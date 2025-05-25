@@ -1,0 +1,16 @@
+{
+  "name": "@uni-final-project/utils",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+"dev": "tsc --watch",
+"build": "tsc --outDir dist",
+"type-check": "tsc --noEmit",
+"lint": "eslint src/**/*.ts"
+  },
+  "devDependencies": {
+"typescript": "5.8.3"
+  }
+}

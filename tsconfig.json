@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+"target": "ES2022",
+"lib": ["ES2022", "DOM", "DOM.Iterable"],
+"allowJs": true,
+"skipLibCheck": true,
+"strict": true,
+"noEmit": true,
+"esModuleInterop": true,
+"module": "esnext",
+"moduleResolution": "bundler",
+"resolveJsonModule": true,
+"isolatedModules": true,
+"jsx": "preserve",
+"incremental": true,
+"baseUrl": ".",
+"paths": {
+  "@uni-final-project/ui": ["./packages/ui/src"],
+  "@uni-final-project/database": ["./packages/database/src"],
+  "@uni-final-project/utils": ["./packages/utils/src"],
+  "@uni-final-project/config": ["./packages/config/src"]
+}
+  },
+  "exclude": ["node_modules"]
+}

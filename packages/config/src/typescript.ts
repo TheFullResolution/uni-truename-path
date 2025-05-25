@@ -1,0 +1,15 @@
+export const baseCompilerOptions = {
+  target: 'ES2022' as const,
+  lib: ['ES2022', 'DOM', 'DOM.Iterable'],
+  allowJs: true,
+  skipLibCheck: true,
+  strict: true,
+  noEmit: true,
+  esModuleInterop: true,
+  module: 'esnext' as const,
+  moduleResolution: 'bundler' as const,
+  resolveJsonModule: true,
+  isolatedModules: true,
+  jsx: 'preserve' as const,
+  incremental: true,
+};

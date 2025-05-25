@@ -3,20 +3,30 @@
   "tasks": {
 "build": {
   "dependsOn": ["^build"],
-  "outputs": ["dist/**"]
+  "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
 },
 "dev": {
   "persistent": true,
   "cache": false
 },
-"transit": {
-  "dependsOn": ["^transit"]
-},
 "lint": {
-  "dependsOn": ["transit"]
+  "dependsOn": ["^lint"]
 },
-"check-types": {
-  "dependsOn": ["transit"]
+"lint:fix": {
+  "dependsOn": ["^lint:fix"],
+  "cache": false
+},
+"type-check": {
+  "dependsOn": ["^type-check"]
+},
+"test": {
+  "dependsOn": ["^test"],
+  "outputs": ["coverage/**"]
+},
+"test:e2e": {
+  "dependsOn": ["build"],
+  "cache": false
 }
-  }
+  },
+  "globalEnv": ["NODE_ENV", "NEXT_PUBLIC_*", "SUPABASE_*"]
 }

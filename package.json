@@ -2,10 +2,10 @@
   "name": "uni-final-project",
   "version": "0.0.0-semantic-release",
   "packageManager": "yarn@4.5.0",
+  "type": "module",
   "workspaces": [
 "packages/*",
-"docs",
-"examples/*"
+"apps/*"
   ],
   "nohoist": [
 "**/react",
@@ -16,10 +16,27 @@
   ],
   "scripts": {
 "dev": "turbo run dev",
-"format": "prettier . --write"
+"build": "turbo run build",
+"lint": "turbo run lint",
+"lint:fix": "turbo run lint:fix",
+"type-check": "turbo run type-check",
+"test": "turbo run test",
+"test:e2e": "playwright test",
+"test:e2e:ui": "playwright test --ui",
+"test:e2e:headed": "playwright test --headed",
+"format": "prettier . --write",
+"db:types": "supabase gen types typescript --local > packages/database/src/types.ts"
   },
   "devDependencies": {
+"@next/eslint-plugin-next": "^15.3.2",
+"@playwright/test": "^1.52.0",
+"@typescript-eslint/eslint-plugin": "^8.32.1",
+"@typescript-eslint/parser": "^8.32.1",
+"eslint": "^9.27.0",
+"eslint-plugin-react": "^7.37.5",
+"eslint-plugin-react-hooks": "^5.2.0",
 "prettier": "^3.5.3",
-"turbo": "2.5.3"
+"turbo": "2.5.3",
+"typescript": "^5.8.3"
   }
 }

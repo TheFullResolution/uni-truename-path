@@ -1,6 +1,7 @@
 alter table public.names enable row level security;
 alter table public.profiles enable row level security;
 alter table public.consents enable row level security;
+alter table public.name_disclosure_log enable row level security;
 
 -- helper: pull JWT audience from the request
 create
@@ -39,3 +40,17 @@ on public.profiles
 for
 select
 using ( auth.role() in ('authenticated', 'service_role') );
+
+-- Consent table policies
+create policy "Users can view own consents" on public.consents
+for select using (auth.uid() = profile_id);
+
+create policy "Users can insert own consents" on public.consents
+for insert with check (auth.uid() = profile_id);
+
+create policy "Users can update own consents" on public.consents
+for update using (auth.uid() = profile_id);
+
+-- Disclosure log policies (read-only for users)
+create policy "Users can view own disclosure log" on public.name_disclosure_log
+for select using (auth.uid() = profile_id);
