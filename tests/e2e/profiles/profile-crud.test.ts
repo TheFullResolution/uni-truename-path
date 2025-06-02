@@ -15,8 +15,9 @@ await DatabaseTestHelper.cleanup();
 await DatabaseTestHelper.cleanup();
   });
 
-  test('should create a new profile', async ({ page }) => {
-const testEmail = testProfiles.johnDoe.email;
+  test('should create a new profile', async () => {
+const uniqueId = Math.random().toString(36).substring(7);
+const testEmail = `test-profile-${uniqueId}@example.test`;
 
 // Create profile via database
 const profile = await DatabaseTestHelper.createProfile(testEmail);
@@ -29,11 +30,13 @@ expect(retrievedProfile).toBeTruthy();
 expect(retrievedProfile!.email).toBe(testEmail);
   });
 
-  test('should create multiple names for a profile', async ({ page }) => {
+  test('should create multiple names for a profile', async () => {
+const uniqueId = Math.random().toString(36).substring(7);
+const testEmail = `test-names-${uniqueId}@example.test`;
 const testData = testProfiles.johnDoe;
 
 // Create profile
-const profile = await DatabaseTestHelper.createProfile(testData.email);
+const profile = await DatabaseTestHelper.createProfile(testEmail);
 
 // Create names
 const names = [];
@@ -53,17 +56,21 @@ const retrievedNames = await DatabaseTestHelper.getNamesForProfile(profile.id!);
 expect(retrievedNames).toHaveLength(2);
   });
 
-  test('should handle name visibility levels', async ({ page }) => {
-const profile = await DatabaseTestHelper.createProfile('visibility@test.com');
+  test('should handle name visibility levels', async () => {
+const uniqueId = Math.random().toString(36).substring(7);
+const profile = await DatabaseTestHelper.createProfile(`test-visibility-${uniqueId}@example.test`);
 
 const visibilityLevels = ['public', 'internal', 'restricted', 'private'] as const;
 
 for (const visibility of visibilityLevels) {
-  await DatabaseTestHelper.createName(profile.id!, {
+  const name = await DatabaseTestHelper.createName(profile.id!, {
 name_text: `Name ${visibility}`,
 type: 'alias',
 visibility
   });
+  // Verify each name was created
+  expect(name).toBeTruthy();
+  expect(name.name_text).toBe(`Name ${visibility}`);
 }
 
 const names = await DatabaseTestHelper.getNamesForProfile(profile.id!);
@@ -77,17 +84,21 @@ for (const visibility of visibilityLevels) {
 }
   });
 
-  test('should handle different name types', async ({ page }) => {
-const profile = await DatabaseTestHelper.createProfile('types@test.com');
+  test('should handle different name types', async () => {
+const uniqueId = Math.random().toString(36).substring(7);
+const profile = await DatabaseTestHelper.createProfile(`test-types-${uniqueId}@example.test`);
 
 const nameTypes = ['legal', 'preferred', 'nickname', 'alias'] as const;
 
 for (const type of nameTypes) {
-  await DatabaseTestHelper.createName(profile.id!, {
+  const name = await DatabaseTestHelper.createName(profile.id!, {
 name_text: `${type} name`,
 type,
 visibility: 'public'
   });
+  // Verify each name was created
+  expect(name).toBeTruthy();
+  expect(name.type).toBe(type);
 }
 
 const names = await DatabaseTestHelper.getNamesForProfile(profile.id!);

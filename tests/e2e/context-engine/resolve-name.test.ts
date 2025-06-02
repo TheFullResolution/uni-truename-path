@@ -12,8 +12,9 @@ await DatabaseTestHelper.cleanup();
   });
 
   test('should resolve names based on audience context', async () => {
-// Create JJ persona
-const jjProfile = await DatabaseTestHelper.createProfile('jj@example.com');
+// Create JJ persona with unique test email
+const uniqueId = Math.random().toString(36).substring(7);
+const jjProfile = await DatabaseTestHelper.createProfile(`test-jj-${uniqueId}@example.test`);
 
 // Legal name
 await DatabaseTestHelper.createName(jjProfile.id!, {
@@ -98,7 +99,8 @@ expect(noConsentName).toBe('Anonymous User');
   });
 
   test('should create audit trail for name disclosures', async () => {
-const profile = await DatabaseTestHelper.createProfile('audit-test@example.com');
+const uniqueId = Math.random().toString(36).substring(7);
+const profile = await DatabaseTestHelper.createProfile(`test-audit-${uniqueId}@example.test`);
 
 await DatabaseTestHelper.createName(profile.id!, {
   name_text: 'Test User',
@@ -145,7 +147,8 @@ expect(logs?.[0]).toMatchObject({
 
   test('should handle multi-language names correctly', async () => {
 // Create Li Wei persona
-const liWeiProfile = await DatabaseTestHelper.createProfile('liwei@example.com');
+const uniqueId = Math.random().toString(36).substring(7);
+const liWeiProfile = await DatabaseTestHelper.createProfile(`test-liwei-${uniqueId}@example.test`);
 
 // Chinese legal name
 await DatabaseTestHelper.createName(liWeiProfile.id!, {
@@ -207,7 +210,8 @@ expect(slackName).toBe('Wei Li');
   });
 
   test('should respect visibility levels', async () => {
-const profile = await DatabaseTestHelper.createProfile('visibility@example.com');
+const uniqueId = Math.random().toString(36).substring(7);
+const profile = await DatabaseTestHelper.createProfile(`test-visibility-${uniqueId}@example.test`);
 
 // Create names with different visibility levels
 await DatabaseTestHelper.createName(profile.id!, {

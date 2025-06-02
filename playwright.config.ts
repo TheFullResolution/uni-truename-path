@@ -1,14 +1,26 @@
+/* eslint-env node */
 import { defineConfig, devices } from '@playwright/test';
+import { config } from 'dotenv';
+import { existsSync } from 'fs';
+
+// Load environment variables from .env.local if it exists
+if (existsSync('.env.local')) {
+  config({ path: '.env.local' });
+} else if (existsSync('.env')) {
+  config({ path: '.env' });
+}
 
 /**
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
   testDir: './tests/e2e',
-  fullyParallel: true,
+  // Disable parallel execution for database tests
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // Force single worker to avoid database conflicts
+  workers: 1,
   reporter: 'html',
   
   use: {

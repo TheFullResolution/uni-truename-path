@@ -101,6 +101,18 @@ cd packages/ui && yarn build # Build shared UI package
 
 ## 🧪 Testing Strategy
 
+### Test Environment Setup
+1. **Local Testing**: Copy `.env.example` to `.env.local`
+   ```bash
+   cp .env.example .env.local
+   # .env.local contains default values for local Supabase
+   ```
+
+2. **CI/GitHub Actions**: Set these secrets in your repository:
+   - `SUPABASE_URL`
+   - `SUPABASE_ANON_KEY`
+   - `SUPABASE_ACCESS_TOKEN`
+
 ### Playwright E2E Tests
 - **Database Integration**: Tests use real Supabase data
 - **Multi-Browser**: Chrome, Firefox, Safari, Mobile

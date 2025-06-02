@@ -90,3 +90,7 @@ Temporary Items
 *~
 .project
 .settings
+
+playwright-report/
+
+test-results/

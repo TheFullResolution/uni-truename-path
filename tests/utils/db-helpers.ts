@@ -1,7 +1,10 @@
+/* eslint-env node */
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL || 'http://127.0.0.1:54321';
-const supabaseKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
+// Get Supabase configuration from environment
+const supabaseUrl = process.env.SUPABASE_URL!;
+// Use service role key for tests to bypass RLS
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY!;
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -32,7 +35,13 @@ const { data, error } = await supabase
   .select()
   .single();
 
-if (error) throw error;
+if (error) {
+  console.error('Error creating profile:', error);
+  throw error;
+}
+if (!data) {
+  throw new Error('Profile created but no data returned - possible RLS issue');
+}
 return data;
   }
 
@@ -57,9 +66,24 @@ return data;
    * Clean up all test data
    */
   static async cleanup(): Promise<void> {
-// Delete in order due to foreign key constraints
-await supabase.from('names').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-await supabase.from('profiles').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+// Delete test data by email pattern - only delete test emails
+const testEmailPattern = ['test-', '@test.', '@example.test'];
+
+// Get all test profiles first
+const { data: profiles } = await supabase
+  .from('profiles')
+  .select('id, email')
+  .or(testEmailPattern.map(pattern => `email.like.%${pattern}%`).join(','));
+
+if (profiles && profiles.length > 0) {
+  const profileIds = profiles.map(p => p.id);
+  
+  // Delete in reverse order of dependencies
+  await supabase.from('name_disclosure_log').delete().in('profile_id', profileIds);
+  await supabase.from('consents').delete().in('profile_id', profileIds);
+  await supabase.from('names').delete().in('profile_id', profileIds);
+  await supabase.from('profiles').delete().in('id', profileIds);
+}
   }
 
   /**

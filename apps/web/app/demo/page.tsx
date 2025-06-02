@@ -39,13 +39,11 @@ p_purpose: 'demo_testing'
   });
 
   if (error) {
-console.error('Error:', error);
 setResults(prev => ({ ...prev, [audience]: `Error: ${error.message}` }));
   } else {
 setResults(prev => ({ ...prev, [audience]: data || 'No name found' }));
   }
 } catch (err) {
-  console.error('Network error:', err);
   setResults(prev => ({ ...prev, [audience]: 'Network error' }));
 } finally {
   setLoading(false);
@@ -132,7 +130,7 @@ View as {audience.toUpperCase()}
   • <strong>Consent-Based</strong>: Users control which audiences can see which names
 </Text>
 <Text size="sm">
-  • <strong>Prioritized</strong>: preferred > nickname > legal > alias based on context appropriateness
+  • <strong>Prioritized</strong>: preferred &gt; nickname &gt; legal &gt; alias based on context appropriateness
 </Text>
   </Stack>
 </Card>

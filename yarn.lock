@@ -1897,6 +1897,13 @@ esutils: "npm:^2.0.2"
   languageName: node
   linkType: hard
 
+"dotenv@npm:^16.5.0":
+  version: 16.5.0
+  resolution: "dotenv@npm:16.5.0"
+  checksum: 10/e68a16834f1a41cc2dfb01563bc150668ad675e6cd09191211467b5c0806b6ecd6ec438e021aa8e01cd0e72d2b70ef4302bec7cc0fe15b6955f85230b62dc8a9
+  languageName: node
+  linkType: hard
+
 "dunder-proto@npm:^1.0.0, dunder-proto@npm:^1.0.1":
   version: 1.0.1
   resolution: "dunder-proto@npm:1.0.1"
@@ -2841,6 +2848,13 @@ glob: dist/esm/bin.mjs
   version: 14.0.0
   resolution: "globals@npm:14.0.0"
   checksum: 10/03939c8af95c6df5014b137cac83aa909090c3a3985caef06ee9a5a669790877af8698ab38007e4c0186873adc14c0b13764acc754b16a754c216cc56aa5f021
+  languageName: node
+  linkType: hard
+
+"globals@npm:^16.2.0":
+  version: 16.2.0
+  resolution: "globals@npm:16.2.0"
+  checksum: 10/37fc33502973ebbee5a44b58939aa8574abc00ca1fc4c1d4ec0571a2c6620843ae647eff8bd082adf6bb5975ad221a887522b9a7961125764f0cb6dfab0b7483
   languageName: node
   linkType: hard
 
@@ -5379,9 +5393,11 @@ typescript: "npm:5.8.3"
 "@playwright/test": "npm:^1.52.0"
 "@typescript-eslint/eslint-plugin": "npm:^8.32.1"
 "@typescript-eslint/parser": "npm:^8.32.1"
+dotenv: "npm:^16.5.0"
 eslint: "npm:^9.27.0"
 eslint-plugin-react: "npm:^7.37.5"
 eslint-plugin-react-hooks: "npm:^5.2.0"
+globals: "npm:^16.2.0"
 prettier: "npm:^3.5.3"
 turbo: "npm:2.5.3"
 typescript: "npm:^5.8.3"

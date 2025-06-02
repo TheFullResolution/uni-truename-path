@@ -3,9 +3,21 @@ import typescript from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
-import nextPlugin from '@next/eslint-plugin-next';
+import globals from 'globals';
 
 export default [
+  {
+ignores: [
+  '**/node_modules/**',
+  '**/.next/**',
+  '**/dist/**',
+  '**/build/**',
+  '**/.turbo/**',
+  '**/coverage/**',
+  '**/.vercel/**',
+  '**/out/**',
+],
+  },
   js.configs.recommended,
   {
 files: ['**/*.{ts,tsx}'],
@@ -17,6 +29,11 @@ sourceType: 'module',
 ecmaFeatures: {
   jsx: true,
 },
+  },
+  globals: {
+...globals.browser,
+...globals.node,
+...globals.es2021,
   },
 },
 plugins: {
@@ -48,6 +65,12 @@ rules: {
   },
   {
 files: ['**/*.js'],
+languageOptions: {
+  globals: {
+...globals.node,
+...globals.es2021,
+  },
+},
 rules: {
   '@typescript-eslint/no-require-imports': 'off',
 },
