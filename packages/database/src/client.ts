@@ -19,7 +19,9 @@ autoRefreshToken: true,
 // Alternative: Create a pre-configured client for browser use
 export const createBrowserSupabaseClient = () => {
   if (typeof window === 'undefined') {
-throw new Error('createBrowserSupabaseClient can only be used in browser environments');
+throw new Error(
+  'createBrowserSupabaseClient can only be used in browser environments',
+);
   }
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

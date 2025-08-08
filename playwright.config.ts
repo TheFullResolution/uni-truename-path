@@ -22,7 +22,7 @@ export default defineConfig({
   // Force single worker to avoid database conflicts
   workers: 1,
   reporter: 'html',
-  
+
   use: {
 baseURL: 'http://localhost:3000',
 trace: 'on-first-retry',

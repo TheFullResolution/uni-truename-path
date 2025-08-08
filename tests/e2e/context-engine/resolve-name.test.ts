@@ -14,14 +14,16 @@ await DatabaseTestHelper.cleanup();
   test('should resolve names based on audience context', async () => {
 // Create JJ persona with unique test email
 const uniqueId = Math.random().toString(36).substring(7);
-const jjProfile = await DatabaseTestHelper.createProfile(`test-jj-${uniqueId}@example.test`);
+const jjProfile = await DatabaseTestHelper.createProfile(
+  `test-jj-${uniqueId}@example.test`,
+);
 
 // Legal name
 await DatabaseTestHelper.createName(jjProfile.id!, {
   name_text: 'Jędrzej Lewandowski',
   type: 'legal',
   visibility: 'restricted',
-  source: 'legal_documents'
+  source: 'legal_documents',
 });
 
 // Preferred nickname
@@ -29,7 +31,7 @@ await DatabaseTestHelper.createName(jjProfile.id!, {
   name_text: 'JJ',
   type: 'preferred',
   visibility: 'public',
-  source: 'personal_preference'
+  source: 'personal_preference',
 });
 
 // Professional alias
@@ -37,7 +39,7 @@ await DatabaseTestHelper.createName(jjProfile.id!, {
   name_text: 'J. Lewandowski',
   type: 'alias',
   visibility: 'public',
-  source: 'professional'
+  source: 'professional',
 });
 
 // Create consents
@@ -47,29 +49,29 @@ profile_id: jjProfile.id,
 audience: 'hr_department',
 purpose: 'employment',
 access_level: 'full',
-active: true
+active: true,
   },
   {
 profile_id: jjProfile.id,
 audience: 'slack_internal',
 purpose: 'communication',
 access_level: 'preferred_only',
-active: true
+active: true,
   },
   {
 profile_id: jjProfile.id,
 audience: 'github_public',
 purpose: 'code_contributions',
 access_level: 'alias_only',
-active: true
-  }
+active: true,
+  },
 ]);
 
 // Test HR context - should get legal name
 const { data: hrName } = await supabase.rpc('resolve_name', {
   p_profile: jjProfile.id,
   p_audience: 'hr_department',
-  p_purpose: 'employment'
+  p_purpose: 'employment',
 });
 expect(hrName).toBe('Jędrzej Lewandowski');
 
@@ -77,7 +79,7 @@ expect(hrName).toBe('Jędrzej Lewandowski');
 const { data: slackName } = await supabase.rpc('resolve_name', {
   p_profile: jjProfile.id,
   p_audience: 'slack_internal',
-  p_purpose: 'communication'
+  p_purpose: 'communication',
 });
 expect(slackName).toBe('JJ');
 
@@ -85,7 +87,7 @@ expect(slackName).toBe('JJ');
 const { data: githubName } = await supabase.rpc('resolve_name', {
   p_profile: jjProfile.id,
   p_audience: 'github_public',
-  p_purpose: 'code_contributions'
+  p_purpose: 'code_contributions',
 });
 expect(githubName).toBe('J. Lewandowski');
 
@@ -93,19 +95,21 @@ expect(githubName).toBe('J. Lewandowski');
 const { data: noConsentName } = await supabase.rpc('resolve_name', {
   p_profile: jjProfile.id,
   p_audience: 'unknown_service',
-  p_purpose: 'unknown'
+  p_purpose: 'unknown',
 });
 expect(noConsentName).toBe('Anonymous User');
   });
 
   test('should create audit trail for name disclosures', async () => {
 const uniqueId = Math.random().toString(36).substring(7);
-const profile = await DatabaseTestHelper.createProfile(`test-audit-${uniqueId}@example.test`);
+const profile = await DatabaseTestHelper.createProfile(
+  `test-audit-${uniqueId}@example.test`,
+);
 
 await DatabaseTestHelper.createName(profile.id!, {
   name_text: 'Test User',
   type: 'preferred',
-  visibility: 'public'
+  visibility: 'public',
 });
 
 await supabase.from('consents').insert({
@@ -113,7 +117,7 @@ await supabase.from('consents').insert({
   audience: 'test_audience',
   purpose: 'testing',
   access_level: 'full',
-  active: true
+  active: true,
 });
 
 // Get count before disclosure
@@ -126,7 +130,7 @@ const { count: beforeCount } = await supabase
 await supabase.rpc('resolve_name', {
   p_profile: profile.id,
   p_audience: 'test_audience',
-  p_purpose: 'testing'
+  p_purpose: 'testing',
 });
 
 // Check audit log was created
@@ -141,21 +145,23 @@ expect(logs?.[0]).toMatchObject({
   profile_id: profile.id,
   audience: 'test_audience',
   purpose: 'testing',
-  name_disclosed: 'Test User'
+  name_disclosed: 'Test User',
 });
   });
 
   test('should handle multi-language names correctly', async () => {
 // Create Li Wei persona
 const uniqueId = Math.random().toString(36).substring(7);
-const liWeiProfile = await DatabaseTestHelper.createProfile(`test-liwei-${uniqueId}@example.test`);
+const liWeiProfile = await DatabaseTestHelper.createProfile(
+  `test-liwei-${uniqueId}@example.test`,
+);
 
 // Chinese legal name
 await DatabaseTestHelper.createName(liWeiProfile.id!, {
   name_text: '李伟',
   type: 'legal',
   visibility: 'restricted',
-  source: 'legal_documents'
+  source: 'legal_documents',
 });
 
 // Western adaptation
@@ -163,7 +169,7 @@ await DatabaseTestHelper.createName(liWeiProfile.id!, {
   name_text: 'Wei Li',
   type: 'preferred',
   visibility: 'public',
-  source: 'western_adaptation'
+  source: 'western_adaptation',
 });
 
 // Nickname
@@ -171,7 +177,7 @@ await DatabaseTestHelper.createName(liWeiProfile.id!, {
   name_text: 'Wei',
   type: 'nickname',
   visibility: 'internal',
-  source: 'colleagues'
+  source: 'colleagues',
 });
 
 // Create consents
@@ -181,22 +187,22 @@ profile_id: liWeiProfile.id,
 audience: 'hr_department',
 purpose: 'employment',
 access_level: 'full',
-active: true
+active: true,
   },
   {
 profile_id: liWeiProfile.id,
 audience: 'slack_internal',
 purpose: 'communication',
 access_level: 'preferred_only',
-active: true
-  }
+active: true,
+  },
 ]);
 
 // Test HR context - should get Chinese legal name
 const { data: hrName } = await supabase.rpc('resolve_name', {
   p_profile: liWeiProfile.id,
   p_audience: 'hr_department',
-  p_purpose: 'employment'
+  p_purpose: 'employment',
 });
 expect(hrName).toBe('李伟');
 
@@ -204,28 +210,30 @@ expect(hrName).toBe('李伟');
 const { data: slackName } = await supabase.rpc('resolve_name', {
   p_profile: liWeiProfile.id,
   p_audience: 'slack_internal',
-  p_purpose: 'communication'
+  p_purpose: 'communication',
 });
 expect(slackName).toBe('Wei Li');
   });
 
   test('should respect visibility levels', async () => {
 const uniqueId = Math.random().toString(36).substring(7);
-const profile = await DatabaseTestHelper.createProfile(`test-visibility-${uniqueId}@example.test`);
+const profile = await DatabaseTestHelper.createProfile(
+  `test-visibility-${uniqueId}@example.test`,
+);
 
 // Create names with different visibility levels
 await DatabaseTestHelper.createName(profile.id!, {
   name_text: 'Private Name',
   type: 'legal',
   visibility: 'private',
-  source: 'confidential'
+  source: 'confidential',
 });
 
 await DatabaseTestHelper.createName(profile.id!, {
   name_text: 'Public Name',
   type: 'preferred',
   visibility: 'public',
-  source: 'public_profile'
+  source: 'public_profile',
 });
 
 // Even with full consent, private names shouldn't be disclosed to non-HR
@@ -234,13 +242,13 @@ await supabase.from('consents').insert({
   audience: 'general_public',
   purpose: 'display',
   access_level: 'full',
-  active: true
+  active: true,
 });
 
 const { data: publicName } = await supabase.rpc('resolve_name', {
   p_profile: profile.id,
   p_audience: 'general_public',
-  p_purpose: 'display'
+  p_purpose: 'display',
 });
 
 expect(publicName).toBe('Public Name');

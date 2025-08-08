@@ -25,9 +25,15 @@
 "test:e2e:ui": "playwright test --ui",
 "test:e2e:headed": "playwright test --headed",
 "format": "prettier . --write",
-"db:types": "supabase gen types typescript --local > packages/database/src/types.ts"
+"db:types": "supabase gen types typescript --local > packages/database/src/types.ts",
+"diagrams:erd": "mmdc -i docs/report-materials/academic-report-diagrams.md -o enhanced-erd.png -t neutral -s 2 --cssFile docs/mermaid-theme.css",
+"diagrams:architecture": "mmdc -i docs/report-materials/academic-report-diagrams.md -o enhanced-architecture.png -t neutral -s 2 --cssFile docs/mermaid-theme.css",
+"diagrams:flowchart": "mmdc -i docs/report-materials/academic-report-diagrams.md -o enhanced-flowchart.png -t neutral -s 2 --cssFile docs/mermaid-theme.css",
+"diagrams:all": "yarn diagrams:erd && yarn diagrams:architecture && yarn diagrams:flowchart",
+"wireframes": "open docs/wireframes/index.html"
   },
   "devDependencies": {
+"@mermaid-js/mermaid-cli": "^11.4.2",
 "@next/eslint-plugin-next": "^15.3.2",
 "@playwright/test": "^1.52.0",
 "@typescript-eslint/eslint-plugin": "^8.32.1",
@@ -38,6 +44,7 @@
 "eslint-plugin-react-hooks": "^5.2.0",
 "globals": "^16.2.0",
 "prettier": "^3.5.3",
+"puppeteer": "^24.10.0",
 "turbo": "2.5.3",
 "typescript": "^5.8.3"
   }

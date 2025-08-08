@@ -11,9 +11,13 @@ authHelper = new AuthHelper(page);
   test('should load home page', async ({ page }) => {
 await page.goto('/');
 // Check for the actual heading on the page
-await expect(page.getByRole('heading', { name: 'TrueNamePath', level: 1 })).toBeVisible();
+await expect(
+  page.getByRole('heading', { name: 'TrueNamePath', level: 1 }),
+).toBeVisible();
 // Verify key content is present
-await expect(page.getByText('Context-aware identity management API')).toBeVisible();
+await expect(
+  page.getByText('Context-aware identity management API'),
+).toBeVisible();
   });
 
   test('should have proper HTML structure', async ({ page }) => {
@@ -23,8 +27,8 @@ await page.goto('/');
 await expect(page.locator('html[lang="en"]')).toBeVisible();
 // Use nth to target the specific viewport meta tag (there are 2)
 await expect(page.locator('meta[name="viewport"]').nth(1)).toHaveAttribute(
-  'content', 
-  'minimum-scale=1, initial-scale=1, width=device-width, user-scalable=no'
+  'content',
+  'minimum-scale=1, initial-scale=1, width=device-width, user-scalable=no',
 );
 
 // Verify Mantine ColorSchemeScript is loaded
@@ -45,11 +49,12 @@ await page.goto('/');
 // Check that Mantine CSS is loaded
 const mantineStyles = await page.evaluate(() => {
   const stylesheets = Array.from(document.styleSheets);
-  return stylesheets.some(sheet => {
+  return stylesheets.some((sheet) => {
 try {
-  return Array.from(sheet.cssRules || []).some(rule => 
-rule.cssText.includes('mantine') || 
-rule.cssText.includes('--mantine')
+  return Array.from(sheet.cssRules || []).some(
+(rule) =>
+  rule.cssText.includes('mantine') ||
+  rule.cssText.includes('--mantine'),
   );
 } catch {
   return false;
@@ -66,14 +71,20 @@ expect(typeof mantineStyles).toBe('boolean');
 // Test desktop
 await page.setViewportSize({ width: 1200, height: 800 });
 await page.goto('/');
-await expect(page.getByRole('heading', { name: 'TrueNamePath' })).toBeVisible();
+await expect(
+  page.getByRole('heading', { name: 'TrueNamePath' }),
+).toBeVisible();
 
 // Test tablet
 await page.setViewportSize({ width: 768, height: 1024 });
-await expect(page.getByRole('heading', { name: 'TrueNamePath' })).toBeVisible();
+await expect(
+  page.getByRole('heading', { name: 'TrueNamePath' }),
+).toBeVisible();
 
 // Test mobile
 await page.setViewportSize({ width: 375, height: 667 });
-await expect(page.getByRole('heading', { name: 'TrueNamePath' })).toBeVisible();
+await expect(
+  page.getByRole('heading', { name: 'TrueNamePath' }),
+).toBeVisible();
   });
 });

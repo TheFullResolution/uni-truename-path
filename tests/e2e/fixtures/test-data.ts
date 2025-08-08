@@ -11,8 +11,8 @@ visibility: 'public' as const,
 name_text: 'Johnny',
 type: 'nickname' as const,
 visibility: 'internal' as const,
-  }
-]
+  },
+],
   },
   janeDoe: {
 email: 'jane.doe@example.com',
@@ -26,7 +26,7 @@ visibility: 'public' as const,
 name_text: 'Jane Doe',
 type: 'preferred' as const,
 visibility: 'public' as const,
-  }
-]
-  }
+  },
+],
+  },
 } as const;

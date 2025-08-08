@@ -28,7 +28,7 @@ Visit [http://localhost:3000](http://localhost:3000) to see TrueNamePath in acti
 
 In our hyper-connected world, most digital platforms treat a **name** as a single, unchanging string. This breaks down when:
 
-- **Jędrzej Lewandowski** appears in Gmail but everyone knows him as **JJ** on Slack  
+- **Jędrzej Lewandowski** appears in Gmail but everyone knows him as **JJ** on Slack
 - **李伟** (Li Wei) uses different name variants for HR vs. public forums
 - **Alex Smith** goes by **@CodeAlex** in developer communities
 
@@ -39,6 +39,7 @@ In our hyper-connected world, most digital platforms treat a **name** as a singl
 ## 🏗️ Project Architecture
 
 ### Tech Stack
+
 - **Frontend**: Next.js 15 with App Router, React 19, Mantine UI
 - **Backend**: Supabase (PostgreSQL, Auth, Edge Functions)
 - **TypeScript**: Full type safety across the entire stack
@@ -46,6 +47,7 @@ In our hyper-connected world, most digital platforms treat a **name** as a singl
 - **Monorepo**: Turbo + Yarn workspaces for scalable development
 
 ### Database Schema
+
 This project implements a sophisticated **multi-name identity system**:
 
 - **Profiles**: Core user entities with email and metadata
@@ -74,18 +76,22 @@ uni-final-project/
 ## 🛠️ Development Commands
 
 ### Root Level (All Packages)
+
 ```bash
 yarn dev   # Start all development servers
 yarn build # Build all packages
-yarn lint  # Lint all packages
+yarn lint  # Lint all packages (using ESLint 9 flat config)
 yarn lint:fix  # Fix linting issues
 yarn type-check# TypeScript compilation check
-yarn test:e2e  # Run Playwright tests
+yarn test  # Run unit tests for all packages
+yarn test:e2e  # Run Playwright tests (single worker mode)
 yarn test:e2e:ui   # Run tests in UI mode
+yarn test:e2e:headed # Run tests with browser UI visible
 yarn format# Format code with Prettier
 ```
 
 ### Database Operations
+
 ```bash
 yarn db:types  # Generate TypeScript types from Supabase
 supabase start # Start local Supabase stack
@@ -94,6 +100,7 @@ supabase db reset  # Reset database with fresh migrations
 ```
 
 ### Package-Specific Commands
+
 ```bash
 cd apps/web && yarn dev  # Next.js development server
 cd packages/ui && yarn build # Build shared UI package
@@ -102,7 +109,9 @@ cd packages/ui && yarn build # Build shared UI package
 ## 🧪 Testing Strategy
 
 ### Test Environment Setup
+
 1. **Local Testing**: Copy `.env.example` to `.env.local`
+
    ```bash
    cp .env.example .env.local
    # .env.local contains default values for local Supabase
@@ -111,25 +120,37 @@ cd packages/ui && yarn build # Build shared UI package
 2. **CI/GitHub Actions**: Set these secrets in your repository:
    - `SUPABASE_URL`
    - `SUPABASE_ANON_KEY`
-   - `SUPABASE_ACCESS_TOKEN`
+   - `SUPABASE_SERVICE_ROLE_KEY` (required for test database operations)
+   - `SUPABASE_ACCESS_TOKEN` (required for starting local Supabase in CI)
 
 ### Playwright E2E Tests
-- **Database Integration**: Tests use real Supabase data
+
+- **Database Integration**: Tests use local Supabase instance (not production)
+- **Single Worker Mode**: Prevents database conflicts during parallel test execution
+- **Unique Identifiers**: Tests use unique IDs to avoid conflicts
 - **Multi-Browser**: Chrome, Firefox, Safari, Mobile
 - **Page Objects**: Reusable test helpers and fixtures
-- **CI Integration**: Automated testing on every PR
+- **CI Integration**: Automated testing on every PR with local Supabase
 
 ```bash
-yarn test:e2e# Run all E2E tests
+yarn test:e2e# Run all E2E tests (single worker)
 yarn test:e2e:ui # Interactive test runner
 yarn test:e2e:headed # Run with browser UI visible
 ```
 
+### Key Testing Improvements
+
+- **ESLint 9**: Updated to flat config format for modern linting
+- **Unique Test Data**: Each test uses unique identifiers to prevent conflicts
+- **CI/CD Optimization**: Single workflow for all tests (duplicate workflows removed)
+- **Local Supabase in CI**: Tests run against local instance, not production
+
 ### Test Structure
+
 ```
 tests/e2e/
 ├── auth/# Authentication flows
-├── profiles/# Profile management tests  
+├── profiles/# Profile management tests
 ├── names/   # Multi-name system tests
 ├── fixtures/# Test data and helpers
 └── utils/   # Database and auth helpers
@@ -138,6 +159,7 @@ tests/e2e/
 ## 📋 Development Workflow
 
 1. **Feature Development**
+
    ```bash
    git checkout -b feature/your-feature-name
    yarn dev  # Start development
@@ -147,11 +169,13 @@ tests/e2e/
    ```
 
 2. **Adding Shared Code**
+
    - UI components → `packages/ui/src/`
    - Database utilities → `packages/database/src/`
    - Validation logic → `packages/utils/src/`
 
 3. **Database Changes**
+
    ```bash
    supabase migration new your_migration_name
    # Edit the migration file
@@ -168,7 +192,8 @@ tests/e2e/
 
 ## 🔗 Integration Setup
 
-See [SETUP.md](./SETUP.md) for detailed instructions on:
+See [SETUP.md](docs/archives/SETUP.md) for detailed instructions on:
+
 - Supabase project configuration
 - Vercel deployment setup
 - GitHub Actions secrets
@@ -178,12 +203,14 @@ See [SETUP.md](./SETUP.md) for detailed instructions on:
 ## 📝 Key Features
 
 ### Multi-Name Identity System
+
 - Support for complex naming scenarios (legal vs. preferred names)
 - Privacy controls for different contexts (professional vs. personal)
 - Comprehensive audit trail for compliance
 - Flexible name types and visibility levels
 
 ### Developer Experience
+
 - **Hot Reload**: Instant feedback during development
 - **Type Safety**: End-to-end TypeScript coverage
 - **Code Quality**: Automated linting and formatting
@@ -191,6 +218,7 @@ See [SETUP.md](./SETUP.md) for detailed instructions on:
 - **CI/CD**: Automated testing and deployment
 
 ### Production Ready
+
 - **Performance**: Optimized builds with Turbo caching
 - **Security**: Row Level Security and audit logging
 - **Scalability**: Modular package architecture
@@ -206,10 +234,9 @@ See [SETUP.md](./SETUP.md) for detailed instructions on:
 
 ## 📚 Documentation
 
-- [Setup Guide](./SETUP.md) - Complete deployment setup
-- [Architecture Decision Records](./docs/adr/) - Design decisions
-- [API Documentation](./docs/api/) - Database schema and endpoints
-- [Testing Guide](./docs/testing.md) - Writing and running tests
+- [Setup Guide](docs/archives/SETUP.md) - Complete deployment setup
+- [AI Assistant Instructions](./CLAUDE.md) - Project context for AI assistance
+- [Auth0 Setup](docs/archives/AUTH0_SETUP.md) - Authentication configuration guide
 
 ## 📄 License
 

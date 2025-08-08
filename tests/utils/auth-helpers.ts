@@ -9,15 +9,18 @@ export class AuthHelper {
   async mockAuth(email: string = 'test@example.com') {
 // Mock Supabase auth session
 await this.page.addInitScript((userEmail) => {
-  window.localStorage.setItem('supabase.auth.token', JSON.stringify({
-access_token: 'mock-access-token',
-refresh_token: 'mock-refresh-token',
-user: {
-  id: 'mock-user-id',
-  email: userEmail,
-  created_at: new Date().toISOString()
-}
-  }));
+  window.localStorage.setItem(
+'supabase.auth.token',
+JSON.stringify({
+  access_token: 'mock-access-token',
+  refresh_token: 'mock-refresh-token',
+  user: {
+id: 'mock-user-id',
+email: userEmail,
+created_at: new Date().toISOString(),
+  },
+}),
+  );
 }, email);
   }
 
