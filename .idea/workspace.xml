@@ -5,32 +5,9 @@
   </component>
   <component name="ChangeListManager">
 <list default="true" id="0cfc5ab6-ac06-4371-9d7b-12f0fcb6eba5" name="Changes" comment="">
-  <change beforePath="$PROJECT_DIR$/docs/README.md" beforeDir="false" />
-  <change beforePath="$PROJECT_DIR$/docs/archives/AUTH0_SETUP.md" beforeDir="false" />
-  <change beforePath="$PROJECT_DIR$/docs/archives/Auth0 Integration Design for Context-Aware Identity API.md" beforeDir="false" />
-  <change beforePath="$PROJECT_DIR$/docs/archives/SETUP.md" beforeDir="false" />
-  <change beforePath="$PROJECT_DIR$/docs/diagrams/architecture-clean.mmd" beforeDir="false" />
-  <change beforePath="$PROJECT_DIR$/docs/diagrams/architecture-two-column.png" beforeDir="false" />
-  <change beforePath="$PROJECT_DIR$/docs/diagrams/erd-vertical.png" beforeDir="false" />
-  <change beforePath="$PROJECT_DIR$/docs/diagrams/flowchart-simple.png" beforeDir="false" />
-  <change beforePath="$PROJECT_DIR$/docs/diagrams/flowchart-user-journey.png" beforeDir="false" />
-  <change beforePath="$PROJECT_DIR$/docs/diagrams/project-gantt-chart.png" beforeDir="false" />
-  <change beforePath="$PROJECT_DIR$/docs/gantt-test.html" beforeDir="false" />
-  <change beforePath="$PROJECT_DIR$/docs/report-improvements-with-code-snippets.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/Draft-Report.md" afterDir="false" />
-  <change beforePath="$PROJECT_DIR$/docs/report-instructions/Academic Writing Expectations Guide.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/report-instructions/Academic Writing Expectations Guide.md" afterDir="false" />
-  <change beforePath="$PROJECT_DIR$/docs/report-instructions/Context-aware name selection identity systems.md" beforeDir="false" />
-  <change beforePath="$PROJECT_DIR$/docs/report-instructions/Draft Report Instructions.md" beforeDir="false" />
-  <change beforePath="$PROJECT_DIR$/docs/report-instructions/Presentation Source Slides D.md" beforeDir="false" />
-  <change beforePath="$PROJECT_DIR$/docs/report-materials/README.md" beforeDir="false" />
-  <change beforePath="$PROJECT_DIR$/docs/report-materials/future-academic-diagrams.md" beforeDir="false" />
-  <change beforePath="$PROJECT_DIR$/docs/report-materials/future-enhancement-plan.md" beforeDir="false" />
-  <change beforePath="$PROJECT_DIR$/docs/report-materials/project-evaluation-metrics.md" beforeDir="false" />
-  <change beforePath="$PROJECT_DIR$/docs/report-materials/project-gantt-chart.md" beforeDir="false" />
-  <change beforePath="$PROJECT_DIR$/docs/report-materials/prototype-api-specification.md" beforeDir="false" />
-  <change beforePath="$PROJECT_DIR$/docs/report-materials/prototype-core-algorithm.md" beforeDir="false" />
-  <change beforePath="$PROJECT_DIR$/docs/report-materials/prototype-honest-status.md" beforeDir="false" />
-  <change beforePath="$PROJECT_DIR$/docs/report-materials/prototype-technical-challenges.md" beforeDir="false" />
-  <change beforePath="$PROJECT_DIR$/docs/report-materials/prototype-testing-strategy.md" beforeDir="false" />
+  <change beforePath="$PROJECT_DIR$/.github/workflows/claude-code-review.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/claude-code-review.yml" afterDir="false" />
+  <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+  <change beforePath="$PROJECT_DIR$/supabase/migrations/20250810120001_add_auth_foreign_key.sql" beforeDir="false" afterPath="$PROJECT_DIR$/supabase/migrations/20250810120001_add_auth_foreign_key.sql" afterDir="false" />
 </list>
 <option name="SHOW_DIALOG" value="false" />
 <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -42,6 +19,7 @@
   </component>
   <component name="PackageJsonUpdateNotifier">
 <dismissed value="$PROJECT_DIR$/apps/web/package.json" />
+<dismissed value="$PROJECT_DIR$/package.json" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 2
@@ -63,10 +41,10 @@
 &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
 &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
 &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-&quot;git-widget-placeholder&quot;: &quot;feat/docs&quot;,
+&quot;git-widget-placeholder&quot;: &quot;feat/step-1&quot;,
 &quot;js.debugger.nextJs.config.created.client&quot;: &quot;true&quot;,
 &quot;js.debugger.nextJs.config.created.server&quot;: &quot;true&quot;,
-&quot;last_opened_file_path&quot;: &quot;/Users/thefullresolution/Projects/uni-final-project/docs/report-instructions&quot;,
+&quot;last_opened_file_path&quot;: &quot;/Users/thefullresolution/Projects/uni-final-project/.claude&quot;,
 &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
 &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
 &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
@@ -74,7 +52,7 @@
 &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
 &quot;npm.Next.js: server-side.executor&quot;: &quot;Run&quot;,
 &quot;prettierjs.PrettierConfiguration.Package&quot;: &quot;/Users/thefullresolution/Projects/uni-final-project/node_modules/prettier&quot;,
-&quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+&quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
 &quot;ts.external.directory.path&quot;: &quot;/Users/thefullresolution/Projects/uni-final-project/node_modules/typescript/lib&quot;,
 &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
@@ -86,16 +64,17 @@
 }</component>
   <component name="RecentsManager">
 <key name="CopyFile.RECENT_KEYS">
+  <recent name="$PROJECT_DIR$/.claude" />
   <recent name="$PROJECT_DIR$/docs/report-instructions" />
   <recent name="$PROJECT_DIR$/docs" />
   <recent name="$PROJECT_DIR$" />
 </key>
 <key name="MoveFile.RECENT_KEYS">
+  <recent name="$PROJECT_DIR$/docs/steps" />
+  <recent name="$PROJECT_DIR$/.claude" />
   <recent name="$PROJECT_DIR$/docs" />
   <recent name="$PROJECT_DIR$/docs/report-instructions" />
   <recent name="$PROJECT_DIR$/docs/archives" />
-  <recent name="$PROJECT_DIR$/docs/report-materials" />
-  <recent name="$PROJECT_DIR$" />
 </key>
   </component>
   <component name="RunManager" selected="npm.Next.js: server-side">
@@ -151,6 +130,8 @@
   <workItem from="1750043852300" duration="4679000" />
   <workItem from="1751429466132" duration="4725000" />
   <workItem from="1754659151161" duration="1178000" />
+  <workItem from="1754825280348" duration="105000" />
+  <workItem from="1754825396015" duration="18691000" />
 </task>
 <servers />
   </component>

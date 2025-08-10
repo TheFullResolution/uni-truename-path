@@ -45,7 +45,16 @@
 "globals": "^16.2.0",
 "prettier": "^3.5.3",
 "puppeteer": "^24.10.0",
+"simple-git-hooks": "^2.13.0",
 "turbo": "2.5.3",
 "typescript": "^5.8.3"
+  },
+  "simple-git-hooks": {
+"pre-commit": "npx lint-staged"
+  },
+  "lint-staged": {
+"*.{js,jsx,ts,tsx,mjs,cjs,json,css,scss,html,md}": [
+  "prettier --write"
+]
   }
 }
