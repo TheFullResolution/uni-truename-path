@@ -21,24 +21,29 @@ import {
   type AuthenticatedUser,
 } from '@uni-final-project/database';
 
-// Demo personas from your academic requirements
+// Demo personas matching real authenticated users
 const PERSONAS = {
   jj: {
-id: '11111111-1111-1111-1111-111111111111',
+id: '54c00e81-cda9-4251-9456-7778df91b988',
 description:
   'Jędrzej Lewandowski (JJ) - Polish developer with nickname preference',
+contexts: ['Work Colleagues', 'Gaming Friends', 'Open Source'],
   },
   liwei: {
-id: '22222222-2222-2222-2222-222222222222',
+id: '809d0224-81f1-48a0-9405-2258de21ea60',
 description: 'Li Wei - Chinese name with Western adaptation',
+contexts: ['Professional Network', 'Close Friends', 'Family & Cultural'],
   },
   alex: {
-id: '33333333-3333-3333-3333-333333333333',
+id: '257113c8-7a62-4758-9b1b-7992dd8aca1e',
 description: 'Alex Smith - Developer with online persona',
+contexts: [
+  'Development Community',
+  'Professional Services',
+  'Casual Acquaintances',
+],
   },
 } as const;
-
-const AUDIENCES = ['hr', 'slack', 'github', 'internal_systems'] as const;
 
 export default function DemoPage() {
   const [selectedPersona, setSelectedPersona] =
@@ -106,12 +111,11 @@ try {
 
   // Use authenticated user's ID if available, otherwise use demo persona
   const profileId = currentUser?.id || PERSONAS[selectedPersona].id;
-  const purpose = currentUser ? 'user_testing' : 'demo_testing';
 
   const { data, error } = await supabase.rpc('resolve_name', {
-p_profile: profileId,
-p_audience: audience,
-p_purpose: purpose,
+p_target_user_id: profileId,
+p_requester_user_id: currentUser?.id,
+p_context_name: audience,
   });
 
   if (error) {
@@ -222,25 +226,33 @@ setSelectedPersona(key as keyof typeof PERSONAS)
   <Title order={3} mb='md'>
 Test Name Resolution by Audience
   </Title>
+  {currentUser ? (
+<Text size='sm' c='dimmed' mb='md'>
+  When authenticated, the system uses your own contexts and name
+  assignments. To see the demo personas, please log out.
+</Text>
+  ) : (
+<>
   <Text size='sm' c='dimmed' mb='md'>
-Click each button to see what name{' '}
-{currentUser ? 'your profile' : 'this persona'} shows to different
-audiences:
+Click each button to see what name this persona shows to
+different audiences:
   </Text>
 
   <Group gap='sm' mb='md'>
-{AUDIENCES.map((audience) => (
+{PERSONAS[selectedPersona].contexts.map((context) => (
   <Button
-key={audience}
-onClick={() => testNameResolution(audience)}
+key={context}
+onClick={() => testNameResolution(context)}
 loading={loading}
 variant='outline'
 size='sm'
   >
-View as {audience.toUpperCase()}
+{context}
   </Button>
 ))}
   </Group>
+</>
+  )}
 
   {Object.keys(results).length > 0 && (
 <Stack gap='xs'>

@@ -17,12 +17,38 @@ export interface TestProfile {
 
 export interface TestName {
   id?: string;
-  profile_id: string;
+  user_id: string; // Updated from profile_id to match new schema
   name_text: string;
-  type: 'legal' | 'preferred' | 'nickname' | 'alias';
-  visibility?: 'public' | 'internal' | 'restricted' | 'private';
+  name_type: 'LEGAL' | 'PREFERRED' | 'NICKNAME' | 'ALIAS'; // Updated to use ENUM values
+  is_preferred?: boolean; // New field for preferred name tracking
   verified?: boolean;
   source?: string;
+}
+
+export interface TestUserContext {
+  id?: string;
+  user_id: string;
+  context_name: string;
+  description?: string;
+  created_at?: string;
+}
+
+export interface TestContextNameAssignment {
+  id?: string;
+  user_id: string;
+  context_id: string;
+  name_id: string;
+}
+
+export interface TestConsent {
+  id?: string;
+  granter_user_id: string;
+  requester_user_id: string;
+  context_id: string;
+  status: 'PENDING' | 'GRANTED' | 'REVOKED' | 'EXPIRED';
+  granted_at?: string;
+  revoked_at?: string;
+  expires_at?: string;
 }
 
 export class DatabaseTestHelper {
@@ -49,18 +75,70 @@ return data;
   }
 
   /**
-   * Create a test name for a profile
+   * Create a test name for a user
    */
   static async createName(
-profileId: string,
-nameData: Omit<TestName, 'id' | 'profile_id'>,
+userId: string,
+nameData: Omit<TestName, 'id' | 'user_id'>,
   ): Promise<TestName> {
 const { data, error } = await supabase
   .from('names')
   .insert({
-profile_id: profileId,
+user_id: userId,
 ...nameData,
   })
+  .select()
+  .single();
+
+if (error) throw error;
+return data;
+  }
+
+  /**
+   * Create a user context
+   */
+  static async createUserContext(
+userId: string,
+contextData: Omit<TestUserContext, 'id' | 'user_id'>,
+  ): Promise<TestUserContext> {
+const { data, error } = await supabase
+  .from('user_contexts')
+  .insert({
+user_id: userId,
+...contextData,
+  })
+  .select()
+  .single();
+
+if (error) throw error;
+return data;
+  }
+
+  /**
+   * Create a context name assignment
+   */
+  static async createContextNameAssignment(
+assignmentData: Omit<TestContextNameAssignment, 'id'>,
+  ): Promise<TestContextNameAssignment> {
+const { data, error } = await supabase
+  .from('context_name_assignments')
+  .insert(assignmentData)
+  .select()
+  .single();
+
+if (error) throw error;
+return data;
+  }
+
+  /**
+   * Create a consent record
+   */
+  static async createConsent(
+consentData: Omit<TestConsent, 'id'>,
+  ): Promise<TestConsent> {
+const { data, error } = await supabase
+  .from('consents')
+  .insert(consentData)
   .select()
   .single();
 
@@ -86,13 +164,23 @@ testEmailPattern.map((pattern) => `email.like.%${pattern}%`).join(','),
 if (profiles && profiles.length > 0) {
   const profileIds = profiles.map((p) => p.id);
 
-  // Delete in reverse order of dependencies
+  // Delete in reverse order of dependencies - updated for Step 2 schema
   await supabase
-.from('name_disclosure_log')
+.from('audit_log_entries')
 .delete()
-.in('profile_id', profileIds);
-  await supabase.from('consents').delete().in('profile_id', profileIds);
-  await supabase.from('names').delete().in('profile_id', profileIds);
+.in('target_user_id', profileIds);
+  await supabase
+.from('consents')
+.delete()
+.or(
+  `granter_user_id.in.(${profileIds.join(',')}),requester_user_id.in.(${profileIds.join(',')})`,
+);
+  await supabase
+.from('context_name_assignments')
+.delete()
+.in('user_id', profileIds);
+  await supabase.from('user_contexts').delete().in('user_id', profileIds);
+  await supabase.from('names').delete().in('user_id', profileIds);
   await supabase.from('profiles').delete().in('id', profileIds);
 }
   }
@@ -112,13 +200,123 @@ return data;
   }
 
   /**
-   * Get names for a profile
+   * Get names for a user
    */
-  static async getNamesForProfile(profileId: string): Promise<TestName[]> {
+  static async getNamesForUser(userId: string): Promise<TestName[]> {
 const { data, error } = await supabase
   .from('names')
   .select('*')
-  .eq('profile_id', profileId);
+  .eq('user_id', userId);
+
+if (error) throw error;
+return data || [];
+  }
+
+  /**
+   * Get user contexts for a user
+   */
+  static async getUserContexts(userId: string): Promise<TestUserContext[]> {
+const { data, error } = await supabase
+  .from('user_contexts')
+  .select('*')
+  .eq('user_id', userId);
+
+if (error) throw error;
+return data || [];
+  }
+
+  /**
+   * Get context name assignments for a user
+   */
+  static async getContextNameAssignments(
+userId: string,
+  ): Promise<TestContextNameAssignment[]> {
+const { data, error } = await supabase
+  .from('context_name_assignments')
+  .select('*')
+  .eq('user_id', userId);
+
+if (error) throw error;
+return data || [];
+  }
+
+  /**
+   * Create a complete persona with names, contexts, and assignments (helper for testing)
+   */
+  static async createPersonaWithContexts(
+email: string,
+persona: {
+  names: Array<{
+name_text: string;
+name_type: 'LEGAL' | 'PREFERRED' | 'NICKNAME' | 'ALIAS';
+is_preferred?: boolean;
+  }>;
+  contexts: Array<{
+context_name: string;
+description: string;
+assigned_name?: string;
+  }>;
+},
+  ): Promise<{
+profile: TestProfile;
+names: TestName[];
+contexts: TestUserContext[];
+assignments: TestContextNameAssignment[];
+  }> {
+// Create profile
+const profile = await this.createProfile(email);
+
+// Create names
+const names: TestName[] = [];
+for (const nameData of persona.names) {
+  const name = await this.createName(profile.id!, {
+name_text: nameData.name_text,
+name_type: nameData.name_type,
+is_preferred: nameData.is_preferred || false,
+verified: true,
+source: 'test_data',
+  });
+  names.push(name);
+}
+
+// Create contexts
+const contexts: TestUserContext[] = [];
+const assignments: TestContextNameAssignment[] = [];
+
+for (const contextData of persona.contexts) {
+  const context = await this.createUserContext(profile.id!, {
+context_name: contextData.context_name,
+description: contextData.description,
+  });
+  contexts.push(context);
+
+  // Create assignment if specified
+  if (contextData.assigned_name) {
+const assignedName = names.find(
+  (n) => n.name_text === contextData.assigned_name,
+);
+if (assignedName) {
+  const assignment = await this.createContextNameAssignment({
+user_id: profile.id!,
+context_id: context.id!,
+name_id: assignedName.id!,
+  });
+  assignments.push(assignment);
+}
+  }
+}
+
+return { profile, names, contexts, assignments };
+  }
+
+  /**
+   * Get all names for a profile
+   */
+  static async getNamesForProfile(userId: string): Promise<TestName[]> {
+const { data, error } = await supabase
+  .from('names')
+  .select('*')
+  .eq('user_id', userId);
 
 if (error) throw error;
 return data || [];

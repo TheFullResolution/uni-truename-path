@@ -48,9 +48,11 @@ for (const nameData of testData.names) {
 
 expect(names).toHaveLength(2);
 expect(names[0].name_text).toBe('John Doe');
-expect(names[0].type).toBe('legal');
+expect(names[0].name_type).toBe('LEGAL');
+expect(names[0].is_preferred).toBe(false);
 expect(names[1].name_text).toBe('Johnny');
-expect(names[1].type).toBe('nickname');
+expect(names[1].name_type).toBe('NICKNAME');
+expect(names[1].is_preferred).toBe(true);
 
 // Verify names in database
 const retrievedNames = await DatabaseTestHelper.getNamesForProfile(
@@ -59,68 +61,84 @@ const retrievedNames = await DatabaseTestHelper.getNamesForProfile(
 expect(retrievedNames).toHaveLength(2);
   });
 
-  test('should handle name visibility levels', async () => {
+  test('should handle name types with preferred name enforcement', async () => {
 const uniqueId = Math.random().toString(36).substring(7);
 const profile = await DatabaseTestHelper.createProfile(
-  `test-visibility-${uniqueId}@example.test`,
+  `test-name-types-${uniqueId}@example.test`,
 );
 
-const visibilityLevels = [
-  'public',
-  'internal',
-  'restricted',
-  'private',
-] as const;
+const nameTypes = ['LEGAL', 'PREFERRED', 'NICKNAME', 'ALIAS'] as const;
 
-for (const visibility of visibilityLevels) {
+// Create names with different types (only one can be preferred)
+const createdNames = [];
+for (let i = 0; i < nameTypes.length; i++) {
+  const nameType = nameTypes[i];
   const name = await DatabaseTestHelper.createName(profile.id!, {
-name_text: `Name ${visibility}`,
-type: 'alias',
-visibility,
+name_text: `Name ${nameType}`,
+name_type: nameType,
+is_preferred: nameType === 'PREFERRED', // Only PREFERRED type is marked as preferred
   });
-  // Verify each name was created
+  createdNames.push(name);
+
+  // Verify each name was created with correct type
   expect(name).toBeTruthy();
-  expect(name.name_text).toBe(`Name ${visibility}`);
+  expect(name.name_text).toBe(`Name ${nameType}`);
+  expect(name.name_type).toBe(nameType);
+  expect(name.is_preferred).toBe(nameType === 'PREFERRED');
 }
 
 const names = await DatabaseTestHelper.getNamesForProfile(profile.id!);
 expect(names).toHaveLength(4);
 
-// Verify each visibility level was set correctly
-for (const visibility of visibilityLevels) {
-  const name = names.find((n) => n.name_text === `Name ${visibility}`);
-  expect(name).toBeTruthy();
-  expect(name!.visibility).toBe(visibility);
-}
+// Verify only one name is marked as preferred
+const preferredNames = names.filter((n) => n.is_preferred);
+expect(preferredNames).toHaveLength(1);
+expect(preferredNames[0].name_type).toBe('PREFERRED');
   });
 
-  test('should handle different name types', async () => {
+  test('should handle different name types with ENUM validation', async () => {
 const uniqueId = Math.random().toString(36).substring(7);
 const profile = await DatabaseTestHelper.createProfile(
   `test-types-${uniqueId}@example.test`,
 );
 
-const nameTypes = ['legal', 'preferred', 'nickname', 'alias'] as const;
+const nameTypes = ['LEGAL', 'PREFERRED', 'NICKNAME', 'ALIAS'] as const;
 
-for (const type of nameTypes) {
+// Create first name with preferred status
+const preferredName = await DatabaseTestHelper.createName(profile.id!, {
+  name_text: 'PREFERRED name',
+  name_type: 'PREFERRED',
+  is_preferred: true,
+});
+expect(preferredName.name_type).toBe('PREFERRED');
+expect(preferredName.is_preferred).toBe(true);
+
+// Create other names without preferred status
+for (const nameType of ['LEGAL', 'NICKNAME', 'ALIAS'] as const) {
   const name = await DatabaseTestHelper.createName(profile.id!, {
-name_text: `${type} name`,
-type,
-visibility: 'public',
+name_text: `${nameType} name`,
+name_type: nameType,
+is_preferred: false,
   });
-  // Verify each name was created
+
+  // Verify each name was created with correct ENUM type
   expect(name).toBeTruthy();
-  expect(name.type).toBe(type);
+  expect(name.name_type).toBe(nameType);
+  expect(name.is_preferred).toBe(false);
 }
 
 const names = await DatabaseTestHelper.getNamesForProfile(profile.id!);
 expect(names).toHaveLength(4);
 
-// Verify each type was set correctly
-for (const type of nameTypes) {
-  const name = names.find((n) => n.type === type);
+// Verify each ENUM type was set correctly
+for (const nameType of nameTypes) {
+  const name = names.find((n) => n.name_type === nameType);
   expect(name).toBeTruthy();
-  expect(name!.name_text).toBe(`${type} name`);
+  expect(name!.name_text).toBe(`${nameType} name`);
 }
+
+// Verify only one preferred name exists
+const preferredNames = names.filter((n) => n.is_preferred);
+expect(preferredNames).toHaveLength(1);
   });
 });

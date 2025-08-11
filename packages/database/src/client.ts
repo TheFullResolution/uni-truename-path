@@ -58,13 +58,6 @@ if (!url || !anonKey) {
   );
 }
 
-// Validate new API key format
-if (!anonKey.startsWith('sb_publishable_')) {
-  throw new Error(
-'Invalid Supabase anon key format. Expected sb_publishable_ prefix.',
-  );
-}
-
 browserClient = createSupabaseClient(url, anonKey, false);
   }
 
@@ -84,13 +77,6 @@ const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!url || !serviceKey) {
   throw new Error(
 'Missing required Supabase environment variables for server client',
-  );
-}
-
-// Validate new API key format
-if (!serviceKey.startsWith('sb_secret_')) {
-  throw new Error(
-'Invalid Supabase service role key format. Expected sb_secret_ prefix.',
   );
 }
 

@@ -7,8 +7,29 @@ branches: [main, develop]
 branches: [main, develop]
 
 jobs:
-  lint-and-type-check:
+  install:
+name: Install Dependencies
 runs-on: ubuntu-latest
+steps:
+  - name: Checkout code
+uses: actions/checkout@v4
+
+  - name: Setup Node.js
+uses: actions/setup-node@v4
+with:
+  node-version: '20'
+  cache: 'yarn'
+
+  - name: Enable Corepack
+run: corepack enable
+
+  - name: Install dependencies
+run: yarn install --immutable
+
+  quality-checks:
+name: Lint, Type Check & Format
+runs-on: ubuntu-latest
+needs: install
 steps:
   - name: Checkout code
 uses: actions/checkout@v4
@@ -27,16 +48,23 @@ run: yarn install --immutable
 
   - name: Type check
 run: yarn type-check
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
 
   - name: Lint
 run: yarn lint
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
 
   - name: Format check
 run: yarn format --check
 
   build:
+name: Build Packages
 runs-on: ubuntu-latest
-needs: lint-and-type-check
+needs: install
 steps:
   - name: Checkout code
 uses: actions/checkout@v4
@@ -55,10 +83,14 @@ run: yarn install --immutable
 
   - name: Build packages
 run: yarn build
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
 
   test-e2e:
+name: E2E Tests
 runs-on: ubuntu-latest
-needs: build
+needs: install
 services:
   postgres:
 image: supabase/postgres:15.1.0.147
@@ -90,6 +122,15 @@ run: corepack enable
   - name: Install dependencies
 run: yarn install --immutable
 
+  - name: Cache Playwright browsers
+uses: actions/cache@v4
+id: playwright-cache
+with:
+  path: ~/.cache/ms-playwright
+  key: ${{ runner.os }}-playwright-${{ hashFiles('**/yarn.lock') }}
+  restore-keys: |
+${{ runner.os }}-playwright-
+
   - name: Setup Supabase CLI
 uses: supabase/setup-cli@v1
 with:
@@ -100,18 +141,33 @@ run: supabase start
 env:
   SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
+  - name: Setup Supabase environment variables
+run: ./.github/scripts/setup-supabase-env.sh
+
   - name: Install Playwright browsers
+if: steps.playwright-cache.outputs.cache-hit != 'true'
 run: npx playwright install --with-deps
 
-  - name: Build application
-run: yarn build
+  - name: Install Playwright dependencies only (if browsers cached)
+if: steps.playwright-cache.outputs.cache-hit == 'true'
+run: npx playwright install-deps
+
+  - name: Validate Environment
+run: |
+  # Simple validation for university project
+  [ -n "$SUPABASE_URL" ] || { echo "Missing SUPABASE_URL"; exit 1; }
+  [ -n "$SUPABASE_SERVICE_ROLE_KEY" ] || { echo "Missing SUPABASE_SERVICE_ROLE_KEY"; exit 1; }
+  echo "Environment validated"
 
   - name: Run Playwright tests
 run: yarn test:e2e
 env:
-  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-  SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+  # CI/CD specific configuration
+  CI: true
+  NODE_ENV: test
+  # Local Supabase environment variables are set dynamically above
 
   - name: Upload Playwright report
 uses: actions/upload-artifact@v4
