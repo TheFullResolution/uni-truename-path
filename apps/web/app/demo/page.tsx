@@ -107,30 +107,56 @@ checkAuth();
   const testNameResolution = async (audience: string) => {
 setLoading(true);
 try {
-  const supabase = createBrowserSupabaseClient();
-
   // Use authenticated user's ID if available, otherwise use demo persona
   const profileId = currentUser?.id || PERSONAS[selectedPersona].id;
 
-  const { data, error } = await supabase.rpc('resolve_name', {
-p_target_user_id: profileId,
-p_requester_user_id: currentUser?.id,
-p_context_name: audience,
+  // Always use the Next.js API endpoint (Step 3 TypeScript implementation)
+  // Authentication is optional for now (demo mode support)
+  const headers: Record<string, string> = {
+'Content-Type': 'application/json',
+  };
+
+  // Add authentication header if user is authenticated
+  if (currentUser) {
+const supabase = createBrowserSupabaseClient();
+const { data: sessionData } = await supabase.auth.getSession();
+const accessToken = sessionData.session?.access_token;
+
+if (accessToken) {
+  headers['Authorization'] = `Bearer ${accessToken}`;
+}
+  }
+
+  const response = await fetch('/api/names/resolve', {
+method: 'POST',
+headers,
+body: JSON.stringify({
+  targetUserId: profileId,
+  requesterUserId: currentUser?.id || null,
+  contextName: audience,
+}),
   });
 
-  if (error) {
+  if (!response.ok) {
+const errorData = await response.json();
 setResults((prev) => ({
   ...prev,
-  [audience]: `Error: ${error.message}`,
+  [audience]: `Error: ${errorData.error || 'API request failed'}`,
 }));
-  } else {
-setResults((prev) => ({
-  ...prev,
-  [audience]: data || 'No name found',
-}));
+return;
   }
-} catch {
-  setResults((prev) => ({ ...prev, [audience]: 'Network error' }));
+
+  const apiData = await response.json();
+  setResults((prev) => ({
+...prev,
+[audience]: apiData.name || 'No name found',
+  }));
+} catch (err) {
+  console.error('Name resolution error:', err);
+  setResults((prev) => ({
+...prev,
+[audience]: 'Network error occurred',
+  }));
 } finally {
   setLoading(false);
 }

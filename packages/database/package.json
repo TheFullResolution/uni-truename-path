@@ -7,12 +7,16 @@
   "scripts": {
 "dev": "tsc --watch",
 "build": "tsc --outDir dist",
-"type-check": "tsc --noEmit"
+"type-check": "tsc --noEmit",
+"test": "vitest run",
+"test:watch": "vitest --watch"
   },
   "dependencies": {
 "@supabase/supabase-js": "^2.39.0"
   },
   "devDependencies": {
-"typescript": "5.8.3"
+"@vitest/coverage-v8": "^3.2.4",
+"typescript": "5.8.3",
+"vitest": "^3.2.4"
   }
 }

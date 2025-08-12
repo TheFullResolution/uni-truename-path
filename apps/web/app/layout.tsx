@@ -5,7 +5,7 @@ import {
   ColorSchemeScript,
   mantineHtmlProps,
 } from '@mantine/core';
-import { theme } from '@uni-final-project/ui';
+import { theme } from '../lib/theme';
 
 export const metadata = {
   title: 'Mantine Next.js template',

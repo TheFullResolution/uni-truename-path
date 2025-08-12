@@ -7,11 +7,6 @@ export type Json =
   | Json[];
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-PostgrestVersion: '12.2.3 (519615d)';
-  };
   graphql_public: {
 Tables: {
   [_ in never]: never;
@@ -22,10 +17,10 @@ Views: {
 Functions: {
   graphql: {
 Args: {
+  extensions?: Json;
   operationName?: string;
   query?: string;
   variables?: Json;
-  extensions?: Json;
 };
 Returns: Json;
   };
@@ -353,8 +348,37 @@ Functions: {
 Args: Record<PropertyKey, never>;
 Returns: string;
   };
+  get_active_consent: {
+Args: { p_requester_user_id: string; p_target_user_id: string };
+Returns: {
+  context_id: string;
+  context_name: string;
+  consent_id: string;
+  granted_at: string;
+  expires_at: string;
+}[];
+  };
+  get_context_assignment: {
+Args: { p_context_name: string; p_user_id: string };
+Returns: {
+  name_id: string;
+  name_text: string;
+  context_id: string;
+  context_name: string;
+  name_type: Database['public']['Enums']['name_category'];
+}[];
+  };
+  get_preferred_name: {
+Args: { p_user_id: string };
+Returns: {
+  name_id: string;
+  name_text: string;
+  name_type: Database['public']['Enums']['name_category'];
+  is_preferred: boolean;
+}[];
+  };
   get_user_audit_log: {
-Args: { p_user_id: string; p_limit?: number };
+Args: { p_limit?: number; p_user_id: string };
 Returns: {
   accessed_at: string;
   action: Database['public']['Enums']['audit_action'];
@@ -380,18 +404,18 @@ Returns: boolean;
   };
   request_consent: {
 Args: {
-  p_granter_user_id: string;
-  p_requester_user_id: string;
   p_context_name: string;
   p_expires_at?: string;
+  p_granter_user_id: string;
+  p_requester_user_id: string;
 };
 Returns: string;
   };
   resolve_name: {
 Args: {
-  p_target_user_id: string;
-  p_requester_user_id?: string;
   p_context_name?: string;
+  p_requester_user_id?: string;
+  p_target_user_id: string;
 };
 Returns: string;
   };
@@ -405,7 +429,8 @@ Enums: {
 | 'NAME_DISCLOSED'
 | 'CONSENT_GRANTED'
 | 'CONSENT_REVOKED'
-| 'CONTEXT_CREATED';
+| 'CONTEXT_CREATED'
+| 'CONSENT_REQUESTED';
   consent_status: 'PENDING' | 'GRANTED' | 'REVOKED' | 'EXPIRED';
   name_category: 'LEGAL' | 'PREFERRED' | 'NICKNAME' | 'ALIAS';
 };
@@ -546,6 +571,7 @@ Enums: {
 'CONSENT_GRANTED',
 'CONSENT_REVOKED',
 'CONTEXT_CREATED',
+'CONSENT_REQUESTED',
   ],
   consent_status: ['PENDING', 'GRANTED', 'REVOKED', 'EXPIRED'],
   name_category: ['LEGAL', 'PREFERRED', 'NICKNAME', 'ALIAS'],

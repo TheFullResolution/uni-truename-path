@@ -18,7 +18,7 @@ export interface TestProfile {
 export interface TestName {
   id?: string;
   user_id: string; // Updated from profile_id to match new schema
-  name_text: string;
+  name_text: string; // Correct column name is name_text
   name_type: 'LEGAL' | 'PREFERRED' | 'NICKNAME' | 'ALIAS'; // Updated to use ENUM values
   is_preferred?: boolean; // New field for preferred name tracking
   verified?: boolean;
@@ -320,5 +320,78 @@ const { data, error } = await supabase
 
 if (error) throw error;
 return data || [];
+  }
+
+  /**
+   * Get audit log entries for a user
+   */
+  static async getAuditLogEntries(targetUserId: string): Promise<any[]> {
+const { data, error } = await supabase
+  .from('audit_log_entries')
+  .select('*')
+  .eq('target_user_id', targetUserId)
+  .order('created_at', { ascending: false });
+
+if (error) throw error;
+return data || [];
+  }
+
+  /**
+   * Helper methods with simplified names for API tests
+   */
+  static async createTestProfile(uniqueId: string): Promise<any> {
+return await this.createProfile(`test-${uniqueId}@example.com`);
+  }
+
+  static async createTestName(
+userId: string,
+nameText: string,
+nameType: 'LEGAL' | 'PREFERRED' | 'NICKNAME' | 'ALIAS',
+  ): Promise<any> {
+return await this.createName(userId, {
+  name_text: nameText,
+  name_type: nameType,
+  is_preferred: nameType === 'PREFERRED',
+  verified: true,
+  source: 'test_data',
+});
+  }
+
+  static async createTestContext(
+userId: string,
+contextName: string,
+description: string,
+  ): Promise<any> {
+return await this.createUserContext(userId, {
+  context_name: contextName,
+  description: description,
+});
+  }
+
+  static async createTestContextAssignment(
+userId: string,
+contextId: string,
+nameId: string,
+  ): Promise<any> {
+return await this.createContextNameAssignment({
+  user_id: userId,
+  context_id: contextId,
+  name_id: nameId,
+});
+  }
+
+  static async createTestConsent(
+granterUserId: string,
+requesterUserId: string,
+contextId: string,
+granted: boolean = true,
+  ): Promise<any> {
+return await this.createConsent({
+  granter_user_id: granterUserId,
+  requester_user_id: requesterUserId,
+  context_id: contextId,
+  status: granted ? 'GRANTED' : 'PENDING',
+  granted_at: granted ? new Date().toISOString() : undefined,
+});
   }
 }

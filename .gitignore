@@ -6,6 +6,8 @@
 
 # testing
 **/coverage
+# Vitest UI output
+**/vitest-ui/
 
 # next.js - ignore at any level
 **/.next/
