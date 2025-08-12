@@ -16,9 +16,23 @@ export interface AuthenticatedUser {
   profile?: Database['public']['Tables']['profiles']['Row'];
 }
 
+/**
+ * Authentication error codes for structured error handling
+ */
+export type AuthErrorCode =
+  | 'AUTHENTICATION_REQUIRED'
+  | 'AUTHENTICATION_FAILED'
+  | 'TOKEN_VERIFICATION_FAILED';
+
+/**
+ * Enhanced AuthResponse interface with structured error handling
+ */
 export interface AuthResponse {
   user: AuthenticatedUser | null;
-  error: string | null;
+  error: {
+code: AuthErrorCode;
+message: string;
+  } | null;
 }
 
 /**
@@ -39,14 +53,20 @@ const { data: authData, error: authError } =
 if (authError) {
   return {
 user: null,
-error: `Authentication failed: ${authError.message}`,
+error: {
+  code: 'AUTHENTICATION_FAILED',
+  message: `Authentication failed: ${authError.message}`,
+},
   };
 }
 
 if (!authData.user) {
   return {
 user: null,
-error: 'No user found in token',
+error: {
+  code: 'AUTHENTICATION_FAILED',
+  message: 'No user found in token',
+},
   };
 }
 
@@ -74,7 +94,10 @@ profile: profile || undefined,
 console.error('JWT verification error:', error);
 return {
   user: null,
-  error: 'Token verification failed',
+  error: {
+code: 'TOKEN_VERIFICATION_FAILED',
+message: 'Token verification failed',
+  },
 };
   }
 };
@@ -92,14 +115,20 @@ const { data: sessionData, error: sessionError } =
 if (sessionError) {
   return {
 user: null,
-error: `Session error: ${sessionError.message}`,
+error: {
+  code: 'AUTHENTICATION_FAILED',
+  message: `Session error: ${sessionError.message}`,
+},
   };
 }
 
 if (!sessionData.session?.user) {
   return {
 user: null,
-error: 'No active session',
+error: {
+  code: 'AUTHENTICATION_REQUIRED',
+  message: 'No active session',
+},
   };
 }
 
@@ -128,7 +157,10 @@ profile: profile || undefined,
 console.error('Get current user error:', error);
 return {
   user: null,
-  error: 'Failed to get current user',
+  error: {
+code: 'TOKEN_VERIFICATION_FAILED',
+message: 'Failed to get current user',
+  },
 };
   }
 };
@@ -164,14 +196,20 @@ const { data, error } = await supabase.auth.signInWithPassword({
 if (error) {
   return {
 user: null,
-error: error.message,
+error: {
+  code: 'AUTHENTICATION_FAILED',
+  message: error.message,
+},
   };
 }
 
 if (!data.user) {
   return {
 user: null,
-error: 'Sign in failed - no user returned',
+error: {
+  code: 'AUTHENTICATION_FAILED',
+  message: 'Sign in failed - no user returned',
+},
   };
 }
 
@@ -199,7 +237,10 @@ email: data.user.email || email,
 console.error('Sign in error:', error);
 return {
   user: null,
-  error: 'Sign in failed',
+  error: {
+code: 'AUTHENTICATION_FAILED',
+message: 'Sign in failed',
+  },
 };
   }
 };
@@ -222,14 +263,20 @@ const { data, error } = await supabase.auth.signUp({
 if (error) {
   return {
 user: null,
-error: error.message,
+error: {
+  code: 'AUTHENTICATION_FAILED',
+  message: error.message,
+},
   };
 }
 
 if (!data.user) {
   return {
 user: null,
-error: 'Sign up failed - no user returned',
+error: {
+  code: 'AUTHENTICATION_FAILED',
+  message: 'Sign up failed - no user returned',
+},
   };
 }
 
@@ -245,7 +292,10 @@ email: data.user.email || email,
 console.error('Sign up error:', error);
 return {
   user: null,
-  error: 'Sign up failed',
+  error: {
+code: 'AUTHENTICATION_FAILED',
+message: 'Sign up failed',
+  },
 };
   }
 };
@@ -327,7 +377,10 @@ const token = extractTokenFromHeader(authHeader);
 if (!token) {
   return {
 user: null,
-error: 'Missing authorization token',
+error: {
+  code: 'AUTHENTICATION_REQUIRED',
+  message: 'Missing authorization token',
+},
   };
 }
 

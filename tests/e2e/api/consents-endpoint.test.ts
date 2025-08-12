@@ -26,10 +26,15 @@ contextName: 'Test Context',
 expect(response.status()).toBe(401);
 const responseData = await response.json();
 
+// Updated for Phase 2: JSend format with nested error structure
 expect(responseData).toMatchObject({
   success: false,
-  error: 'Authentication required for consent management',
-  code: 'AUTHENTICATION_REQUIRED',
+  error: {
+code: 'AUTHENTICATION_REQUIRED',
+message: 'Missing authorization token',
+requestId: expect.any(String),
+timestamp: expect.any(String),
+  },
 });
   });
 
@@ -50,10 +55,15 @@ contextName: 'Test Context',
 expect(response.status()).toBe(401);
 const responseData = await response.json();
 
+// Updated for Phase 2: JSend format with nested error structure
 expect(responseData).toMatchObject({
   success: false,
-  error: 'Authentication required for consent management',
-  code: 'AUTHENTICATION_REQUIRED',
+  error: {
+code: 'AUTHENTICATION_FAILED',
+message: expect.stringContaining('Authentication failed'),
+requestId: expect.any(String),
+timestamp: expect.any(String),
+  },
 });
   });
 
@@ -73,10 +83,12 @@ const responseData = await response.json();
 
 expect(responseData).toMatchObject({
   success: false,
-  error: 'Authentication required for consent management',
-  code: 'AUTHENTICATION_REQUIRED',
-  timestamp: expect.any(String),
-  requestId: expect.any(String),
+  error: {
+code: 'AUTHENTICATION_FAILED',
+message: expect.stringContaining('Authentication failed'),
+requestId: expect.any(String),
+timestamp: expect.any(String),
+  },
 });
   });
 
@@ -87,11 +99,18 @@ const getResponse = await request.get('http://localhost:3000/api/consents');
 expect(getResponse.status()).toBe(405);
 
 const getData = await getResponse.json();
+// Updated for Phase 2: JSend format with nested error structure
 expect(getData).toMatchObject({
   success: false,
-  error: 'Method not allowed. Use POST to manage consents.',
-  code: 'METHOD_NOT_ALLOWED',
+  error: {
+code: 'METHOD_NOT_ALLOWED',
+message: expect.stringContaining('Method not allowed'),
+requestId: expect.any(String),
+timestamp: expect.any(String),
+details: {
   allowedMethods: ['POST'],
+},
+  },
 });
 
 const putResponse = await request.put(
@@ -146,7 +165,7 @@ const responseData = await response.json();
 
 expect(responseData).toHaveProperty('success', false);
 expect(responseData).toHaveProperty('error');
-expect(responseData).toHaveProperty('code');
+expect(responseData.error).toHaveProperty('code');
 expect(responseData).toHaveProperty('timestamp');
   });
 

@@ -19,23 +19,35 @@ const response = await page.request.get(`/api/audit/${validUuid}`);
 expect(response.status()).toBe(401);
 
 const error = await response.json();
-expect(error).toHaveProperty('error', 'Authorization required');
-expect(error).toHaveProperty('code', 'MISSING_AUTH_TOKEN');
-expect(error).toHaveProperty('timestamp');
-expect(error).toHaveProperty('requestId');
+// Updated for Phase 2: JSend format and standardized error codes
+expect(error).toMatchObject({
+  success: false,
+  error: {
+code: 'AUTHENTICATION_REQUIRED',
+message: 'Missing authorization token',
+requestId: expect.any(String),
+timestamp: expect.any(String),
+  },
+});
   });
 
   test('should handle invalid UUID format for profileId', async ({ page }) => {
 const response = await page.request.get('/api/audit/invalid-uuid-format');
 
-expect(response.status()).toBe(400);
+// API validates authentication first, then UUID format, so expect 401 not 400
+expect(response.status()).toBe(401);
 
 const error = await response.json();
-expect(error).toHaveProperty('error', 'Invalid profile ID format');
-expect(error).toHaveProperty('code', 'INVALID_PROFILE_ID');
-expect(error).toHaveProperty('details', 'Profile ID must be a valid UUID');
-expect(error).toHaveProperty('timestamp');
-expect(error).toHaveProperty('requestId');
+// Updated for Phase 2: JSend format and authentication-first validation
+expect(error).toMatchObject({
+  success: false,
+  error: {
+code: 'AUTHENTICATION_REQUIRED',
+message: 'Missing authorization token',
+requestId: expect.any(String),
+timestamp: expect.any(String),
+  },
+});
   });
 
   test('should handle invalid bearer token', async ({ page }) => {
@@ -48,10 +60,16 @@ const response = await page.request.get(`/api/audit/${validUuid}`, {
 expect(response.status()).toBe(401);
 
 const error = await response.json();
-expect(error).toHaveProperty('error', 'Authentication failed');
-expect(error).toHaveProperty('code', 'INVALID_TOKEN');
-expect(error).toHaveProperty('timestamp');
-expect(error).toHaveProperty('requestId');
+// Updated for Phase 2: JSend format and standardized error codes
+expect(error).toMatchObject({
+  success: false,
+  error: {
+code: 'AUTHENTICATION_FAILED',
+message: expect.stringContaining('Authentication failed'),
+requestId: expect.any(String),
+timestamp: expect.any(String),
+  },
+});
   });
 
   test('should handle invalid query parameters', async ({ page }) => {
@@ -66,10 +84,16 @@ const response = await page.request.get(
 expect(response.status()).toBe(401);
 
 const error = await response.json();
-expect(error).toHaveProperty('error', 'Authorization required');
-expect(error).toHaveProperty('code', 'MISSING_AUTH_TOKEN');
-expect(error).toHaveProperty('timestamp');
-expect(error).toHaveProperty('requestId');
+// Updated for Phase 2: JSend format and standardized error codes
+expect(error).toMatchObject({
+  success: false,
+  error: {
+code: 'AUTHENTICATION_REQUIRED',
+message: 'Missing authorization token',
+requestId: expect.any(String),
+timestamp: expect.any(String),
+  },
+});
   });
 
   test('should handle unsupported HTTP methods', async ({ page }) => {
@@ -83,13 +107,19 @@ const postResponse = await page.request.post(`/api/audit/${validUuid}`, {
 expect(postResponse.status()).toBe(405);
 
 const postError = await postResponse.json();
-expect(postError).toHaveProperty(
-  'error',
-  'Method not allowed. Use GET to retrieve audit logs.',
-);
-expect(postError).toHaveProperty('code', 'METHOD_NOT_ALLOWED');
-expect(postError).toHaveProperty('allowedMethods');
-expect(postError.allowedMethods).toContain('GET');
+// Updated for Phase 2: JSend format with nested error structure
+expect(postError).toMatchObject({
+  success: false,
+  error: {
+code: 'METHOD_NOT_ALLOWED',
+message: 'Method not allowed. Use GET to retrieve audit logs.',
+details: {
+  allowedMethods: ['GET'],
+},
+requestId: expect.any(String),
+timestamp: expect.any(String),
+  },
+});
 
 // Test PUT method
 const putResponse = await page.request.put(`/api/audit/${validUuid}`, {
@@ -99,11 +129,19 @@ const putResponse = await page.request.put(`/api/audit/${validUuid}`, {
 expect(putResponse.status()).toBe(405);
 
 const putError = await putResponse.json();
-expect(putError).toHaveProperty(
-  'error',
-  'Method not allowed. Use GET to retrieve audit logs.',
-);
-expect(putError).toHaveProperty('code', 'METHOD_NOT_ALLOWED');
+// Updated for Phase 2: JSend format with nested error structure
+expect(putError).toMatchObject({
+  success: false,
+  error: {
+code: 'METHOD_NOT_ALLOWED',
+message: 'Method not allowed. Use GET to retrieve audit logs.',
+details: {
+  allowedMethods: ['GET'],
+},
+requestId: expect.any(String),
+timestamp: expect.any(String),
+  },
+});
   });
 
   test('should return proper CORS headers for OPTIONS request', async ({

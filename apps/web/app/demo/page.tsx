@@ -377,7 +377,7 @@ return;
   const apiData = await response.json();
   setResults((prev) => ({
 ...prev,
-[audience]: apiData.name || 'No name found',
+[audience]: apiData.data?.name || 'No name found',
   }));
 } catch (err) {
   console.error('Name resolution error:', err);

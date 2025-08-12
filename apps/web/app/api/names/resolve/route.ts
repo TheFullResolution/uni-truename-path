@@ -3,12 +3,19 @@
 // Date: August 11, 2025
 // Academic project REST API with authentication and validation
 
+// TrueNamePath: Name Resolution API Route - JSend Compliant
 import { NextRequest } from 'next/server';
-import { apiAuth } from '@uni-final-project/database';
 import {
   TrueNameContextEngine,
   type ResolutionSource,
 } from '../../../../lib/context-engine/TrueNameContextEngine';
+import {
+  withOptionalAuth,
+  createSuccessResponse,
+  createErrorResponse,
+  type AuthenticatedHandler,
+} from '../../../../lib/api/with-auth';
+import { ErrorCodes } from '../../../../lib/api/types';
 import { z } from 'zod';
 
 /**
@@ -57,7 +64,7 @@ return false;
 /**
  * API Response interfaces for type safety and consistency
  */
-interface ResolveNameResponse {
+interface ResolveNameData {
   name: string;
   resolvedAt: string;
   source: ResolutionSource;
@@ -73,20 +80,82 @@ hadRequester?: boolean;
   };
 }
 
-interface ErrorResponse {
-  error: string;
-  code?: string;
-  details?: unknown;
-  timestamp: string;
-  requestId?: string;
-}
-
 /**
- * Generate unique request ID for tracking and debugging
+ * Core handler function implementing the name resolution logic
+ * This is wrapped by the authentication HOF
  */
-function generateRequestId(): string {
-  return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-}
+const handleResolveNameRequest: AuthenticatedHandler<ResolveNameData> = async (
+  request: NextRequest,
+  context,
+) => {
+  // 1. Request body parsing with error handling
+  let requestBody: unknown;
+  try {
+requestBody = await request.json();
+  } catch {
+return createErrorResponse(
+  ErrorCodes.INVALID_JSON,
+  'Invalid JSON in request body',
+  context.requestId,
+  'Request body must be valid JSON',
+  context.timestamp,
+);
+  }
+
+  // 2. Input validation with comprehensive Zod schema
+  const validationResult = ResolveNameRequestSchema.safeParse(requestBody);
+
+  if (!validationResult.success) {
+return createErrorResponse(
+  ErrorCodes.VALIDATION_ERROR,
+  'Invalid request parameters',
+  context.requestId,
+  validationResult.error.issues.map((err) => ({
+field: err.path.join('.'),
+message: err.message,
+code: err.code,
+  })),
+  context.timestamp,
+);
+  }
+
+  const params = validationResult.data;
+
+  // 3. Business logic execution
+  const contextEngine = new TrueNameContextEngine();
+
+  const nameResolution = await contextEngine.resolveName({
+targetUserId: params.targetUserId,
+requesterUserId: params.requesterUserId || undefined,
+contextName: params.contextName || undefined,
+  });
+
+  // 4. Success response with comprehensive metadata
+  const responseData: ResolveNameData = {
+name: nameResolution.name,
+resolvedAt: nameResolution.metadata.resolutionTimestamp,
+source: nameResolution.source,
+metadata: {
+  ...nameResolution.metadata,
+},
+  };
+
+  console.log(`API Request [${context.requestId}]:`, {
+source: nameResolution.source,
+targetUser: params.targetUserId.substring(0, 8) + '...',
+contextRequested: params.contextName || 'none',
+authenticated: context.isAuthenticated ? 'yes' : 'no',
+requesterUser: params.requesterUserId
+  ? params.requesterUserId.substring(0, 8) + '...'
+  : 'none',
+  });
+
+  return createSuccessResponse(
+responseData,
+context.requestId,
+context.timestamp,
+  );
+};
 
 /**
  * POST /api/names/resolve
@@ -97,224 +166,106 @@ function generateRequestId(): string {
  * 3. Preferred name fallback (lowest priority)
  *
  * Features:
- * - JWT authentication via existing auth system
+ * - Optional JWT authentication (demo mode compatible)
  * - Comprehensive input validation with Zod
  * - Detailed error handling with proper HTTP status codes
  * - GDPR-compliant audit logging
  * - Academic-quality response metadata
+ * - JSend format compliance
  */
-export async function POST(request: NextRequest): Promise<Response> {
-  const requestId = generateRequestId();
-
-  try {
-// 1. Optional authentication - allow both authenticated and anonymous requests
-const authResult = await apiAuth.authenticateRequest(request.headers);
-
-// Note: Allow unauthenticated requests for demo mode
-// Authentication will be enforced later when proper auth system is implemented
-
-// 2. Request body parsing with error handling
-let requestBody: unknown;
-try {
-  requestBody = await request.json();
-} catch {
-  return Response.json(
-{
-  error: 'Invalid JSON in request body',
-  code: 'INVALID_JSON',
-  details: 'Request body must be valid JSON',
-  timestamp: new Date().toISOString(),
-  requestId,
-} as ErrorResponse,
-{ status: 400 },
-  );
-}
-
-// 3. Input validation with comprehensive Zod schema
-const validationResult = ResolveNameRequestSchema.safeParse(requestBody);
-
-if (!validationResult.success) {
-  return Response.json(
-{
-  error: 'Invalid request parameters',
-  code: 'VALIDATION_ERROR',
-  details: validationResult.error.issues.map((err) => ({
-field: err.path.join('.'),
-message: err.message,
-code: err.code,
-  })),
-  timestamp: new Date().toISOString(),
-  requestId,
-} as ErrorResponse,
-{ status: 400 },
-  );
-}
-
-const params = validationResult.data;
-
-// 4. Business logic execution
-const contextEngine = new TrueNameContextEngine();
-
-const nameResolution = await contextEngine.resolveName({
-  targetUserId: params.targetUserId,
-  requesterUserId: params.requesterUserId || undefined,
-  contextName: params.contextName || undefined,
+export const POST = withOptionalAuth(handleResolveNameRequest, {
+  enableLogging: true,
 });
 
-// 5. Success response with comprehensive metadata
-const response: ResolveNameResponse = {
-  name: nameResolution.name,
-  resolvedAt: nameResolution.metadata.resolutionTimestamp,
-  source: nameResolution.source,
-  metadata: {
-...nameResolution.metadata,
-  },
-};
+/**
+ * Handle unsupported HTTP methods with proper JSend error responses
+ */
+export async function GET(): Promise<Response> {
+  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const timestamp = new Date().toISOString();
 
-console.log(`API Request [${requestId}]:`, {
-  source: nameResolution.source,
-  targetUser: params.targetUserId.substring(0, 8) + '...',
-  contextRequested: params.contextName || 'none',
-  authenticated: authResult.user ? 'yes' : 'no',
-  requesterUser: params.requesterUserId
-? params.requesterUserId.substring(0, 8) + '...'
-: 'none',
-});
-
-return Response.json(response, {
-  status: 200,
-  headers: {
-'Content-Type': 'application/json',
-'Cache-Control': 'no-cache, no-store, must-revalidate',
-'X-Request-ID': requestId,
-  },
-});
-  } catch (error) {
-// Comprehensive error logging for debugging
-console.error(`API Route Error [${requestId}]:`, {
-  error: error instanceof Error ? error.message : 'Unknown error',
-  stack: error instanceof Error ? error.stack : undefined,
-  endpoint: '/api/names/resolve',
-});
-
-// Determine error type and appropriate response
-let errorCode = 'INTERNAL_SERVER_ERROR';
-let statusCode = 500;
-let errorMessage = 'Internal server error occurred';
-
-if (error instanceof Error) {
-  // Check for specific error types
-  if (error.message.includes('Database')) {
-errorCode = 'DATABASE_ERROR';
-errorMessage = 'Database operation failed';
-  } else if (error.message.includes('Timeout')) {
-errorCode = 'TIMEOUT_ERROR';
-statusCode = 504;
-errorMessage = 'Request timeout occurred';
-  } else if (error.message.includes('Network')) {
-errorCode = 'NETWORK_ERROR';
-errorMessage = 'Network error occurred';
-  }
-}
-
-return Response.json(
-  {
-error: errorMessage,
-code: errorCode,
-timestamp: new Date().toISOString(),
+  const errorResponse = createErrorResponse(
+ErrorCodes.METHOD_NOT_ALLOWED,
+'Method not allowed. Use POST to resolve names.',
 requestId,
-details:
-  process.env.NODE_ENV === 'development'
-? {
-message:
-  error instanceof Error ? error.message : 'Unknown error',
-  }
-: undefined,
-  } as ErrorResponse,
-  {
-status: statusCode,
+{ allowedMethods: ['POST'] },
+timestamp,
+  );
+
+  return new Response(JSON.stringify(errorResponse), {
+status: 405,
 headers: {
+  'Allow': 'POST',
   'Content-Type': 'application/json',
   'X-Request-ID': requestId,
 },
-  },
-);
-  }
-}
-
-/**
- * Handle unsupported HTTP methods with proper error responses
- */
-export async function GET(): Promise<Response> {
-  return Response.json(
-{
-  error: 'Method not allowed. Use POST to resolve names.',
-  code: 'METHOD_NOT_ALLOWED',
-  timestamp: new Date().toISOString(),
-  allowedMethods: ['POST'],
-} as ErrorResponse,
-{
-  status: 405,
-  headers: {
-'Allow': 'POST',
-'Content-Type': 'application/json',
-  },
-},
-  );
+  });
 }
 
 export async function PUT(): Promise<Response> {
-  return Response.json(
-{
-  error: 'Method not allowed. Use POST to resolve names.',
-  code: 'METHOD_NOT_ALLOWED',
-  timestamp: new Date().toISOString(),
-  allowedMethods: ['POST'],
-} as ErrorResponse,
-{
-  status: 405,
-  headers: {
-'Allow': 'POST',
-'Content-Type': 'application/json',
-  },
-},
+  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const timestamp = new Date().toISOString();
+
+  const errorResponse = createErrorResponse(
+ErrorCodes.METHOD_NOT_ALLOWED,
+'Method not allowed. Use POST to resolve names.',
+requestId,
+{ allowedMethods: ['POST'] },
+timestamp,
   );
+
+  return new Response(JSON.stringify(errorResponse), {
+status: 405,
+headers: {
+  'Allow': 'POST',
+  'Content-Type': 'application/json',
+  'X-Request-ID': requestId,
+},
+  });
 }
 
 export async function DELETE(): Promise<Response> {
-  return Response.json(
-{
-  error: 'Method not allowed. Use POST to resolve names.',
-  code: 'METHOD_NOT_ALLOWED',
-  timestamp: new Date().toISOString(),
-  allowedMethods: ['POST'],
-} as ErrorResponse,
-{
-  status: 405,
-  headers: {
-'Allow': 'POST',
-'Content-Type': 'application/json',
-  },
-},
+  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const timestamp = new Date().toISOString();
+
+  const errorResponse = createErrorResponse(
+ErrorCodes.METHOD_NOT_ALLOWED,
+'Method not allowed. Use POST to resolve names.',
+requestId,
+{ allowedMethods: ['POST'] },
+timestamp,
   );
+
+  return new Response(JSON.stringify(errorResponse), {
+status: 405,
+headers: {
+  'Allow': 'POST',
+  'Content-Type': 'application/json',
+  'X-Request-ID': requestId,
+},
+  });
 }
 
 export async function PATCH(): Promise<Response> {
-  return Response.json(
-{
-  error: 'Method not allowed. Use POST to resolve names.',
-  code: 'METHOD_NOT_ALLOWED',
-  timestamp: new Date().toISOString(),
-  allowedMethods: ['POST'],
-} as ErrorResponse,
-{
-  status: 405,
-  headers: {
-'Allow': 'POST',
-'Content-Type': 'application/json',
-  },
-},
+  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const timestamp = new Date().toISOString();
+
+  const errorResponse = createErrorResponse(
+ErrorCodes.METHOD_NOT_ALLOWED,
+'Method not allowed. Use POST to resolve names.',
+requestId,
+{ allowedMethods: ['POST'] },
+timestamp,
   );
+
+  return new Response(JSON.stringify(errorResponse), {
+status: 405,
+headers: {
+  'Allow': 'POST',
+  'Content-Type': 'application/json',
+  'X-Request-ID': requestId,
+},
+  });
 }
 
 /**

@@ -41,29 +41,34 @@ expect(response.status()).toBe(200);
 const data = await response.json();
 
 expect(data).toMatchObject({
-  names: expect.arrayContaining([
-expect.objectContaining({
-  nameText: 'Test Legal Name',
-  nameType: 'LEGAL',
-  isPreferred: false,
-}),
-expect.objectContaining({
-  nameText: 'Test Preferred',
-  nameType: 'PREFERRED',
-  isPreferred: true,
-}),
-expect.objectContaining({
-  nameText: 'TestNick',
-  nameType: 'NICKNAME',
-  isPreferred: false,
-}),
-  ]),
-  total: 3,
-  profileId: userId,
-  metadata: expect.objectContaining({
-userId: userId,
-isOwner: true,
+  success: true,
+  data: {
+names: expect.arrayContaining([
+  expect.objectContaining({
+nameText: 'Test Legal Name',
+nameType: 'LEGAL',
+isPreferred: false,
   }),
+  expect.objectContaining({
+nameText: 'Test Preferred',
+nameType: 'PREFERRED',
+isPreferred: true,
+  }),
+  expect.objectContaining({
+nameText: 'TestNick',
+nameType: 'NICKNAME',
+isPreferred: false,
+  }),
+]),
+total: 3,
+profileId: userId,
+metadata: expect.objectContaining({
+  userId: userId,
+  isOwner: true,
+}),
+  },
+  requestId: expect.any(String),
+  timestamp: expect.any(String),
 });
   });
 
@@ -77,8 +82,16 @@ const response = await page.request.get(`/api/names/${profile.id}`);
 
 expect(response.status()).toBe(401);
 const data = await response.json();
-expect(data.error).toBe('Missing authorization token');
-expect(data.code).toBe('UNAUTHORIZED');
+// Updated for Phase 2: JSend format and standardized error codes
+expect(data).toMatchObject({
+  success: false,
+  error: {
+code: 'AUTHENTICATION_REQUIRED',
+message: 'Missing authorization token',
+requestId: expect.any(String),
+timestamp: expect.any(String),
+  },
+});
   });
 
   test('should reject requests with invalid JWT token', async ({ page }) => {
@@ -93,8 +106,16 @@ Authorization: 'Bearer invalid-token-here',
 
 expect(response.status()).toBe(401);
 const data = await response.json();
-expect(data.error).toBe('Invalid or expired token');
-expect(data.code).toBe('UNAUTHORIZED');
+// Updated for Phase 2: JSend format and standardized error codes
+expect(data).toMatchObject({
+  success: false,
+  error: {
+code: 'AUTHENTICATION_FAILED',
+message: expect.stringContaining('Authentication failed'),
+requestId: expect.any(String),
+timestamp: expect.any(String),
+  },
+});
   });
 
   test('should reject access to other users profiles', async ({ page }) => {
@@ -117,8 +138,16 @@ Authorization: `Bearer ${user1Token}`,
 
 expect(response.status()).toBe(403);
 const data = await response.json();
-expect(data.error).toBe('Access denied');
-expect(data.code).toBe('FORBIDDEN');
+// Updated for Phase 2: JSend format and standardized error codes
+expect(data).toMatchObject({
+  success: false,
+  error: {
+code: 'AUTHORIZATION_FAILED',
+message: expect.stringContaining('Access denied'),
+requestId: expect.any(String),
+timestamp: expect.any(String),
+  },
+});
   });
 
   test('should handle invalid UUID format for profileId', async ({ page }) => {
@@ -135,8 +164,22 @@ Authorization: `Bearer ${token}`,
 
 expect(response.status()).toBe(400);
 const data = await response.json();
-expect(data.error).toBe('Invalid profile ID parameter');
-expect(data.code).toBe('VALIDATION_ERROR');
+// Updated for Phase 2: JSend format with nested error structure
+expect(data).toMatchObject({
+  success: false,
+  error: {
+code: 'VALIDATION_ERROR',
+message: 'Invalid profile ID parameter',
+details: expect.arrayContaining([
+  expect.objectContaining({
+field: 'profileId',
+message: 'Profile ID must be a valid UUID',
+  }),
+]),
+requestId: expect.any(String),
+timestamp: expect.any(String),
+  },
+});
   });
 
   test('should filter names by type using query parameters', async ({
@@ -168,9 +211,9 @@ headers: {
 
 expect(response.status()).toBe(200);
 const data = await response.json();
-expect(data.names).toHaveLength(1);
-expect(data.names[0].nameType).toBe('LEGAL');
-expect(data.metadata.filterApplied.nameType).toBe('LEGAL');
+expect(data.data.names).toHaveLength(1);
+expect(data.data.names[0].nameType).toBe('LEGAL');
+expect(data.data.metadata.filterApplied.nameType).toBe('LEGAL');
   });
 
   test('should handle limit query parameter', async ({ page }) => {
@@ -193,8 +236,8 @@ Authorization: `Bearer ${token}`,
 
 expect(response.status()).toBe(200);
 const data = await response.json();
-expect(data.names.length).toBeLessThanOrEqual(2);
-expect(data.metadata.filterApplied.limit).toBe(2);
+expect(data.data.names.length).toBeLessThanOrEqual(2);
+expect(data.data.metadata.filterApplied.limit).toBe(2);
   });
 
   test('should handle invalid query parameters', async ({ page }) => {
@@ -212,8 +255,17 @@ Authorization: `Bearer ${token}`,
 
 expect(response.status()).toBe(400);
 const data = await response.json();
-expect(data.error).toBe('Invalid query parameters');
-expect(data.code).toBe('VALIDATION_ERROR');
+// Updated for Phase 2: JSend format with nested error structure
+expect(data).toMatchObject({
+  success: false,
+  error: {
+code: 'VALIDATION_ERROR',
+message: 'Invalid query parameters',
+details: expect.any(Array),
+requestId: expect.any(String),
+timestamp: expect.any(String),
+  },
+});
   });
 
   test('should handle unsupported HTTP methods', async ({ page }) => {
@@ -231,10 +283,19 @@ Authorization: `Bearer ${token}`,
 
 expect(postResponse.status()).toBe(405);
 const postData = await postResponse.json();
-expect(postData.error).toBe(
-  'Method not allowed. Use GET to retrieve names.',
-);
-expect(postData.code).toBe('METHOD_NOT_ALLOWED');
+// Updated for Phase 2: JSend format with nested error structure
+expect(postData).toMatchObject({
+  success: false,
+  error: {
+code: 'METHOD_NOT_ALLOWED',
+message: 'Method not allowed. Use GET to retrieve names.',
+details: {
+  allowedMethods: ['GET'],
+},
+requestId: expect.any(String),
+timestamp: expect.any(String),
+  },
+});
 
 // Test PUT method
 const putResponse = await page.request.put(`/api/names/${userId}`, {
