@@ -1,6 +1,7 @@
 import {
   createServerSupabaseClient,
   createBrowserSupabaseClient,
+  createUserSupabaseClient,
 } from './client';
 import type { Database } from './types';
 import type { User, Session } from '@supabase/supabase-js';
@@ -31,7 +32,7 @@ export const verifyAndGetUser = async (
   try {
 const supabase = createServerSupabaseClient();
 
-// Use Supabase's JWT Signing Keys validation through getUser
+// Use Supabase's JWT Signing Keys validation through getUser with explicit token
 const { data: authData, error: authError } =
   await supabase.auth.getUser(accessToken);
 
@@ -49,7 +50,8 @@ error: 'No user found in token',
   };
 }
 
-// Get the user's profile from our database
+// For profile lookup, use service role privileges (bypasses RLS)
+// This is safe because we've already validated the user's identity
 const { data: profile, error: profileError } = await supabase
   .from('profiles')
   .select('*')

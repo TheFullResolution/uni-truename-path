@@ -13,6 +13,13 @@ import {
   Alert,
   Loader,
   Center,
+  TextInput,
+  Select,
+  Badge,
+  Tabs,
+  JsonInput,
+  ScrollArea,
+  Divider,
 } from '@mantine/core';
 import { IconUser, IconLogin } from '@tabler/icons-react';
 import {
@@ -55,6 +62,27 @@ null,
   );
   const [authLoading, setAuthLoading] = useState(true);
   const [demoMode, setDemoMode] = useState(false);
+
+  // API Testing state
+  interface ApiResult {
+status?: number;
+statusText?: string;
+data?: unknown;
+request?: unknown;
+timestamp?: string;
+error?: string;
+  }
+  const [apiResults, setApiResults] = useState<Record<string, ApiResult>>({});
+  const [apiLoading, setApiLoading] = useState<Record<string, boolean>>({});
+  const [activeTab, setActiveTab] = useState('names');
+
+  // Consent form state
+  const [consentForm, setConsentForm] = useState({
+action: 'request' as 'request' | 'grant' | 'revoke',
+granterUserId: '',
+requesterUserId: '',
+contextName: '',
+  });
 
   // Listen for auth state changes
   useEffect(() => {
@@ -103,6 +131,206 @@ setAuthLoading(false);
 
 checkAuth();
   }, []);
+
+  // API Testing Functions
+  const testNamesAPI = async () => {
+if (!currentUser) {
+  setApiResults({
+names: { error: 'Authentication required to test Names API' },
+  });
+  return;
+}
+
+setApiLoading({ ...apiLoading, names: true });
+
+try {
+  const supabase = createBrowserSupabaseClient();
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData.session?.access_token;
+
+  if (!accessToken) {
+setApiResults({
+  names: { error: 'No access token found' },
+});
+return;
+  }
+
+  const response = await fetch(`/api/names/${currentUser.id}`, {
+method: 'GET',
+headers: {
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${accessToken}`,
+},
+  });
+
+  const data = await response.json();
+
+  setApiResults({
+...apiResults,
+names: {
+  status: response.status,
+  statusText: response.ok ? 'Success' : 'Error',
+  data: data,
+  timestamp: new Date().toISOString(),
+},
+  });
+} catch (error) {
+  setApiResults({
+...apiResults,
+names: {
+  error: error instanceof Error ? error.message : 'Network error',
+  timestamp: new Date().toISOString(),
+},
+  });
+} finally {
+  setApiLoading({ ...apiLoading, names: false });
+}
+  };
+
+  const testConsentsAPI = async () => {
+if (!currentUser) {
+  setApiResults({
+consents: { error: 'Authentication required to test Consents API' },
+  });
+  return;
+}
+
+if (!consentForm.granterUserId || !consentForm.requesterUserId) {
+  setApiResults({
+consents: { error: 'Both granter and requester user IDs are required' },
+  });
+  return;
+}
+
+setApiLoading({ ...apiLoading, consents: true });
+
+try {
+  const supabase = createBrowserSupabaseClient();
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData.session?.access_token;
+
+  if (!accessToken) {
+setApiResults({
+  consents: { error: 'No access token found' },
+});
+return;
+  }
+
+  interface ConsentRequestBody {
+action: 'request' | 'grant' | 'revoke';
+granterUserId: string;
+requesterUserId: string;
+contextName?: string;
+expiresAt?: string | null;
+  }
+
+  const requestBody: ConsentRequestBody = {
+action: consentForm.action,
+granterUserId: consentForm.granterUserId,
+requesterUserId: consentForm.requesterUserId,
+  };
+
+  if (consentForm.action === 'request' && consentForm.contextName) {
+requestBody.contextName = consentForm.contextName;
+requestBody.expiresAt = null; // Optional, can be set for testing
+  }
+
+  const response = await fetch('/api/consents', {
+method: 'POST',
+headers: {
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${accessToken}`,
+},
+body: JSON.stringify(requestBody),
+  });
+
+  const data = await response.json();
+
+  setApiResults({
+...apiResults,
+consents: {
+  status: response.status,
+  statusText: response.ok ? 'Success' : 'Error',
+  data: data,
+  request: requestBody,
+  timestamp: new Date().toISOString(),
+},
+  });
+} catch (error) {
+  setApiResults({
+...apiResults,
+consents: {
+  error: error instanceof Error ? error.message : 'Network error',
+  timestamp: new Date().toISOString(),
+},
+  });
+} finally {
+  setApiLoading({ ...apiLoading, consents: false });
+}
+  };
+
+  const testAuditAPI = async () => {
+if (!currentUser) {
+  setApiResults({
+audit: { error: 'Authentication required to test Audit API' },
+  });
+  return;
+}
+
+setApiLoading({ ...apiLoading, audit: true });
+
+try {
+  const supabase = createBrowserSupabaseClient();
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData.session?.access_token;
+
+  if (!accessToken) {
+setApiResults({
+  audit: { error: 'No access token found' },
+});
+return;
+  }
+
+  // Add query parameters for demonstration
+  const queryParams = new URLSearchParams({
+limit: '10',
+// action: 'name_resolved', // Optional filter
+  });
+
+  const response = await fetch(
+`/api/audit/${currentUser.id}?${queryParams}`,
+{
+  method: 'GET',
+  headers: {
+'Content-Type': 'application/json',
+'Authorization': `Bearer ${accessToken}`,
+  },
+},
+  );
+
+  const data = await response.json();
+
+  setApiResults({
+...apiResults,
+audit: {
+  status: response.status,
+  statusText: response.ok ? 'Success' : 'Error',
+  data: data,
+  timestamp: new Date().toISOString(),
+},
+  });
+} catch (error) {
+  setApiResults({
+...apiResults,
+audit: {
+  error: error instanceof Error ? error.message : 'Network error',
+  timestamp: new Date().toISOString(),
+},
+  });
+} finally {
+  setApiLoading({ ...apiLoading, audit: false });
+}
+  };
 
   const testNameResolution = async (audience: string) => {
 setLoading(true);
@@ -292,6 +520,317 @@ size='sm'
 </Stack>
   )}
 </Card>
+
+{/* API Endpoints Testing Section */}
+{currentUser && (
+  <Card withBorder>
+<Title order={3} mb='md'>
+  REST API Endpoints Testing
+</Title>
+<Text size='sm' c='dimmed' mb='md'>
+  Interactive testing of the new REST API endpoints with JWT
+  authentication. Test the three core API endpoints that demonstrate
+  academic REST principles.
+</Text>
+
+<Tabs
+  value={activeTab}
+  onChange={(value) => value && setActiveTab(value)}
+>
+  <Tabs.List>
+<Tabs.Tab value='names'>
+  <Badge variant='light' color='blue' size='sm'>
+GET
+  </Badge>
+  <Text ml='xs'>Names API</Text>
+</Tabs.Tab>
+<Tabs.Tab value='consents'>
+  <Badge variant='light' color='green' size='sm'>
+POST
+  </Badge>
+  <Text ml='xs'>Consents API</Text>
+</Tabs.Tab>
+<Tabs.Tab value='audit'>
+  <Badge variant='light' color='orange' size='sm'>
+GET
+  </Badge>
+  <Text ml='xs'>Audit API</Text>
+</Tabs.Tab>
+  </Tabs.List>
+
+  <Tabs.Panel value='names' pt='md'>
+<Stack gap='sm'>
+  <Group>
+<Code>
+  GET /api/names/{currentUser.id.substring(0, 8)}...
+</Code>
+<Button
+  onClick={testNamesAPI}
+  loading={apiLoading.names}
+  variant='outline'
+  size='sm'
+>
+  Test Names API
+</Button>
+  </Group>
+  <Text size='sm' c='dimmed'>
+Retrieves all name variants for your profile with optional
+filtering. Requires JWT authentication and validates profile
+ownership.
+  </Text>
+  {apiResults.names && (
+<Card withBorder bg='gray.0' p='sm'>
+  <Group mb='xs'>
+<Badge
+  color={
+(apiResults.names.status ?? 500) < 400
+  ? 'green'
+  : 'red'
+  }
+  variant='filled'
+>
+  {apiResults.names.status || 'ERROR'}{' '}
+  {apiResults.names.statusText}
+</Badge>
+<Text size='xs' c='dimmed'>
+  {apiResults.names.timestamp}
+</Text>
+  </Group>
+  <ScrollArea h={200}>
+<JsonInput
+  value={JSON.stringify(apiResults.names, null, 2)}
+  readOnly
+  minRows={8}
+/>
+  </ScrollArea>
+</Card>
+  )}
+</Stack>
+  </Tabs.Panel>
+
+  <Tabs.Panel value='consents' pt='md'>
+<Stack gap='sm'>
+  <Group>
+<Code>POST /api/consents</Code>
+<Select
+  value={consentForm.action}
+  onChange={(value) =>
+value &&
+setConsentForm({
+  ...consentForm,
+  action: value as 'request' | 'grant' | 'revoke',
+})
+  }
+  data={[
+{ value: 'request', label: 'Request Consent' },
+{ value: 'grant', label: 'Grant Consent' },
+{ value: 'revoke', label: 'Revoke Consent' },
+  ]}
+  size='xs'
+  w={150}
+/>
+  </Group>
+
+  <Group grow>
+<TextInput
+  label='Granter User ID'
+  placeholder={currentUser.id}
+  value={consentForm.granterUserId}
+  onChange={(e) =>
+setConsentForm({
+  ...consentForm,
+  granterUserId: e.target.value,
+})
+  }
+  size='xs'
+/>
+<TextInput
+  label='Requester User ID'
+  placeholder={currentUser.id}
+  value={consentForm.requesterUserId}
+  onChange={(e) =>
+setConsentForm({
+  ...consentForm,
+  requesterUserId: e.target.value,
+})
+  }
+  size='xs'
+/>
+  </Group>
+
+  {consentForm.action === 'request' && (
+<TextInput
+  label='Context Name (for request action)'
+  placeholder='e.g., Work Colleagues'
+  value={consentForm.contextName}
+  onChange={(e) =>
+setConsentForm({
+  ...consentForm,
+  contextName: e.target.value,
+})
+  }
+  size='xs'
+/>
+  )}
+
+  <Group>
+<Button
+  onClick={testConsentsAPI}
+  loading={apiLoading.consents}
+  variant='outline'
+  size='sm'
+>
+  Test Consents API
+</Button>
+<Button
+  variant='subtle'
+  size='xs'
+  onClick={() =>
+setConsentForm({
+  action: 'request',
+  granterUserId: currentUser.id,
+  requesterUserId: PERSONAS.jj.id,
+  contextName: 'Work Colleagues',
+})
+  }
+>
+  Fill with Demo Data
+</Button>
+  </Group>
+
+  <Text size='sm' c='dimmed'>
+Manages consent lifecycle: request, grant, or revoke consent
+between users. Demonstrates comprehensive input validation
+and business logic.
+  </Text>
+
+  {apiResults.consents && (
+<Card withBorder bg='gray.0' p='sm'>
+  <Group mb='xs'>
+<Badge
+  color={
+(apiResults.consents.status ?? 500) < 400
+  ? 'green'
+  : 'red'
+  }
+  variant='filled'
+>
+  {apiResults.consents.status || 'ERROR'}{' '}
+  {apiResults.consents.statusText}
+</Badge>
+<Text size='xs' c='dimmed'>
+  {apiResults.consents.timestamp}
+</Text>
+  </Group>
+  <ScrollArea h={200}>
+<JsonInput
+  value={JSON.stringify(apiResults.consents, null, 2)}
+  readOnly
+  minRows={8}
+/>
+  </ScrollArea>
+</Card>
+  )}
+</Stack>
+  </Tabs.Panel>
+
+  <Tabs.Panel value='audit' pt='md'>
+<Stack gap='sm'>
+  <Group>
+<Code>
+  GET /api/audit/{currentUser.id.substring(0, 8)}
+  ...?limit=10
+</Code>
+<Button
+  onClick={testAuditAPI}
+  loading={apiLoading.audit}
+  variant='outline'
+  size='sm'
+>
+  Test Audit API
+</Button>
+  </Group>
+  <Text size='sm' c='dimmed'>
+Retrieves GDPR-compliant audit log entries with
+comprehensive filtering options. Shows the complete audit
+trail for transparency and compliance.
+  </Text>
+  {apiResults.audit && (
+<Card withBorder bg='gray.0' p='sm'>
+  <Group mb='xs'>
+<Badge
+  color={
+(apiResults.audit.status ?? 500) < 400
+  ? 'green'
+  : 'red'
+  }
+  variant='filled'
+>
+  {apiResults.audit.status || 'ERROR'}{' '}
+  {apiResults.audit.statusText}
+</Badge>
+<Text size='xs' c='dimmed'>
+  {apiResults.audit.timestamp}
+</Text>
+  </Group>
+  <ScrollArea h={200}>
+<JsonInput
+  value={JSON.stringify(apiResults.audit, null, 2)}
+  readOnly
+  minRows={8}
+/>
+  </ScrollArea>
+</Card>
+  )}
+</Stack>
+  </Tabs.Panel>
+</Tabs>
+
+<Divider my='md' />
+
+<Card bg='blue.0' withBorder>
+  <Title order={5} mb='xs'>
+Academic Demonstration Features
+  </Title>
+  <Stack gap='xs'>
+<Text size='sm'>
+  • <strong>REST API Principles</strong>: Proper HTTP methods
+  (GET/POST), status codes, and resource URLs
+</Text>
+<Text size='sm'>
+  • <strong>JWT Authentication</strong>: Bearer token validation
+  with comprehensive error handling
+</Text>
+<Text size='sm'>
+  • <strong>Input Validation</strong>: Zod schema validation
+  with detailed error messages
+</Text>
+<Text size='sm'>
+  • <strong>JSON Request/Response</strong>: Structured API
+  communication with metadata
+</Text>
+<Text size='sm'>
+  • <strong>Error Handling</strong>: Proper HTTP status codes
+  and academic-quality error responses
+</Text>
+<Text size='sm'>
+  • <strong>Documentation</strong>: Self-documenting endpoints
+  with comprehensive logging
+</Text>
+  </Stack>
+</Card>
+  </Card>
+)}
+
+{!currentUser && (
+  <Alert color='yellow' title='API Testing Requires Authentication'>
+<Text size='sm'>
+  The REST API endpoints require JWT authentication to demonstrate
+  secure access patterns. Please sign in to test the interactive API
+  functionality.
+</Text>
+  </Alert>
+)}
 
 <Card withBorder>
   <Title order={4} mb='sm'>

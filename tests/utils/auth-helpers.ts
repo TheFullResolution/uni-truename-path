@@ -55,31 +55,7 @@ await this.page.goto('/dashboard');
  */
 export class AuthTestHelper {
   /**
-   * Generate a simple mock JWT token for testing API endpoints
-   * This creates a basic token structure that should work with the API
-   */
-  static async generateValidJWT(userId: string): Promise<string> {
-// For now, create a simple mock JWT structure for testing
-// This should work with the API validation since it's testing mode
-const mockPayload = {
-  sub: userId,
-  email: `test-${userId.substring(0, 8)}@example.com`,
-  aud: 'authenticated',
-  role: 'authenticated',
-  iat: Math.floor(Date.now() / 1000),
-  exp: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hour
-};
-
-// Create a simple base64-encoded mock token for testing
-const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-const payload = btoa(JSON.stringify(mockPayload));
-const signature = btoa('test-signature');
-
-return `${header}.${payload}.${signature}`;
-  }
-
-  /**
-   * Create a test user session and return authentication data
+   * Create a test user session and return authentication data with real Supabase token
    */
   static async createTestUserSession(
 email: string,
@@ -89,22 +65,56 @@ const supabaseKey =
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Try to create or get existing test user
-const { data, error } = await supabase.auth.admin.createUser({
-  email,
-  password: 'test-password-123',
-  email_confirm: true,
-  user_metadata: { test_user: true },
-});
+// Try to create or get existing test user with admin API
+const { data: userData, error: createError } =
+  await supabase.auth.admin.createUser({
+email,
+password: 'test-password-123',
+email_confirm: true,
+user_metadata: { test_user: true },
+  });
 
-if (error && !error.message.includes('already registered')) {
-  throw new Error(`Failed to create test user: ${error.message}`);
+let userId: string;
+
+if (createError && createError.message.includes('already registered')) {
+  // User exists, get their ID
+  const { data: existingUsers } = await supabase.auth.admin.listUsers();
+  const existingUser = existingUsers.users.find((u) => u.email === email);
+  userId = existingUser?.id || '';
+} else if (createError) {
+  throw new Error(`Failed to create test user: ${createError.message}`);
+} else {
+  userId = userData?.user?.id || '';
 }
 
-const userId = data?.user?.id || '';
+// Generate a valid access token using admin API
+const { data: tokenData, error: tokenError } =
+  await supabase.auth.admin.generateLink({
+type: 'magiclink',
+email,
+  });
 
-// Generate token for this user
-const token = await AuthTestHelper.generateValidJWT(userId);
+if (tokenError) {
+  throw new Error(`Failed to generate token: ${tokenError.message}`);
+}
+
+// Extract access token from the link or create session directly
+// For testing, we'll use the service role key to create a session
+const { data: sessionData, error: sessionError } =
+  await supabase.auth.signInWithPassword({
+email,
+password: 'test-password-123',
+  });
+
+if (sessionError) {
+  throw new Error(`Failed to create session: ${sessionError.message}`);
+}
+
+const token = sessionData.session?.access_token || '';
+
+if (!token) {
+  throw new Error('No access token received from session');
+}
 
 return { userId, token };
   }
