@@ -61,31 +61,6 @@ env:
   - name: Format check
 run: yarn format --check
 
-  build:
-name: Build Packages
-runs-on: ubuntu-latest
-needs: install
-steps:
-  - name: Checkout code
-uses: actions/checkout@v4
-
-  - name: Setup Node.js
-uses: actions/setup-node@v4
-with:
-  node-version: '20'
-  cache: 'yarn'
-
-  - name: Enable Corepack
-run: corepack enable
-
-  - name: Install dependencies
-run: yarn install --immutable
-
-  - name: Build packages
-run: yarn build
-env:
-  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
 
   test:
 name: Unit Tests
@@ -107,8 +82,8 @@ run: corepack enable
   - name: Install dependencies
 run: yarn install --immutable
 
-  - name: Run unit tests
-run: yarn test
+  - name: Run unit tests with coverage
+run: yarn test:coverage
 env:
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
   TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
@@ -181,6 +156,21 @@ env:
   - name: Setup Supabase environment variables
 run: ./.github/scripts/setup-supabase-env.sh
 
+  - name: Create demo users for testing
+run: node scripts/create-demo-users.js
+env:
+  # Environment variables are set by setup-supabase-env.sh
+  SUPABASE_URL: ${{ env.SUPABASE_URL }}
+  SUPABASE_SERVICE_ROLE_KEY: ${{ env.SUPABASE_SERVICE_ROLE_KEY }}
+
+  - name: Build for E2E testing
+run: yarn build
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+  NODE_ENV: test
+  # NEXT_PUBLIC_* vars from setup-supabase-env.sh are now available
+
   - name: Install Playwright browsers
 if: steps.playwright-cache.outputs.cache-hit != 'true'
 run: npx playwright install --with-deps
@@ -194,7 +184,9 @@ run: |
   # Simple validation for university project
   [ -n "$SUPABASE_URL" ] || { echo "Missing SUPABASE_URL"; exit 1; }
   [ -n "$SUPABASE_SERVICE_ROLE_KEY" ] || { echo "Missing SUPABASE_SERVICE_ROLE_KEY"; exit 1; }
-  echo "Environment validated"
+  [ -n "$NEXT_PUBLIC_SUPABASE_URL" ] || { echo "Missing NEXT_PUBLIC_SUPABASE_URL"; exit 1; }
+  [ -n "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ] || { echo "Missing NEXT_PUBLIC_SUPABASE_ANON_KEY"; exit 1; }
+  echo "✅ Environment validated"
 
   - name: Run Playwright tests
 run: yarn test:e2e

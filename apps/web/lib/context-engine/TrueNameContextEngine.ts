@@ -3,10 +3,9 @@
 // Date: August 11, 2025
 // Phase 2: TypeScript Business Logic Implementation
 
-import {
-  createServerSupabaseClient,
-  type SupabaseClient,
-} from '@uni-final-project/database';
+import { createClient } from '../../utils/supabase/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '../types/database';
 
 /**
  * Parameters for name resolution request
@@ -97,14 +96,31 @@ interface AuditEvent {
  * audit logging, and performance monitoring capabilities.
  */
 export class TrueNameContextEngine {
-  private supabase: SupabaseClient;
+  private supabase: SupabaseClient<Database> | null = null;
 
   /**
    * Constructor with dependency injection for testing
    * @param supabaseClient Optional Supabase client for dependency injection
    */
-  constructor(supabaseClient?: SupabaseClient) {
-this.supabase = supabaseClient ?? createServerSupabaseClient();
+  constructor(private providedClient?: SupabaseClient<Database>) {
+this.supabase = providedClient ?? null;
+  }
+
+  /**
+   * Get or create the Supabase client instance
+   */
+  private async getSupabaseClient(): Promise<SupabaseClient<Database>> {
+if (this.supabase) {
+  return this.supabase;
+}
+
+if (this.providedClient) {
+  this.supabase = this.providedClient;
+  return this.supabase;
+}
+
+this.supabase = await createClient();
+return this.supabase;
   }
 
   /**
@@ -224,8 +240,10 @@ startTime: number,
 if (!params.requesterUserId) return null;
 
 try {
+  const supabase = await this.getSupabaseClient();
+  
   // Call helper function from Migration 19
-  const { data: consent, error } = await this.supabase.rpc(
+  const { data: consent, error } = await supabase.rpc(
 'get_active_consent',
 {
   p_target_user_id: params.targetUserId,
@@ -253,7 +271,7 @@ if (!nameId) {
 }
 
 // Fetch the actual name text
-const { data: nameData, error: nameError } = await this.supabase
+const { data: nameData, error: nameError } = await supabase
   .from('names')
   .select('name_text')
   .eq('id', nameId)
@@ -307,8 +325,10 @@ startTime: number,
 if (!params.contextName) return null;
 
 try {
+  const supabase = await this.getSupabaseClient();
+  
   // Call helper function from Migration 19
-  const { data: assignment, error } = await this.supabase.rpc(
+  const { data: assignment, error } = await supabase.rpc(
 'get_context_assignment',
 {
   p_user_id: params.targetUserId,
@@ -363,8 +383,10 @@ params: ResolveNameParams,
 startTime: number,
   ): Promise<NameResolution> {
 try {
+  const supabase = await this.getSupabaseClient();
+  
   // Call helper function from Migration 19
-  const { data: preferredName, error } = await this.supabase.rpc(
+  const { data: preferredName, error } = await supabase.rpc(
 'get_preferred_name',
 {
   p_user_id: params.targetUserId,
@@ -444,7 +466,9 @@ contextId: string,
 userId: string
   ): Promise<string | null> {
 try {
-  const { data, error } = await this.supabase
+  const supabase = await this.getSupabaseClient();
+  
+  const { data, error } = await supabase
 .from('context_name_assignments')
 .select('name_id')
 .eq('context_id', contextId)
@@ -476,7 +500,9 @@ return null;
    */
   private async logAuditEvent(event: AuditEvent): Promise<void> {
 try {
-  const { error } = await this.supabase.from('audit_log_entries').insert({
+  const supabase = await this.getSupabaseClient();
+  
+  const { error } = await supabase.from('audit_log_entries').insert({
 target_user_id: event.targetUserId,
 requester_user_id: event.requesterUserId || null,
 context_id: (event.metadata.contextId as string) || null,
@@ -598,7 +624,7 @@ return typeof performance !== 'undefined'
  * @returns New TrueNameContextEngine instance
  */
 export function createTrueNameContextEngine(
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient<Database>
 ): TrueNameContextEngine {
   return new TrueNameContextEngine(supabaseClient);
 }

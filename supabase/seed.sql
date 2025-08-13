@@ -2,8 +2,7 @@
 -- Purpose: Quick seed script for `supabase db reset`
 -- Usage: This file is automatically executed when running `supabase db reset`
 
--- Since the demo personas are already created in migration 021, 
--- this seed file is kept minimal to avoid conflicts
+-- Note: Demo auth users are created via scripts/create-demo-users.js using the Supabase Admin API
+-- This ensures proper GoTrue service integration and avoids auth table inconsistencies
 
--- Additional development-specific seed data can be added here if needed
-SELECT 'TrueNamePath seed.sql: Demo personas already seeded via migration 021' as seed_status;
+SELECT 'TrueNamePath seed.sql: Demo personas created in migration 021. Run scripts/create-demo-users.js to create auth users.' as seed_status;

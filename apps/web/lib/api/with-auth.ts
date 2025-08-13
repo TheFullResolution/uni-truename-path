@@ -4,7 +4,7 @@
 // Academic project infrastructure for consistent API patterns
 
 import { NextRequest, NextResponse } from 'next/server';
-import { apiAuth, type AuthenticatedUser } from '@uni-final-project/database';
+import { apiAuth, type AuthenticatedUser, createClientWithToken } from '../auth/server';
 import { 
   type StandardSuccessResponse, 
   type StandardErrorResponse,
@@ -12,6 +12,8 @@ import {
   type ErrorCode,
   getStatusCode 
 } from './types';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '../types/database';
 
 /**
  * Authentication modes for API routes
@@ -26,6 +28,7 @@ export interface AuthenticatedContext {
   requestId: string;
   timestamp: string;
   isAuthenticated: boolean;
+  supabase: SupabaseClient<Database>;
 }
 
 /**
@@ -138,7 +141,7 @@ console.log(`API Request [${requestId}]:`, {
   }
 
   // 1. Perform authentication check
-  const authResult = await apiAuth.authenticateRequest(request.headers);
+  const authResult = await apiAuth.authenticateRequest(request);
   
   // 2. Handle authentication based on mode
   if (options.authMode === 'required') {
@@ -176,12 +179,20 @@ headers: {
 }
   }
 
-  // 3. Create authentication context
+  // 3. Create authentication context with authenticated Supabase client
+  // Extract token for client creation (if using header-based auth)
+  const authHeader = request.headers.get('authorization');
+  const token = authHeader ? authHeader.replace('Bearer ', '') : undefined;
+  
+  // Create authenticated client (uses token if available, otherwise cookies)
+  const authenticatedClient = await createClientWithToken(token);
+  
   const context: AuthenticatedContext = {
 user: authResult.user,
 requestId,
 timestamp,
 isAuthenticated: !authResult.error && !!authResult.user,
+supabase: authenticatedClient,
   };
 
   // 4. Call the wrapped handler

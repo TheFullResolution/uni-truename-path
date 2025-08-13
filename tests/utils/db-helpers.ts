@@ -1,11 +1,18 @@
 /* eslint-env node */
 import { createClient } from '@supabase/supabase-js';
 
-// Get Supabase configuration from environment
-const supabaseUrl = process.env.SUPABASE_URL!;
-// Use service role key for tests to bypass RLS
+// Get Supabase configuration from environment (aligned with SSR patterns)
+// For tests, we prefer local Supabase if available, otherwise use NEXT_PUBLIC_ vars
+const supabaseUrl =
+  process.env.SUPABASE_URL || // Legacy for local testing
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  'http://127.0.0.1:54321'; // Default local Supabase
+
+// Use service role key for tests to bypass RLS, fallback to anon key
 const supabaseKey =
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY!;
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.SUPABASE_ANON_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -56,6 +63,12 @@ export class DatabaseTestHelper {
    * Create a test profile
    */
   static async createProfile(email: string): Promise<TestProfile> {
+// First check if profile already exists
+const existing = await this.getProfileByEmail(email);
+if (existing) {
+  return existing;
+}
+
 const { data, error } = await supabase
   .from('profiles')
   .insert({ email })
@@ -63,6 +76,13 @@ const { data, error } = await supabase
   .single();
 
 if (error) {
+  // If profile already exists, try to get it instead of failing
+  if (error.code === '23505') {
+const existingProfile = await this.getProfileByEmail(email);
+if (existingProfile) {
+  return existingProfile;
+}
+  }
   console.error('Error creating profile:', error);
   throw error;
 }
@@ -81,6 +101,8 @@ return data;
 userId: string,
 nameData: Omit<TestName, 'id' | 'user_id'>,
   ): Promise<TestName> {
+console.log('📝 Creating name:', nameData.name_text, 'for user:', userId);
+
 const { data, error } = await supabase
   .from('names')
   .insert({
@@ -90,7 +112,12 @@ user_id: userId,
   .select()
   .single();
 
-if (error) throw error;
+if (error) {
+  console.error('❌ Name creation failed:', error);
+  throw error;
+}
+
+console.log('✅ Name created:', data.name_text);
 return data;
   }
 
@@ -144,6 +171,41 @@ const { data, error } = await supabase
 
 if (error) throw error;
 return data;
+  }
+
+  /**
+   * Clean up specific user data
+   */
+  static async cleanupUser(userId: string): Promise<void> {
+// Delete data for specific user ID
+await supabase
+  .from('audit_log_entries')
+  .delete()
+  .eq('target_user_id', userId);
+await supabase
+  .from('consents')
+  .delete()
+  .or(`granter_user_id.eq.${userId},requester_user_id.eq.${userId}`);
+await supabase
+  .from('context_name_assignments')
+  .delete()
+  .eq('user_id', userId);
+await supabase.from('user_contexts').delete().eq('user_id', userId);
+await supabase.from('names').delete().eq('user_id', userId);
+await supabase.from('profiles').delete().eq('id', userId);
+
+// Also cleanup from auth.users if using admin API
+try {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (supabaseUrl && serviceRoleKey) {
+const adminClient = createClient(supabaseUrl, serviceRoleKey);
+await adminClient.auth.admin.deleteUser(userId);
+  }
+} catch (error) {
+  // Ignore auth deletion errors - user might not exist
+  console.warn('Auth user deletion warning:', error);
+}
   }
 
   /**

@@ -1,5 +1,5 @@
 import {
-  createServerSupabaseClient,
+  createServiceSupabaseClient,
   createBrowserSupabaseClient,
   createUserSupabaseClient,
 } from './client';
@@ -44,7 +44,7 @@ export const verifyAndGetUser = async (
   accessToken: string,
 ): Promise<AuthResponse> => {
   try {
-const supabase = createServerSupabaseClient();
+const supabase = createServiceSupabaseClient();
 
 // Use Supabase's JWT Signing Keys validation through getUser with explicit token
 const { data: authData, error: authError } =

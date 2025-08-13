@@ -5,10 +5,7 @@
 
 // TrueNamePath: Audit Log API Route - JSend Compliant
 import { NextRequest } from 'next/server';
-import {
-  createServerSupabaseClient,
-  type Json,
-} from '@uni-final-project/database';
+import type { Json } from '../../../../lib/types/database';
 import {
   withRequiredAuth,
   createSuccessResponse,
@@ -154,7 +151,7 @@ code: err.code,
   const filters: AuditFilters = queryValidation.data;
 
   // 4. Database query - call existing get_user_audit_log() function
-  const supabase = createServerSupabaseClient();
+  const supabase = context.supabase;
 
   const { data, error } = await supabase.rpc('get_user_audit_log', {
 p_user_id: profileId,

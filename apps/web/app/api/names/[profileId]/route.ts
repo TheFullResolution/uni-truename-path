@@ -5,10 +5,7 @@
 
 // TrueNamePath: Names Retrieval API Route - JSend Compliant
 import { NextRequest } from 'next/server';
-import {
-  createServerSupabaseClient,
-  type Database,
-} from '@uni-final-project/database';
+import type { Database } from '../../../../lib/types/database';
 import {
   withRequiredAuth,
   createSuccessResponse,
@@ -163,8 +160,8 @@ return createErrorResponse(
 
   const authenticatedUserId = context.user.id;
 
-  // 4. Database query with optional filtering
-  const supabase = createServerSupabaseClient();
+  // 4. Database query with authenticated client from context
+  const supabase = context.supabase;
 
   let query = supabase
 .from('names')
@@ -211,16 +208,18 @@ return createErrorResponse(
   }
 
   // 5. Transform database results to API format
-  const nameVariants: NameVariant[] = (namesData || []).map((name) => ({
-id: name.id,
-nameText: name.name_text,
-nameType: name.name_type,
-isPreferred: name.is_preferred,
-verified: name.verified,
-source: name.source,
-createdAt: name.created_at,
-updatedAt: name.updated_at,
-  }));
+  const nameVariants: NameVariant[] = (namesData || []).map(
+(name: Database['public']['Tables']['names']['Row']) => ({
+  id: name.id,
+  nameText: name.name_text,
+  nameType: name.name_type,
+  isPreferred: name.is_preferred,
+  verified: name.verified,
+  source: name.source,
+  createdAt: name.created_at,
+  updatedAt: name.updated_at,
+}),
+  );
 
   // 6. Success response with comprehensive metadata
   const responseData: NamesResponseData = {

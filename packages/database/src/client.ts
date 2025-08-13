@@ -1,122 +1,224 @@
-import {
-  createClient,
-  type SupabaseClient as BaseSupabaseClient,
-} from '@supabase/supabase-js';
+import { createBrowserClient, createServerClient } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
+import type { SupabaseClient as BaseSupabaseClient } from '@supabase/supabase-js';
+import type { ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension/adapters/request-cookies';
+import type { ResponseCookies } from 'next/dist/compiled/@edge-runtime/cookies';
 import type { Database } from './types';
 
-// Client instances for different contexts
-let browserClient: BaseSupabaseClient<Database> | null = null;
-let serverClient: BaseSupabaseClient<Database> | null = null;
+// Type definitions
+export type SupabaseClient = BaseSupabaseClient<Database>;
 
-/**
- * Create a Supabase client with optimized JWT Signing Keys configuration
- * @param url Supabase project URL
- * @param key API key (anon or service role)
- * @param isServer Whether this is for server-side use
- */
-export const createSupabaseClient = (
-  url: string,
-  key: string,
-  isServer = false,
-): BaseSupabaseClient<Database> => {
-  return createClient<Database>(url, key, {
-auth: {
-  persistSession: !isServer,
-  autoRefreshToken: !isServer,
-  detectSessionInUrl: !isServer,
-  // Enable JWT Signing Keys validation
-  flowType: isServer ? 'pkce' : 'implicit',
-},
-// Optimize for JWT Signing Keys performance
-global: {
-  headers: {
-'X-Client-Info': `truename-path-${isServer ? 'server' : 'browser'}`,
-  },
-},
-  });
+// Cookie handler types for SSR
+type CookieOptions = {
+  name: string;
+  value: string;
+  options?: {
+domain?: string;
+maxAge?: number;
+path?: string;
+sameSite?: 'lax' | 'strict' | 'none';
+secure?: boolean;
+httpOnly?: boolean;
+  };
 };
 
+// Client instances cache
+let browserClientInstance: SupabaseClient | null = null;
+
 /**
- * Browser-side Supabase client with session persistence
- * Uses NEXT_PUBLIC_ environment variables
+ * Get environment variables for Supabase configuration
+ * Uses consistent NEXT_PUBLIC_ variables as per official patterns
  */
-export const createBrowserSupabaseClient = (): BaseSupabaseClient<Database> => {
+function getSupabaseConfig() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !anonKey) {
+throw new Error(
+  'Missing required Supabase environment variables. ' +
+'Need NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY',
+);
+  }
+
+  return { url, anonKey };
+}
+
+/**
+ * Create a browser-side Supabase client using official SSR patterns
+ * Uses singleton pattern to avoid multiple instances
+ */
+export function createBrowserSupabaseClient(): SupabaseClient {
   if (typeof window === 'undefined') {
 throw new Error(
   'createBrowserSupabaseClient can only be used in browser environments',
 );
   }
 
-  // Singleton pattern for browser client
-  if (!browserClient) {
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-if (!url || !anonKey) {
-  throw new Error(
-'Missing required Supabase environment variables for browser client',
-  );
-}
-
-browserClient = createSupabaseClient(url, anonKey, false);
+  // Return cached instance if available
+  if (browserClientInstance) {
+return browserClientInstance;
   }
 
-  return browserClient;
-};
+  const { url, anonKey } = getSupabaseConfig();
+
+  browserClientInstance = createBrowserClient<Database>(url, anonKey, {
+global: {
+  headers: {
+'X-Client-Info': 'truename-path-browser',
+  },
+},
+  });
+
+  return browserClientInstance;
+}
 
 /**
- * Server-side Supabase client with service role privileges
- * Uses service role key for admin operations
- *
- * For testing: Uses local Supabase when SUPABASE_URL is available (testing environment)
- * For production: Uses NEXT_PUBLIC_SUPABASE_URL (production environment)
+ * Create a server-side Supabase client using official SSR patterns
+ * @deprecated Use utils/supabase/server.ts createClient() instead
  */
-export const createServerSupabaseClient = (): BaseSupabaseClient<Database> => {
-  // Use local Supabase if available (testing environment)
-  // This ensures API endpoints use the same Supabase instance as the tests
-  const localUrl = process.env.SUPABASE_URL;
-  const localServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+export function createSSRServerSupabaseClient(
+  cookieStore: ReadonlyRequestCookies,
+  cookieOptions?: {
+onSet?: (cookie: CookieOptions) => void;
+onRemove?: (name: string) => void;
+  },
+): SupabaseClient {
+  const { url, anonKey } = getSupabaseConfig();
 
-  // Use production Supabase for browser/production environment
-  const prodUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  return createServerClient<Database>(url, anonKey, {
+cookies: {
+  get(name: string) {
+return cookieStore.get(name)?.value;
+  },
+  set(name: string, value: string, options: any) {
+try {
+  cookieOptions?.onSet?.({ name, value, options });
+} catch {
+  // The `set` method was called from a Server Component.
+  // This can be ignored if you have middleware refreshing
+  // user sessions.
+}
+  },
+  remove(name: string, options: any) {
+try {
+  cookieOptions?.onRemove?.(name);
+} catch {
+  // The `remove` method was called from a Server Component.
+  // This can be ignored if you have middleware refreshing
+  // user sessions.
+}
+  },
+},
+global: {
+  headers: {
+'X-Client-Info': 'truename-path-server',
+  },
+},
+  });
+}
 
-  let url: string;
-  let serviceKey: string;
-  let clientKey: string; // Key to identify the client configuration
+/**
+ * Create a server-side Supabase client for Route Handlers
+ * Uses ResponseCookies for proper cookie management in API routes
+ */
+export function createRouteHandlerSupabaseClient(
+  request: Request,
+  response: Response,
+): SupabaseClient {
+  const { url, anonKey } = getSupabaseConfig();
 
-  if (localUrl && localServiceKey) {
-// Testing environment: use local Supabase
-url = localUrl;
-serviceKey = localServiceKey;
-clientKey = `local:${localUrl}`;
-console.log('Server client: Using local Supabase for testing');
-  } else if (prodUrl && process.env.SUPABASE_SERVICE_ROLE_KEY) {
-// Production environment: use production Supabase
-url = prodUrl;
-serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-clientKey = `prod:${prodUrl}`;
-console.log('Server client: Using production Supabase');
-  } else {
+  return createServerClient<Database>(url, anonKey, {
+cookies: {
+  get(name: string) {
+const cookies = request.headers.get('cookie');
+if (!cookies) return undefined;
+
+const cookie = cookies
+  .split(';')
+  .find((c) => c.trim().startsWith(`${name}=`));
+
+return cookie?.split('=')[1];
+  },
+  set(name: string, value: string, options: any) {
+response.headers.append(
+  'Set-Cookie',
+  `${name}=${value}; Path=/; ${options.httpOnly ? 'HttpOnly; ' : ''}${
+options.secure ? 'Secure; ' : ''
+  }SameSite=${options.sameSite || 'lax'}`,
+);
+  },
+  remove(name: string, options: any) {
+response.headers.append(
+  'Set-Cookie',
+  `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT`,
+);
+  },
+},
+global: {
+  headers: {
+'X-Client-Info': 'truename-path-route-handler',
+  },
+},
+  });
+}
+
+/**
+ * Create a service role Supabase client for admin operations
+ * Uses service role key for elevated privileges
+ */
+export function createServiceSupabaseClient(): SupabaseClient {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !serviceKey) {
 throw new Error(
-  'Missing required Supabase environment variables for server client. ' +
-'Need either (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY) or (NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY)',
+  'Missing required Supabase service role environment variables. ' +
+'Need NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY',
 );
   }
 
-  // Only use singleton if the configuration hasn't changed
-  // This prevents issues when switching between test and production environments
-  const currentClientKey = (serverClient as any)?._clientKey;
+  return createClient<Database>(url, serviceKey, {
+auth: {
+  persistSession: false,
+  autoRefreshToken: false,
+  detectSessionInUrl: false,
+},
+global: {
+  headers: {
+'X-Client-Info': 'truename-path-service',
+  },
+},
+  });
+}
 
-  if (!serverClient || currentClientKey !== clientKey) {
-console.log(`Server client: Creating new client with key ${clientKey}`);
-serverClient = createSupabaseClient(url, serviceKey, true);
-(serverClient as any)._clientKey = clientKey; // Store the client key for comparison
-  }
-
-  return serverClient;
+/**
+ * Legacy compatibility function - creates a basic client
+ * @deprecated Use specific SSR functions instead
+ */
+export const createSupabaseClient = (
+  url: string,
+  key: string,
+  isServer = false,
+): SupabaseClient => {
+  return createClient<Database>(url, key, {
+auth: {
+  persistSession: !isServer,
+  autoRefreshToken: !isServer,
+  detectSessionInUrl: !isServer,
+},
+global: {
+  headers: {
+'X-Client-Info': `truename-path-${isServer ? 'server' : 'browser'}-legacy`,
+  },
+},
+  });
 };
 
-export type SupabaseClient = BaseSupabaseClient<Database>;
+/**
+ * Legacy compatibility function - creates server client
+ * @deprecated Use createServiceSupabaseClient instead
+ */
+export const createServerSupabaseClient = createServiceSupabaseClient;
 
 /**
  * Create an authenticated user client with a specific access token
@@ -124,38 +226,22 @@ export type SupabaseClient = BaseSupabaseClient<Database>;
  */
 export const createUserSupabaseClient = (
   accessToken: string,
-): BaseSupabaseClient<Database> => {
-  // Use local Supabase if available (testing environment)
-  const localUrl = process.env.SUPABASE_URL;
-  const localAnonKey = process.env.SUPABASE_ANON_KEY;
+): SupabaseClient => {
+  const { url, anonKey } = getSupabaseConfig();
 
-  // Use production Supabase for browser/production environment
-  const prodUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const prodAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  let url: string;
-  let anonKey: string;
-
-  if (localUrl && localAnonKey) {
-// Testing environment: use local Supabase
-url = localUrl;
-anonKey = localAnonKey;
-  } else if (prodUrl && prodAnonKey) {
-// Production environment: use production Supabase
-url = prodUrl;
-anonKey = prodAnonKey;
-  } else {
-throw new Error(
-  'Missing required Supabase environment variables for user client. ' +
-'Need either (SUPABASE_URL + SUPABASE_ANON_KEY) or (NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_ANON_KEY)',
-);
-  }
-
-  const client = createSupabaseClient(url, anonKey, true);
-
-  // For server-side usage with user tokens, we can set the global auth headers
-  // This is a more direct approach than setSession for API routes
-  client.realtime.setAuth(accessToken);
+  const client = createClient<Database>(url, anonKey, {
+auth: {
+  persistSession: false,
+  autoRefreshToken: false,
+  detectSessionInUrl: false,
+},
+global: {
+  headers: {
+'Authorization': `Bearer ${accessToken}`,
+'X-Client-Info': 'truename-path-user-token',
+  },
+},
+  });
 
   return client;
 };
@@ -164,6 +250,5 @@ throw new Error(
  * Reset client instances (useful for testing)
  */
 export const resetClients = () => {
-  browserClient = null;
-  serverClient = null;
+  browserClientInstance = null;
 };

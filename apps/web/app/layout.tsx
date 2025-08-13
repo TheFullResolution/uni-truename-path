@@ -1,15 +1,20 @@
 import '@mantine/core/styles.css';
+import '@mantine/notifications/styles.css';
 import React from 'react';
 import {
   MantineProvider,
   ColorSchemeScript,
   mantineHtmlProps,
 } from '@mantine/core';
+import { Notifications } from '@mantine/notifications';
 import { theme } from '../lib/theme';
+import { AuthProvider } from '../lib/context/AuthProvider';
+import { AuthErrorBoundary } from '../components/AuthErrorBoundary';
 
 export const metadata = {
-  title: 'Mantine Next.js template',
-  description: 'I am using Mantine with Next.js!',
+  title: 'TrueNamePath - Context-Aware Identity Management',
+  description:
+'API that delivers the "right name" to the "right audience" at the "right time"',
 };
 
 export default function RootLayout({
@@ -28,7 +33,12 @@ export default function RootLayout({
 />
   </head>
   <body>
-<MantineProvider theme={theme}>{children}</MantineProvider>
+<MantineProvider theme={theme}>
+  <Notifications />
+  <AuthErrorBoundary>
+<AuthProvider>{children}</AuthProvider>
+  </AuthErrorBoundary>
+</MantineProvider>
   </body>
 </html>
   );

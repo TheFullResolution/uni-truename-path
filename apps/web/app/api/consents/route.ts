@@ -5,7 +5,6 @@
 
 // TrueNamePath: Consent Management API Route - JSend Compliant
 import { NextRequest } from 'next/server';
-import { createServerSupabaseClient } from '@uni-final-project/database';
 import {
   withRequiredAuth,
   createSuccessResponse,
@@ -174,7 +173,7 @@ return createErrorResponse(
   }
 
   // 4. Business logic execution based on action
-  const supabase = createServerSupabaseClient();
+  const supabase = context.supabase;
 
   switch (params.action) {
 case 'request': {

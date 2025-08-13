@@ -40,9 +40,20 @@ in developer communities
   </Stack>
 </Card>
 
-<Button component={Link} href='/demo' size='lg'>
-  View Live Demo
-</Button>
+<Stack gap='md' align='center'>
+  <Button component={Link} href='/demo' size='lg'>
+View Live Demo
+  </Button>
+
+  <Button
+component={Link}
+href='/auth/login'
+variant='outline'
+size='md'
+  >
+Login to TrueNamePath
+  </Button>
+</Stack>
 
 <Card withBorder p='md' maw={500}>
   <Stack gap='xs'>

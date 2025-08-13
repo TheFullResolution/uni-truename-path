@@ -3,23 +3,15 @@ import { DatabaseTestHelper } from '../../utils/db-helpers';
 import { AuthTestHelper } from '../../utils/auth-helpers';
 
 test.describe('GET /api/names/[profileId]', () => {
-  test.beforeEach(async () => {
-await DatabaseTestHelper.cleanup();
-  });
-
-  test.afterEach(async () => {
-await DatabaseTestHelper.cleanup();
-  });
-
   test('should return name variants for authenticated user', async ({
 page,
   }) => {
-const uniqueId = Math.random().toString(36).substring(7);
+const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
+const testEmail = `test-${uniqueId}@example.com`;
 
 // Create test user session
-const { userId, token } = await AuthTestHelper.createTestUserSession(
-  `test-${uniqueId}@example.com`,
-);
+const { userId, token } =
+  await AuthTestHelper.createTestUserSession(testEmail);
 
 // Update profile ID to match auth user ID
 await DatabaseTestHelper.createTestName(userId, 'Test Legal Name', 'LEGAL');

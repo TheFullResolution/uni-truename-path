@@ -21,7 +21,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   // Force single worker to avoid database conflicts
   workers: 1,
-  reporter: 'html',
+  reporter: [['html'], ['json', { outputFile: 'test-results/results.json' }]],
 
   use: {
 baseURL: 'http://localhost:3000',
@@ -49,9 +49,12 @@ screenshot: 'only-on-failure',
   ],
 
   webServer: {
-command: 'yarn dev',
+// Use production server in CI (already built), dev server locally
+command: process.env.CI
+  ? 'yarn workspace uni-final-project-web start'
+  : 'yarn dev',
 url: 'http://localhost:3000',
 reuseExistingServer: !process.env.CI,
-timeout: 120 * 1000,
+timeout: process.env.CI ? 60 * 1000 : 120 * 1000,
   },
 });

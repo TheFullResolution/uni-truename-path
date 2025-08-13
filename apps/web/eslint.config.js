@@ -22,7 +22,6 @@ plugins: {
 },
 rules: {
   ...nextPlugin.configs.recommended.rules,
-  '@typescript-eslint/no-explicit-any': 'warn',
 },
   },
   {
