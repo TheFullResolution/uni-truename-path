@@ -12,11 +12,19 @@ import {
   List,
   Button,
   Center,
+  Group,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconTarget } from '@tabler/icons-react';
+import {
+  IconApi,
+  IconRocket,
+  IconBuilding,
+  IconCode,
+  IconBrandGithub,
+} from '@tabler/icons-react';
 import { LoginForm } from '../../../components/LoginForm';
 import { useAuth } from '../../../lib/context/AuthProvider';
+import { LogoWithText, Logo } from '../../../components/branding';
 
 function LoginPageContent() {
   const router = useRouter();
@@ -77,14 +85,9 @@ return (
 <Container size='lg' py='xl'>
   <Center style={{ minHeight: '60vh' }}>
 <Box style={{ textAlign: 'center' }}>
-  <IconTarget
-size={48}
-color='#3498db'
-style={{ marginBottom: '1rem' }}
-  />
-  <Title order={2} c='gray.7' mb='md'>
-TrueNamePath
-  </Title>
+  <Box mb='lg'>
+<LogoWithText size='md' />
+  </Box>
   <Text size='sm' c='dimmed'>
 Checking authentication...
   </Text>
@@ -101,27 +104,37 @@ return null;
   }
 
   return (
-<Box bg='gray.0' style={{ minHeight: '100vh' }}>
+<Box
+  style={{
+minHeight: '100vh',
+background:
+  'linear-gradient(135deg, rgba(74, 127, 231, 0.05) 0%, rgba(195, 217, 247, 0.1) 100%)',
+  }}
+>
   <Container size='lg' py='xl'>
 <Paper
-  shadow='md'
-  radius='md'
+  shadow='lg'
+  radius='lg'
   style={{ overflow: 'hidden', backgroundColor: 'white' }}
 >
-  {/* Blue Header */}
+  {/* Brand Header */}
   <Box
-bg='blue.5'
-py='lg'
+py='xl'
 px='xl'
-style={{ textAlign: 'center', color: 'white' }}
+style={{
+  textAlign: 'center',
+  background:
+'linear-gradient(135deg, rgba(74, 127, 231, 0.08) 0%, rgba(195, 217, 247, 0.15) 100%)',
+  borderBottom: '1px solid rgba(74, 127, 231, 0.1)',
+}}
   >
-<Center mb='xs'>
-  <IconTarget size={32} />
+<Center mb='md'>
+  <Logo size='xl' />
 </Center>
-<Title order={1} size='h2' fw={600}>
+<Title order={1} size='h2' fw={600} c='brand.8'>
   TrueNamePath
 </Title>
-<Text size='lg' opacity={0.9}>
+<Text size='lg' c='gray.7'>
   Context-Aware Identity Management
 </Text>
   </Box>
@@ -144,9 +157,12 @@ borderRight: '1px solid #dee2e6',
   &quot;Context-Aware Identity API for the Modern Web&quot;
 </Text>
 
-<Title order={3} c='gray.7' mb='md' size='h4'>
-  🔗 Enterprise-Ready Identity API:
-</Title>
+<Group gap='xs' mb='md'>
+  <IconApi size={20} color='#4A7FE7' />
+  <Title order={3} c='gray.7' size='h4'>
+Enterprise-Ready Identity API
+  </Title>
+</Group>
 <List
   spacing='xs'
   size='sm'
@@ -157,7 +173,7 @@ itemWrapper: {
   alignItems: 'flex-start',
 },
 itemIcon: {
-  color: '#3498db',
+  color: '#4A7FE7',
   marginTop: '2px',
 },
   }}
@@ -179,16 +195,19 @@ GDPR-compliant with comprehensive audit trails
 {/* Developer highlight box */}
 <Box
   style={{
-backgroundColor: 'rgba(52, 152, 219, 0.1)',
-border: '1px solid rgba(52, 152, 219, 0.2)',
+backgroundColor: 'rgba(74, 127, 231, 0.1)',
+border: '1px solid rgba(74, 127, 231, 0.2)',
 borderRadius: '8px',
 padding: '16px',
   }}
   mb='md'
 >
-  <Text fw={600} size='sm' mb='xs' c='blue.7'>
-🚀 For Developers:
-  </Text>
+  <Group gap='xs' mb='xs'>
+<IconRocket size={16} color='#4A7FE7' />
+<Text fw={600} size='sm' c='brand.7'>
+  For Developers
+</Text>
+  </Group>
   <Text size='xs' c='gray.7'>
 RESTful API integration with JWT authentication. Standard
 claims, no proprietary APIs. Edge Functions handle the
@@ -206,9 +225,12 @@ padding: '16px',
   }}
   mb='xl'
 >
-  <Text fw={600} size='sm' mb='xs' c='green.7'>
-🏢 For Enterprises:
-  </Text>
+  <Group gap='xs' mb='xs'>
+<IconBuilding size={16} color='#27ae60' />
+<Text fw={600} size='sm' c='green.7'>
+  For Enterprises
+</Text>
+  </Group>
   <Text size='xs' c='gray.7'>
 Enterprise-ready authentication. GDPR compliant by design.
 Seamless integration with existing infrastructure. No major
@@ -218,9 +240,12 @@ architecture changes required.
 
 {/* Demo section */}
 <Box>
-  <Title order={3} c='gray.7' mb='md' size='h4'>
-🚀 Try Live Examples
-  </Title>
+  <Group gap='xs' mb='md'>
+<IconRocket size={20} color='#4A7FE7' />
+<Title order={3} c='gray.7' size='h4'>
+  Try Live Examples
+</Title>
+  </Group>
 
   <Button
 variant='subtle'
@@ -244,9 +269,12 @@ justifyContent: 'flex-start',
 }}
   >
 <Box style={{ textAlign: 'left' }}>
-  <Text fw={600} size='sm'>
-👨‍💻 JJ&apos;s Slack Integration
-  </Text>
+  <Group gap='xs' mb='xs'>
+<IconCode size={16} color='#4A7FE7' />
+<Text fw={600} size='sm'>
+  JJ&apos;s Slack Integration
+</Text>
+  </Group>
   <Text size='xs' c='gray.6'>
 Team context: Automatically serves &quot;JJ&quot; for
 casual team communication
@@ -276,9 +304,12 @@ justifyContent: 'flex-start',
 }}
   >
 <Box style={{ textAlign: 'left' }}>
-  <Text fw={600} size='sm'>
-🏢 JJ&apos;s HR System Access
-  </Text>
+  <Group gap='xs' mb='xs'>
+<IconBuilding size={16} color='#27ae60' />
+<Text fw={600} size='sm'>
+  JJ&apos;s HR System Access
+</Text>
+  </Group>
   <Text size='xs' c='gray.6'>
 Legal context: Automatically serves &quot;Jędrzej
 Lewandowski&quot; for HiBob
@@ -308,9 +339,12 @@ justifyContent: 'flex-start',
 }}
   >
 <Box style={{ textAlign: 'left' }}>
-  <Text fw={600} size='sm'>
-💻 JJ&apos;s GitHub Profile
-  </Text>
+  <Group gap='xs' mb='xs'>
+<IconBrandGithub size={16} color='#333' />
+<Text fw={600} size='sm'>
+  JJ&apos;s GitHub Profile
+</Text>
+  </Group>
   <Text size='xs' c='gray.6'>
 Professional context: Automatically serves &quot;J.
 Lewandowski&quot; for code contributions
@@ -352,14 +386,9 @@ export default function LoginPage() {
   <Container size='lg' py='xl'>
 <Center style={{ minHeight: '60vh' }}>
   <Box style={{ textAlign: 'center' }}>
-<IconTarget
-  size={48}
-  color='#3498db'
-  style={{ marginBottom: '1rem' }}
-/>
-<Title order={2} c='gray.7' mb='md'>
-  TrueNamePath
-</Title>
+<Box mb='lg'>
+  <LogoWithText size='md' />
+</Box>
 <Text size='sm' c='dimmed'>
   Loading...
 </Text>

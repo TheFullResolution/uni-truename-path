@@ -19,9 +19,9 @@ test('should load app successfully with essential elements', async ({
 }) => {
   await page.goto('/');
 
-  // Check app loads and has essential elements
+  // Check app loads and has essential elements (now uses LogoWithText image component)
   await expect(
-page.getByRole('heading', { name: 'TrueNamePath' }),
+page.getByRole('img', { name: 'TrueNamePath' }),
   ).toBeVisible();
   await expect(page.locator('html[lang="en"]')).toBeVisible();
 
@@ -35,13 +35,13 @@ test('should work on mobile and desktop (responsive)', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 800 });
   await page.goto('/');
   await expect(
-page.getByRole('heading', { name: 'TrueNamePath' }),
+page.getByRole('img', { name: 'TrueNamePath' }),
   ).toBeVisible();
 
   // Test mobile
   await page.setViewportSize({ width: 375, height: 667 });
   await expect(
-page.getByRole('heading', { name: 'TrueNamePath' }),
+page.getByRole('img', { name: 'TrueNamePath' }),
   ).toBeVisible();
 });
   });

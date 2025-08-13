@@ -16,13 +16,16 @@ import {
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
-  IconTarget,
   IconLogout,
   IconUser,
   IconShieldCheck,
+  IconRocket,
+  IconSettings,
 } from '@tabler/icons-react';
 import { useAuth } from '../../lib/context/AuthProvider';
 import { AuthGuard } from '../../components/auth/AuthGuard';
+import { Logo } from '../../components/branding';
+import { ICON_SIZES, ICON_COLORS } from '../../components/icons';
 
 function DashboardContent() {
   const router = useRouter();
@@ -65,13 +68,19 @@ autoClose: 5000,
   }, [logout, router]);
 
   return (
-<Box bg='gray.0' style={{ minHeight: '100vh' }}>
+<Box
+  style={{
+minHeight: '100vh',
+background:
+  'linear-gradient(135deg, rgba(74, 127, 231, 0.05) 0%, rgba(195, 217, 247, 0.1) 100%)',
+  }}
+>
   <Container size='lg' py='xl'>
 {/* Header */}
-<Paper p='xl' mb='xl' shadow='md'>
+<Paper p='xl' mb='xl' shadow='lg'>
   <Group justify='space-between' align='center'>
 <Group>
-  <IconTarget size={32} color='#3498db' />
+  <Logo size='lg' />
   <Box>
 <Title order={1} size='h2' c='gray.8'>
   TrueNamePath Dashboard
@@ -96,8 +105,8 @@ autoClose: 5000,
 
 {/* Welcome Section */}
 <Paper p='xl' mb='xl' shadow='md'>
-  <Group mb='lg'>
-<IconUser size={24} color='#3498db' />
+  <Group gap='sm' mb='md'>
+<IconUser size={ICON_SIZES.lg} color={ICON_COLORS.brand} />
 <Title order={2} c='gray.8'>
   Welcome back!
 </Title>
@@ -137,8 +146,8 @@ User ID:
 
 {/* Authentication Status */}
 <Paper p='xl' mb='xl' shadow='md'>
-  <Group mb='lg'>
-<IconShieldCheck size={24} color='#2ecc71' />
+  <Group gap='sm' mb='md'>
+<IconShieldCheck size={ICON_SIZES.lg} color={ICON_COLORS.success} />
 <Title order={3} c='gray.8'>
   Authentication Status
 </Title>
@@ -180,9 +189,12 @@ Quick Actions
   justify='flex-start'
 >
   <Box style={{ textAlign: 'left' }}>
-<Text fw={500} size='sm'>
-  🚀 Try Context Engine Demo
-</Text>
+<Group gap='sm'>
+  <IconRocket size={ICON_SIZES.sm} color={ICON_COLORS.brand} />
+  <Text fw={500} size='sm'>
+Try Context Engine Demo
+  </Text>
+</Group>
 <Text size='xs' c='dimmed'>
   Experience context-aware name resolution in action
 </Text>
@@ -205,9 +217,15 @@ notifications.show({
   justify='flex-start'
 >
   <Box style={{ textAlign: 'left' }}>
-<Text fw={500} size='sm'>
-  ⚙️ Manage Your Contexts
-</Text>
+<Group gap='sm'>
+  <IconSettings
+size={ICON_SIZES.sm}
+color={ICON_COLORS.neutral}
+  />
+  <Text fw={500} size='sm'>
+Manage Your Contexts
+  </Text>
+</Group>
 <Text size='xs' c='dimmed'>
   Create and configure custom contexts for different audiences
 </Text>
@@ -230,9 +248,12 @@ notifications.show({
   justify='flex-start'
 >
   <Box style={{ textAlign: 'left' }}>
-<Text fw={500} size='sm'>
-  👤 Manage Your Names
-</Text>
+<Group gap='sm'>
+  <IconUser size={ICON_SIZES.sm} color={ICON_COLORS.neutral} />
+  <Text fw={500} size='sm'>
+Manage Your Names
+  </Text>
+</Group>
 <Text size='xs' c='dimmed'>
   Add, edit, and organize your different name variants
 </Text>

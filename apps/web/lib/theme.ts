@@ -3,16 +3,29 @@
 import { createTheme, rem, MantineThemeOverride, MantineTheme } from '@mantine/core';
 
 export const theme: MantineThemeOverride = createTheme({
-  // Primary color scheme matching wireframe - #3498db for login, #27ae60 for signup
-  primaryColor: 'blue',
+  // Primary brand color scheme matching TrueNamePath logo
+  primaryColor: 'brand',
   colors: {
+// Brand blue palette extracted from logo
+brand: [
+  '#E8F4FE', // Lightest - backgrounds
+  '#C3D9F7', // Light - hover states
+  '#9CBDE4', // Light-medium - subtle accents  
+  '#74A1D7', // Medium - secondary elements
+  '#4D85CA', // Medium-dark - interactive elements
+  '#4A7FE7', // Primary - main brand color from logo
+  '#3366CC', // Dark - hover states, emphasis
+  '#2952A3', // Darker - pressed states
+  '#1F3F7A', // Very dark - text on light backgrounds
+  '#152B52', // Darkest - high contrast text
+],
 blue: [
   '#e8f4fd',
   '#c3d9f1',
   '#9cbde4',
   '#74a1d7',
   '#4d85ca',
-  '#3498db', // Primary blue from wireframe
+  '#3498db', // Keep legacy blue for backward compatibility
   '#2980b9',
   '#206694',
   '#1a5490',
@@ -44,8 +57,12 @@ gray: [
 ],
   },
 
-  // Font family matching wireframe
-  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  // Enhanced typography for professional branding
+  fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  headings: {
+fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+fontWeight: '600',
+  },
   
   // Spacing for form layouts
   spacing: {
@@ -85,15 +102,16 @@ size: 'lg', // Matches max-width: 1200px from wireframe
 TextInput: {
   styles: {
 input: {
-  // Matching wireframe input styling
+  // Enhanced input styling with brand colors
   padding: rem(12),
   fontSize: rem(14),
   border: '1px solid #ced4da',
-  borderRadius: rem(4),
+  borderRadius: rem(6),
+  transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
   '&:focus': {
-borderColor: '#3498db',
+borderColor: '#4A7FE7',
 outline: 'none',
-boxShadow: `0 0 0 2px rgba(52, 152, 219, 0.2)`,
+boxShadow: `0 0 0 2px rgba(74, 127, 231, 0.2)`,
   },
 },
 label: {
@@ -111,11 +129,12 @@ input: {
   padding: rem(12),
   fontSize: rem(14),
   border: '1px solid #ced4da',
-  borderRadius: rem(4),
+  borderRadius: rem(6),
+  transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
   '&:focus': {
-borderColor: '#3498db',
+borderColor: '#4A7FE7',
 outline: 'none',
-boxShadow: `0 0 0 2px rgba(52, 152, 219, 0.2)`,
+boxShadow: `0 0 0 2px rgba(74, 127, 231, 0.2)`,
   },
 },
 label: {
@@ -129,33 +148,38 @@ label: {
 Button: {
   styles: (theme: MantineTheme, props: { variant?: string; color?: string }) => ({
 root: {
-  // Matching wireframe button styling
+  // Enhanced button styling with brand colors
   padding: `${rem(12)} ${rem(24)}`,
   fontSize: rem(14),
-  borderRadius: rem(4),
+  borderRadius: rem(6),
   fontWeight: 500,
   cursor: 'pointer',
-  // Variant-specific styles
+  transition: 'all 0.2s ease',
+  // Variant-specific styles with brand colors
   ...(props.variant === 'filled' && {
-backgroundColor: props.color === 'blue' ? '#3498db' : props.color === 'green' ? '#27ae60' : theme.colors.gray[6],
+backgroundColor: props.color === 'brand' ? '#4A7FE7' : props.color === 'blue' ? '#3498db' : props.color === 'green' ? '#27ae60' : theme.colors.gray[6],
 color: 'white',
+border: 'none',
 '&:hover': {
-  backgroundColor: props.color === 'blue' ? '#2980b9' : props.color === 'green' ? '#229954' : theme.colors.gray[7],
+  backgroundColor: props.color === 'brand' ? '#3366CC' : props.color === 'blue' ? '#2980b9' : props.color === 'green' ? '#229954' : theme.colors.gray[7],
+  transform: 'translateY(-1px)',
+  boxShadow: '0 4px 12px rgba(74, 127, 231, 0.3)',
 },
   }),
   ...(props.variant === 'light' && {
-backgroundColor: '#6c757d',
-color: 'white',
+backgroundColor: 'rgba(74, 127, 231, 0.1)',
+color: '#4A7FE7',
+border: 'none',
 '&:hover': {
-  backgroundColor: theme.colors.gray[7],
+  backgroundColor: 'rgba(74, 127, 231, 0.2)',
 },
   }),
   ...(props.variant === 'outline' && {
 backgroundColor: 'transparent',
-border: `1px solid ${props.color === 'blue' ? '#3498db' : props.color === 'green' ? '#27ae60' : theme.colors.gray[4]}`,
-color: props.color === 'blue' ? '#3498db' : props.color === 'green' ? '#27ae60' : theme.colors.gray[6],
+border: `1px solid ${props.color === 'brand' ? '#4A7FE7' : props.color === 'blue' ? '#3498db' : props.color === 'green' ? '#27ae60' : theme.colors.gray[4]}`,
+color: props.color === 'brand' ? '#4A7FE7' : props.color === 'blue' ? '#3498db' : props.color === 'green' ? '#27ae60' : theme.colors.gray[6],
 '&:hover': {
-  backgroundColor: props.color === 'blue' ? 'rgba(52, 152, 219, 0.1)' : props.color === 'green' ? 'rgba(39, 174, 96, 0.1)' : theme.colors.gray[0],
+  backgroundColor: props.color === 'brand' ? 'rgba(74, 127, 231, 0.1)' : props.color === 'blue' ? 'rgba(52, 152, 219, 0.1)' : props.color === 'green' ? 'rgba(39, 174, 96, 0.1)' : theme.colors.gray[0],
 },
   }),
 },
@@ -165,11 +189,16 @@ color: props.color === 'blue' ? '#3498db' : props.color === 'green' ? '#27ae60' 
 Card: {
   styles: {
 root: {
-  // Matching wireframe container styling
+  // Enhanced card styling with subtle brand accents
   backgroundColor: 'white',
   borderRadius: rem(8),
-  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-  border: 'none',
+  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.08)',
+  border: '1px solid rgba(74, 127, 231, 0.08)',
+  transition: 'all 0.2s ease',
+  '&:hover': {
+boxShadow: '0 4px 20px rgba(74, 127, 231, 0.15)',
+transform: 'translateY(-2px)',
+  },
 },
   },
 },
@@ -221,8 +250,8 @@ label: {
 input: {
   cursor: 'pointer',
   '&:checked': {
-backgroundColor: '#3498db',
-borderColor: '#3498db',
+backgroundColor: '#4A7FE7',
+borderColor: '#4A7FE7',
   },
 },
   },

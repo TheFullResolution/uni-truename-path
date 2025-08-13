@@ -16,7 +16,6 @@ import {
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
-  IconTarget,
   IconShield,
   IconTool,
   IconLock,
@@ -25,6 +24,7 @@ import {
 } from '@tabler/icons-react';
 import { SignupForm } from '../../../components/SignupForm';
 import { useAuth } from '../../../lib/context/AuthProvider';
+import { LogoWithText, Logo } from '../../../components/branding';
 
 function SignupPageContent() {
   const router = useRouter();
@@ -101,14 +101,9 @@ return (
 <Container size='lg' py='xl'>
   <Center style={{ minHeight: '60vh' }}>
 <Box style={{ textAlign: 'center' }}>
-  <IconTarget
-size={48}
-color='#27ae60'
-style={{ marginBottom: '1rem' }}
-  />
-  <Title order={2} c='gray.7' mb='md'>
-TrueNamePath
-  </Title>
+  <Box mb='lg'>
+<LogoWithText size='md' />
+  </Box>
   <Text size='sm' c='dimmed'>
 Checking authentication...
   </Text>
@@ -125,27 +120,37 @@ return null;
   }
 
   return (
-<Box bg='gray.0' style={{ minHeight: '100vh' }}>
+<Box
+  style={{
+minHeight: '100vh',
+background:
+  'linear-gradient(135deg, rgba(74, 127, 231, 0.05) 0%, rgba(195, 217, 247, 0.1) 100%)',
+  }}
+>
   <Container size='lg' py='xl'>
 <Paper
-  shadow='md'
-  radius='md'
+  shadow='lg'
+  radius='lg'
   style={{ overflow: 'hidden', backgroundColor: 'white' }}
 >
-  {/* Green Header for Signup */}
+  {/* Brand Header */}
   <Box
-bg='green.5'
-py='lg'
+py='xl'
 px='xl'
-style={{ textAlign: 'center', color: 'white' }}
+style={{
+  textAlign: 'center',
+  background:
+'linear-gradient(135deg, rgba(74, 127, 231, 0.08) 0%, rgba(195, 217, 247, 0.15) 100%)',
+  borderBottom: '1px solid rgba(74, 127, 231, 0.1)',
+}}
   >
-<Center mb='xs'>
-  <IconTarget size={32} />
+<Center mb='md'>
+  <Logo size='xl' />
 </Center>
-<Title order={1} size='h2' fw={600}>
+<Title order={1} size='h2' fw={600} c='brand.8'>
   TrueNamePath
 </Title>
-<Text size='lg' opacity={0.9}>
+<Text size='lg' c='gray.7'>
   Create Your Account
 </Text>
   </Box>
@@ -172,14 +177,14 @@ borderRight: '1px solid #dee2e6',
 {/* Privacy by Design section */}
 <Box
   style={{
-backgroundColor: 'rgba(40, 167, 69, 0.1)',
-border: '1px solid rgba(40, 167, 69, 0.2)',
+backgroundColor: 'rgba(74, 127, 231, 0.1)',
+border: '1px solid rgba(74, 127, 231, 0.2)',
 borderRadius: '8px',
 padding: '20px',
   }}
   mb='xl'
 >
-  <Title order={3} c='green.7' mb='md' size='h4'>
+  <Title order={3} c='brand.7' mb='md' size='h4'>
 <IconShield size={20} style={{ marginRight: '8px' }} />
 What you get:
   </Title>
@@ -193,7 +198,7 @@ styles={{
 alignItems: 'flex-start',
   },
   itemIcon: {
-color: '#28a745',
+color: '#4A7FE7',
 marginTop: '2px',
   },
 }}
@@ -256,7 +261,7 @@ Learn More
 
   <Button
 variant='subtle'
-color='green'
+color='brand'
 fullWidth
 mb='xs'
 justify='flex-start'
@@ -268,7 +273,7 @@ styles={{
 'padding': '12px 16px',
 'whiteSpace': 'normal',
 '&:hover': {
-  backgroundColor: 'rgba(40, 167, 69, 0.1)',
+  backgroundColor: 'rgba(74, 127, 231, 0.1)',
 },
   },
   inner: {
@@ -382,14 +387,9 @@ export default function SignupPage() {
   <Container size='lg' py='xl'>
 <Center style={{ minHeight: '60vh' }}>
   <Box style={{ textAlign: 'center' }}>
-<IconTarget
-  size={48}
-  color='#27ae60'
-  style={{ marginBottom: '1rem' }}
-/>
-<Title order={2} c='gray.7' mb='md'>
-  TrueNamePath
-</Title>
+<Box mb='lg'>
+  <LogoWithText size='md' />
+</Box>
 <Text size='sm' c='dimmed'>
   Loading...
 </Text>
