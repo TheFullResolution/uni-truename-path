@@ -14,6 +14,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import {
   signInWithPassword,
+  signUpWithPassword,
   signOut,
   getCurrentUser,
   sessionUtils,
@@ -22,10 +23,12 @@ import {
   type AuthErrorCode,
 } from '../auth/supabase-auth';
 import type { Session } from '@supabase/supabase-js';
+import { createClient } from '../../utils/supabase/client';
 
 interface AuthContextType {
   user: AuthenticatedUser | null;
   login: (email: string, password: string) => Promise<AuthResponse>;
+  signup: (email: string, password: string, legalName: string, preferredName?: string) => Promise<AuthResponse>;
   logout: () => Promise<{ error: string | null }>;
   loading: boolean;
   isAuthenticated: boolean;
@@ -182,6 +185,91 @@ error: {
 }
   }, []);
 
+  const signup = useCallback(async (
+email: string,
+password: string,
+legalName: string,
+preferredName?: string
+  ): Promise<AuthResponse> => {
+setLoading(true);
+setError(null);
+
+try {
+  // Use existing signUpWithPassword function from auth utilities
+  const authResponse = await signUpWithPassword(email, password);
+  
+  if (authResponse.error) {
+setError(authResponse.error.code);
+return authResponse;
+  }
+
+  if (!authResponse.user) {
+const errorResponse: AuthResponse = {
+  user: null,
+  error: {
+code: 'AUTHENTICATION_FAILED',
+message: 'Signup succeeded but no user returned',
+  },
+};
+setError('AUTHENTICATION_FAILED');
+return errorResponse;
+  }
+
+  // Create name variants using database-direct approach with authenticated client
+  try {
+const supabase = createClient();
+
+// Create LEGAL name (always required)
+await supabase
+  .from('names')
+  .insert({
+user_id: authResponse.user.id,
+name_text: legalName,
+name_type: 'LEGAL',
+is_preferred: !preferredName, // legal is preferred if no preferred name provided
+verified: true,
+source: 'signup_form',
+  });
+
+// Create PREFERRED name if provided
+if (preferredName && preferredName.trim() !== legalName.trim()) {
+  await supabase
+.from('names')
+.insert({
+  user_id: authResponse.user.id,
+  name_text: preferredName,
+  name_type: 'PREFERRED',
+  is_preferred: true, // preferred name is the preferred one
+  verified: true,
+  source: 'signup_form',
+});
+}
+  } catch (nameError) {
+// Non-blocking name creation - signup succeeds even if names fail
+console.warn('Name creation during signup failed:', nameError);
+// Could log this for monitoring but don't fail the signup
+  }
+
+  // Update authentication state on successful signup
+  setUser(authResponse.user);
+  setError(null);
+  
+  return authResponse;
+} catch (err) {
+  const errorResponse: AuthResponse = {
+user: null,
+error: {
+  code: 'AUTHENTICATION_FAILED',
+  message: err instanceof Error ? err.message : 'Signup failed due to unexpected error',
+},
+  };
+  setError('AUTHENTICATION_FAILED');
+  return errorResponse;
+} finally {
+  setLoading(false);
+}
+  }, []);
+
   const logout = useCallback(async (): Promise<{ error: string | null }> => {
 setLoading(true);
 
@@ -205,6 +293,7 @@ setError(null);
   const value: AuthContextType = {
 user,
 login,
+signup,
 logout,
 loading,
 isAuthenticated: !!user,
