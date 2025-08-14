@@ -29,7 +29,8 @@ trace: 'on-first-retry',
 screenshot: 'only-on-failure',
   },
 
-  projects: [
+  projects: process.env.CI
+? [
 {
   name: 'chromium',
   use: { ...devices['Desktop Chrome'] },
@@ -45,6 +46,12 @@ screenshot: 'only-on-failure',
 {
   name: 'mobile',
   use: { ...devices['iPhone 13'] },
+},
+  ]
+: [
+{
+  name: 'chromium',
+  use: { ...devices['Desktop Chrome'] },
 },
   ],
 

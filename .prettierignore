@@ -11,6 +11,7 @@ lib
 node_modules
 temp
 examples/.github
+.serena
 .changeset
 build
 

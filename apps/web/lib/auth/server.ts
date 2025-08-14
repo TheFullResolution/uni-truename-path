@@ -12,6 +12,7 @@ import type { Database } from '../types/database';
 export interface AuthenticatedUser {
   id: string;
   email: string;
+  created_at?: string;
   profile?: Database['public']['Tables']['profiles']['Row'];
 }
 

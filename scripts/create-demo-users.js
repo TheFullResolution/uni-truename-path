@@ -114,6 +114,7 @@ console.log(`   ID: ${userData.id}`);
 
 try {
   const { data, error } = await supabase.auth.admin.createUser({
+user_id: userData.id,
 email: userData.email,
 password: userData.password,
 user_metadata: userData.user_metadata,
