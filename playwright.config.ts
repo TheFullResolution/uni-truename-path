@@ -61,7 +61,7 @@ command: process.env.CI
   ? 'yarn workspace uni-final-project-web start'
   : 'yarn dev',
 url: 'http://localhost:3000',
-reuseExistingServer: !process.env.CI,
-timeout: process.env.CI ? 60 * 1000 : 120 * 1000,
+reuseExistingServer: true,
+timeout: process.env.CI ? 60 * 1000 : 30 * 1000,
   },
 });

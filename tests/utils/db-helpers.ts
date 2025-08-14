@@ -60,6 +60,19 @@ export interface TestConsent {
 
 export class DatabaseTestHelper {
   /**
+   * Get direct access to supabase client for advanced operations
+   */
+  static get supabase() {
+return supabase;
+  }
+
+  /**
+   * Access table methods directly (helper for new cleanup patterns)
+   */
+  static from(table: string) {
+return supabase.from(table);
+  }
+  /**
    * Create a test profile
    */
   static async createProfile(email: string): Promise<TestProfile> {
@@ -174,7 +187,47 @@ return data;
   }
 
   /**
-   * Clean up specific user data
+   * Clean only user contexts and related data (optimized for test reuse)
+   * Use this between tests to clean contexts while keeping the user
+   */
+  static async cleanupUserContextsOnly(userId: string): Promise<void> {
+// Only clean context-related data, keep user and base names
+await supabase
+  .from('context_name_assignments')
+  .delete()
+  .eq('user_id', userId);
+
+await supabase.from('user_contexts').delete().eq('user_id', userId);
+
+// Clean test-specific names but keep permanent test names
+await supabase
+  .from('names')
+  .delete()
+  .eq('user_id', userId)
+  .like('name_text', 'Test %');
+
+console.log(`🧹 Cleaned contexts for user: ${userId}`);
+  }
+
+  /**
+   * Batch cleanup multiple user contexts (optimized for performance)
+   */
+  static async batchCleanupContexts(userIds: string[]): Promise<void> {
+if (userIds.length === 0) return;
+
+// Batch delete operations for better performance
+await supabase
+  .from('context_name_assignments')
+  .delete()
+  .in('user_id', userIds);
+
+await supabase.from('user_contexts').delete().in('user_id', userIds);
+
+console.log(`🧹 Batch cleaned contexts for ${userIds.length} users`);
+  }
+
+  /**
+   * Clean up specific user data (full cleanup)
    */
   static async cleanupUser(userId: string): Promise<void> {
 // Delete data for specific user ID

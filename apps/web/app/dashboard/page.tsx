@@ -31,6 +31,7 @@ import {
   IconApi,
   IconActivity,
   IconEye,
+  IconTags,
 } from '@tabler/icons-react';
 import { useAuth } from '../../lib/context/AuthProvider';
 import { AuthGuard } from '../../components/auth/AuthGuard';
@@ -205,6 +206,9 @@ Dashboard
   <Tabs.Tab value='names' leftSection={<IconUser size={16} />}>
 Names
   </Tabs.Tab>
+  <Tabs.Tab value='contexts' leftSection={<IconTags size={16} />}>
+Contexts
+  </Tabs.Tab>
   <Tabs.Tab
 value='consents'
 leftSection={<IconShieldCheck size={16} />}
@@ -265,6 +269,11 @@ loading={statsLoading}
 {/* Names Tab Content */}
 <Tabs.Panel value='names' pt='xl'>
   <NameManagementPanel />
+</Tabs.Panel>
+
+{/* Contexts Tab Content */}
+<Tabs.Panel value='contexts' pt='xl'>
+  <ContextManagementPanel />
 </Tabs.Panel>
 
 {/* Consents Tab Content */}
@@ -1039,6 +1048,63 @@ c={resolvedName ? 'green.7' : 'red.7'}
 </Paper>
   </Grid.Col>
 </Grid>
+  );
+}
+
+function ContextManagementPanel() {
+  const router = useRouter();
+
+  return (
+<Paper p='xl' shadow='md' radius='lg'>
+  <Group justify='space-between' mb='md'>
+<Group gap='sm'>
+  <IconTags size={24} color='#4A7FE7' />
+  <Title order={2} c='gray.8'>
+Context Management
+  </Title>
+</Group>
+<Button
+  color='brand'
+  leftSection={<IconTags size={16} />}
+  onClick={() => router.push('/contexts')}
+>
+  Manage Contexts
+</Button>
+  </Group>
+  <Text c='gray.6' mb='lg'>
+Create and manage custom contexts for your name variants. This allows
+you to control how your name appears to different audiences and
+applications.
+  </Text>
+
+  <Grid>
+<Grid.Col span={{ base: 12, md: 6 }}>
+  <Paper p='md' withBorder radius='md' bg='gray.0'>
+<Text fw={600} size='sm' mb='xs'>
+  What are contexts?
+</Text>
+<Text size='xs' c='gray.6'>
+  Contexts are custom categories that determine which name variant
+  to use. Examples: &quot;Work Colleagues&quot;, &quot;Gaming
+  Friends&quot;, &quot;HR Systems&quot;, &quot;Client Portal&quot;
+</Text>
+  </Paper>
+</Grid.Col>
+
+<Grid.Col span={{ base: 12, md: 6 }}>
+  <Paper p='md' withBorder radius='md' bg='blue.0'>
+<Text fw={600} size='sm' mb='xs'>
+  Ready to get started?
+</Text>
+<Text size='xs' c='gray.6'>
+  Click &quot;Manage Contexts&quot; to create your first custom
+  context and assign name variants to control your identity
+  presentation.
+</Text>
+  </Paper>
+</Grid.Col>
+  </Grid>
+</Paper>
   );
 }
 

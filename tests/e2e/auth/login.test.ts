@@ -1,25 +1,41 @@
 import { test, expect } from '@playwright/test';
 import { DatabaseTestHelper } from '../../utils/db-helpers';
 import { AuthTestHelper } from '../../utils/auth-helpers';
+import {
+  OptimizedTestPattern,
+  TEST_SUITE_CONFIGS,
+} from '../../utils/shared-test-setup';
 
 /**
- * Essential Login Tests - Lean and maintainable
+ * Essential Login Tests - Performance Optimized
  *
  * Focuses only on critical functionality:
  * - Authentication flow
  * - Form validation
  * - Navigation
  * - Essential UI elements
+ *
+ * NOTE: Auth tests need unique users (testing login flow) but use optimized cleanup
  */
+
+// Initialize optimized test pattern for auth tests (uses full cleanup strategy)
+const testPattern = new OptimizedTestPattern(TEST_SUITE_CONFIGS.AUTH_FLOW);
+
 test.describe('Login Tests', () => {
-  test.beforeEach(async () => {
-await DatabaseTestHelper.cleanup();
-await AuthTestHelper.cleanupTestUsers();
+  test.beforeAll(async () => {
+await testPattern.setupSuite();
   });
 
-  test.afterEach(async () => {
-await DatabaseTestHelper.cleanup();
-await AuthTestHelper.cleanupTestUsers();
+  test.afterAll(async () => {
+await testPattern.teardownSuite();
+  });
+
+  test.beforeEach(async ({}, testInfo) => {
+await testPattern.setupTest(testInfo.title);
+  });
+
+  test.afterEach(async ({}, testInfo) => {
+await testPattern.teardownTest(testInfo.title);
   });
 
   test.describe('Authentication Flow', () => {

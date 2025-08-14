@@ -1,69 +1,60 @@
-// TrueNamePath: Dashboard E2E Test
+// TrueNamePath: Dashboard E2E Test - Performance Optimized
 // Tests comprehensive dashboard functionality including API integration
-// Date: August 13, 2025
+// Date: August 14, 2025 - Performance optimization update
 
 import { test, expect } from '@playwright/test';
 import { DatabaseTestHelper } from '../utils/db-helpers';
 import { AuthTestHelper } from '../utils/auth-helpers';
+import {
+  SharedTestSetup,
+  OptimizedTestPattern,
+  TEST_SUITE_CONFIGS,
+} from '../utils/shared-test-setup';
+
+// Initialize optimized test pattern for dashboard tests
+const testPattern = new OptimizedTestPattern(TEST_SUITE_CONFIGS.DASHBOARD);
 
 test.describe('Dashboard Page', () => {
-  test.beforeEach(async () => {
-await DatabaseTestHelper.cleanup();
-await AuthTestHelper.cleanupTestUsers();
+  test.beforeAll(async () => {
+await testPattern.setupSuite();
   });
 
-  test.afterEach(async () => {
-await DatabaseTestHelper.cleanup();
-await AuthTestHelper.cleanupTestUsers();
+  test.afterAll(async () => {
+await testPattern.teardownSuite();
+  });
+
+  test.beforeEach(async ({}, testInfo) => {
+await testPattern.setupTest(testInfo.title);
+  });
+
+  test.afterEach(async ({}, testInfo) => {
+await testPattern.teardownTest(testInfo.title);
   });
 
   test('should load dashboard with authentication', async ({ page }) => {
-const uniqueId = Math.random().toString(36).substring(7);
-const testEmail = `test-dash-${uniqueId}@example.com`;
-
-// Create test user and profile
-await AuthTestHelper.createTestUserSession(testEmail);
-await DatabaseTestHelper.createProfile(testEmail);
-
-// Navigate to login page
-await page.goto('/auth/login');
-
-// Login with test user
-await page.getByLabel('Email Address').fill(testEmail);
-await page.getByLabel('Password').fill('test-password-123');
-await page.getByRole('button', { name: 'Sign In' }).click();
-
-// Should redirect to dashboard
-await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
+// Use shared user with optimized authentication
+await testPattern.authenticateWithSharedUser(page, '/dashboard');
 
 // Check dashboard header is present
 await expect(page.locator('text=TrueNamePath Dashboard')).toBeVisible();
 
 // Check user email is displayed in the dashboard (not in notifications)
 // Use a more specific selector to avoid matching notification text
+const sharedUser = testPattern.getSharedUser();
 await expect(
-  page.getByText(testEmail, { exact: true }).last(),
+  page.getByText(sharedUser.email, { exact: true }).last(),
 ).toBeVisible();
   });
 
   test('should navigate between dashboard tabs correctly', async ({ page }) => {
-const uniqueId = Math.random().toString(36).substring(7);
-const testEmail = `test-tabs-${uniqueId}@example.com`;
-
-// Create test user and profile
-await AuthTestHelper.createTestUserSession(testEmail);
-await DatabaseTestHelper.createProfile(testEmail);
-
-// Login first
-await page.goto('/auth/login');
-await page.getByLabel('Email Address').fill(testEmail);
-await page.getByLabel('Password').fill('test-password-123');
-await page.getByRole('button', { name: 'Sign In' }).click();
-await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
+// Use shared user with optimized authentication
+await testPattern.authenticateWithSharedUser(page, '/dashboard');
 
 // Test tab navigation
 await page.click('text=Names');
-await expect(page.locator('text=Your Name Variants')).toBeVisible();
+await expect(
+  page.getByRole('heading', { name: 'Your Name Variants' }),
+).toBeVisible();
 
 await page.click('text=Consents');
 // Use role selector to target the heading specifically
@@ -84,19 +75,8 @@ await expect(page.locator('text=TrueNamePath Dashboard')).toBeVisible();
   });
 
   test('should handle logout correctly from dashboard', async ({ page }) => {
-const uniqueId = Math.random().toString(36).substring(7);
-const testEmail = `test-logout-${uniqueId}@example.com`;
-
-// Create test user and profile
-await AuthTestHelper.createTestUserSession(testEmail);
-await DatabaseTestHelper.createProfile(testEmail);
-
-// Login first
-await page.goto('/auth/login');
-await page.getByLabel('Email Address').fill(testEmail);
-await page.getByLabel('Password').fill('test-password-123');
-await page.getByRole('button', { name: 'Sign In' }).click();
-await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
+// Use shared user with optimized authentication
+await testPattern.authenticateWithSharedUser(page, '/dashboard');
 
 // Click logout button
 await page.click('text=Sign Out');

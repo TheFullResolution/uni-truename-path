@@ -1,0 +1,47 @@
+# Page snapshot
+
+```yaml
+- img "TrueNamePath Logo"
+- heading "TrueNamePath" [level=1]
+- paragraph: Context-Aware Identity Management
+- heading "Welcome to TrueNamePath" [level=2]
+- paragraph: '"Context-Aware Identity API for the Modern Web"'
+- img
+- heading "Enterprise-Ready Identity API" [level=3]
+- list:
+- listitem: Powered by Supabase with enterprise authentication
+- listitem: RESTful API with comprehensive JWT token handling
+- listitem: Edge Functions for real-time name resolution
+- listitem: GDPR-compliant with comprehensive audit trails
+- img
+- paragraph: For Developers
+- paragraph: RESTful API integration with JWT authentication. Standard claims, no proprietary APIs. Edge Functions handle the complexity - you get clean, context-aware names.
+- img
+- paragraph: For Enterprises
+- paragraph: Enterprise-ready authentication. GDPR compliant by design. Seamless integration with existing infrastructure. No major architecture changes required.
+- img
+- heading "Try Live Examples" [level=3]
+- 'button "JJ''s Slack Integration Team context: Automatically serves \"JJ\" for casual team communication"':
+- img
+- paragraph: JJ's Slack Integration
+- paragraph: 'Team context: Automatically serves "JJ" for casual team communication'
+- 'button "JJ''s HR System Access Legal context: Automatically serves \"Jędrzej Lewandowski\" for HiBob"':
+- img
+- paragraph: JJ's HR System Access
+- paragraph: 'Legal context: Automatically serves "Jędrzej Lewandowski" for HiBob'
+- 'button "JJ''s GitHub Profile Professional context: Automatically serves \"J. Lewandowski\" for code contributions"':
+- img
+- paragraph: JJ's GitHub Profile
+- paragraph: 'Professional context: Automatically serves "J. Lewandowski" for code contributions'
+- heading "Sign In" [level=2]
+- text: Email Address
+- textbox "Email Address"
+- text: Password
+- textbox "Password"
+- button "Sign In"
+- button "Forgot Password?"
+- separator
+- paragraph: Don't have an account?
+- button "Create Account"
+- alert
+```

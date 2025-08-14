@@ -55,6 +55,116 @@ await this.page.goto('/dashboard');
  */
 export class AuthTestHelper {
   /**
+   * Inject Supabase auth session into browser page (optimized for performance)
+   * Use this instead of full browser login flows
+   */
+  static async injectAuthSession(
+page: Page,
+token: string,
+email: string,
+userId: string,
+  ): Promise<void> {
+await page.addInitScript(
+  ({ token, email, userId }) => {
+// Set Supabase auth session in browser storage
+const authData = {
+  access_token: token,
+  refresh_token: 'mock-refresh-token',
+  expires_in: 3600,
+  token_type: 'bearer',
+  user: {
+id: userId,
+email: email,
+created_at: new Date().toISOString(),
+app_metadata: {},
+user_metadata: { test_user: true },
+  },
+};
+
+// Set in localStorage for Supabase client
+window.localStorage.setItem('sb-access-token', token);
+window.localStorage.setItem('sb-refresh-token', 'mock-refresh-token');
+window.localStorage.setItem('sb-user', JSON.stringify(authData.user));
+
+// Set auth cookies for SSR
+document.cookie = `sb-access-token=${token}; path=/; SameSite=Lax`;
+document.cookie = `sb-refresh-token=mock-refresh-token; path=/; SameSite=Lax`;
+  },
+  { token, email, userId },
+);
+  }
+
+  /**
+   * Navigate to authenticated page with injected session
+   * Replaces the full login flow for performance
+   */
+  static async goToAuthenticatedPage(
+page: Page,
+path: string,
+authData: { token: string; email: string; userId: string },
+  ): Promise<void> {
+await this.injectAuthSession(
+  page,
+  authData.token,
+  authData.email,
+  authData.userId,
+);
+await page.goto(path);
+
+// Brief wait for auth state to be recognized
+await page.waitForTimeout(500);
+  }
+
+  /**
+   * Create reusable auth session data for multiple tests
+   */
+  static async createReusableSession(email: string): Promise<{
+email: string;
+userId: string;
+token: string;
+  }> {
+const { userId, token } = await this.createTestUserSession(email);
+return { email, userId, token };
+  }
+
+  /**
+   * Create session for existing user without attempting user creation
+   */
+  static async createSessionForExistingUser(
+email: string,
+  ): Promise<{ token: string }> {
+const supabaseUrl = process.env.SUPABASE_URL;
+const anonKey = process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !anonKey) {
+  throw new Error(
+'Missing required environment variables: SUPABASE_URL and SUPABASE_ANON_KEY must be set',
+  );
+}
+
+const supabase = createClient(supabaseUrl, anonKey);
+
+// Create session for existing user directly
+const { data: sessionData, error: sessionError } =
+  await supabase.auth.signInWithPassword({
+email,
+password: 'test-password-123',
+  });
+
+if (sessionError) {
+  throw new Error(
+`Failed to create session for existing user: ${sessionError.message}`,
+  );
+}
+
+const token = sessionData.session?.access_token || '';
+if (!token) {
+  throw new Error('No access token received from session');
+}
+
+return { token };
+  }
+  /**
    * Create a test user session and return authentication data with real Supabase token
    */
   static async createTestUserSession(
@@ -142,7 +252,7 @@ let userId: string;
 if (createError && createError.message.includes('already registered')) {
   // User exists, get their ID
   const { data: existingUsers } = await supabase.auth.admin.listUsers();
-  const existingUser = existingUsers.users.find((u) => u.email === email);
+  const existingUser = existingUsers?.users?.find((u) => u.email === email);
   userId = existingUser?.id || '';
 } else if (createError) {
   throw new Error(`Failed to create test user: ${createError.message}`);
@@ -160,7 +270,7 @@ id: userId,
 email: email,
   },
   {
-onConflict: 'id',
+onConflict: 'email',
   },
 )
 .select()
