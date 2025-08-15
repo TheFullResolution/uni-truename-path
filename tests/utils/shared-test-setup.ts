@@ -131,20 +131,8 @@ await page.waitForTimeout(1000);
    * Use in afterEach() instead of full cleanup
    */
   static async cleanupUserContextsOnly(userId: string): Promise<void> {
-// Only clean test-specific data, keep user for reuse
-await DatabaseTestHelper.from('context_name_assignments')
-  .delete()
-  .eq('user_id', userId);
-
-await DatabaseTestHelper.from('user_contexts')
-  .delete()
-  .eq('user_id', userId);
-
-// Keep names but remove test-specific ones if needed
-await DatabaseTestHelper.from('names')
-  .delete()
-  .eq('user_id', userId)
-  .like('name_text', 'Test %');
+// Use the improved cleanup method from DatabaseTestHelper
+await DatabaseTestHelper.cleanupUserContextsOnly(userId);
   }
 
   /**

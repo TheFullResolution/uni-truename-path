@@ -14,47 +14,33 @@ import {
   createSuccessResponse,
   createErrorResponse,
   type AuthenticatedHandler,
-} from '../../../../lib/api/with-auth';
-import { ErrorCodes } from '../../../../lib/api/types';
+} from '../../../../lib/api';
+import { ErrorCodes } from '../../../../lib/api';
 import { z } from 'zod';
 
 /**
  * Input validation schema with comprehensive validation rules
  */
-const ResolveNameRequestSchema = z
-  .object({
-targetUserId: z
-  .string()
-  .uuid('Target user ID must be a valid UUID')
-  .min(1, 'Target user ID is required'),
+const ResolveNameRequestSchema = z.object({
+  target_user_id: z
+.string()
+.uuid('Target user ID must be a valid UUID')
+.min(1, 'Target user ID is required'),
 
-requesterUserId: z
-  .string()
-  .uuid('Requester user ID must be a valid UUID')
-  .optional()
-  .nullable(),
+  requester_user_id: z
+.string()
+.uuid('Requester user ID must be a valid UUID')
+.optional()
+.nullable(),
 
-contextName: z
-  .string()
-  .min(1, 'Context name cannot be empty')
-  .max(100, 'Context name cannot exceed 100 characters')
-  .regex(/^[a-zA-Z0-9\s\-_]+$/, 'Context name contains invalid characters')
-  .optional()
-  .nullable(),
-  })
-  .refine(
-(data) => {
-  // Business rule: if requesterUserId is provided, it should be different from targetUserId
-  if (data.requesterUserId && data.requesterUserId === data.targetUserId) {
-return false;
-  }
-  return true;
-},
-{
-  message: 'Requester user ID cannot be the same as target user ID',
-  path: ['requesterUserId'],
-},
-  );
+  context_name: z
+.string()
+.min(1, 'Context name cannot be empty')
+.max(100, 'Context name cannot exceed 100 characters')
+.regex(/^[a-zA-Z0-9\s\-_]+$/, 'Context name contains invalid characters')
+.optional()
+.nullable(),
+});
 
 /**
  * Validated request type
@@ -125,9 +111,9 @@ code: err.code,
   const contextEngine = new TrueNameContextEngine();
 
   const nameResolution = await contextEngine.resolveName({
-targetUserId: params.targetUserId,
-requesterUserId: params.requesterUserId || undefined,
-contextName: params.contextName || undefined,
+targetUserId: params.target_user_id,
+requesterUserId: params.requester_user_id || undefined,
+contextName: params.context_name || undefined,
   });
 
   // 4. Success response with comprehensive metadata
@@ -142,11 +128,11 @@ metadata: {
 
   console.log(`API Request [${context.requestId}]:`, {
 source: nameResolution.source,
-targetUser: params.targetUserId.substring(0, 8) + '...',
-contextRequested: params.contextName || 'none',
+targetUser: params.target_user_id.substring(0, 8) + '...',
+contextRequested: params.context_name || 'none',
 authenticated: context.isAuthenticated ? 'yes' : 'no',
-requesterUser: params.requesterUserId
-  ? params.requesterUserId.substring(0, 8) + '...'
+requesterUser: params.requester_user_id
+  ? params.requester_user_id.substring(0, 8) + '...'
   : 'none',
   });
 

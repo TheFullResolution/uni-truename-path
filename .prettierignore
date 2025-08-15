@@ -7,7 +7,6 @@ _templates/generator/with-prompt/prompt.js
 # folders
 .yarn
 dist
-lib
 node_modules
 temp
 examples/.github

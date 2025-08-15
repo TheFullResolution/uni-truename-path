@@ -2,7 +2,7 @@
 
 /**
  * AuthProvider with official Supabase SSR patterns
- * 
+ *
  * This provider uses the official Supabase SSR client implementation which:
  * - Uses official createClient from utils/supabase/client for optimal SSR session persistence
  * - Handles authentication state with proper SSR cookie management
@@ -11,7 +11,13 @@
  * - Follows official Supabase SSR patterns for Next.js
  */
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from 'react';
 import {
   signInWithPassword,
   signUpWithPassword,
@@ -21,14 +27,19 @@ import {
   type AuthenticatedUser,
   type AuthResponse,
   type AuthErrorCode,
-} from '../auth/supabase-auth';
+} from '../auth';
 import type { Session } from '@supabase/supabase-js';
 import { createClient } from '../../utils/supabase/client';
 
 interface AuthContextType {
   user: AuthenticatedUser | null;
   login: (email: string, password: string) => Promise<AuthResponse>;
-  signup: (email: string, password: string, legalName: string, preferredName?: string) => Promise<AuthResponse>;
+  signup: (
+email: string,
+password: string,
+legalName: string,
+preferredName?: string,
+  ) => Promise<AuthResponse>;
   logout: () => Promise<{ error: string | null }>;
   loading: boolean;
   isAuthenticated: boolean;
@@ -94,48 +105,49 @@ let subscription: { unsubscribe?: () => void } | null = null;
 
 try {
   // sessionUtils uses official SSR browser client for reliable auth state tracking
-  const authListener = sessionUtils.onAuthStateChange(async (event: string, session: Session | null) => {
-if (!mounted) {
-  return;
-}
+  const authListener = sessionUtils.onAuthStateChange(
+async (event: string, session: Session | null) => {
+  if (!mounted) {
+return;
+  }
 
-setLoading(true);
+  setLoading(true);
 
-try {
-  if (event === 'SIGNED_IN' && session?.user) {
-// Get full user data including profile
-const response = await getCurrentUser();
-if (response.user) {
-  setUser(response.user);
-  setError(null);
-} else if (response.error) {
-  setError(response.error.code);
-  setUser(null);
-}
-  } else if (event === 'SIGNED_OUT') {
-setUser(null);
+  try {
+if (event === 'SIGNED_IN' && session?.user) {
+  // Get full user data including profile
+  const response = await getCurrentUser();
+  if (response.user) {
+setUser(response.user);
 setError(null);
-  } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-// Refresh user data
-const response = await getCurrentUser();
-if (response.user) {
-  setUser(response.user);
+  } else if (response.error) {
+setError(response.error.code);
+setUser(null);
+  }
+} else if (event === 'SIGNED_OUT') {
+  setUser(null);
   setError(null);
-}
-  }
-} catch {
-  if (mounted) {
-setError('AUTHENTICATION_FAILED');
-  }
-} finally {
-  if (mounted) {
-setLoading(false);
+} else if (event === 'TOKEN_REFRESHED' && session?.user) {
+  // Refresh user data
+  const response = await getCurrentUser();
+  if (response.user) {
+setUser(response.user);
+setError(null);
   }
 }
-  });
+  } catch {
+if (mounted) {
+  setError('AUTHENTICATION_FAILED');
+}
+  } finally {
+if (mounted) {
+  setLoading(false);
+}
+  }
+},
+  );
 
   subscription = authListener?.data?.subscription;
-  
 } catch {
   if (mounted) {
 setError('AUTHENTICATION_FAILED');
@@ -153,76 +165,81 @@ subscription?.unsubscribe?.();
 };
   }, []);
 
-  const login = useCallback(async (email: string, password: string): Promise<AuthResponse> => {
-setLoading(true);
-setError(null);
+  const login = useCallback(
+async (email: string, password: string): Promise<AuthResponse> => {
+  setLoading(true);
+  setError(null);
 
-try {
-  // signInWithPassword uses official SSR browser client for secure authentication
-  const response = await signInWithPassword(email, password);
-  
-  if (response.user) {
-setUser(response.user);
-setError(null);
-  } else if (response.error) {
-setError(response.error.code);
-setUser(null);
-  }
+  try {
+// signInWithPassword uses official SSR browser client for secure authentication
+const response = await signInWithPassword(email, password);
 
-  return response;
-} catch (err) {
-  const errorResponse: AuthResponse = {
-user: null,
-error: {
-  code: 'AUTHENTICATION_FAILED',
-  message: err instanceof Error ? err.message : 'Login failed due to unexpected error',
-},
-  };
-  setError('AUTHENTICATION_FAILED');
-  return errorResponse;
-} finally {
-  setLoading(false);
+if (response.user) {
+  setUser(response.user);
+  setError(null);
+} else if (response.error) {
+  setError(response.error.code);
+  setUser(null);
 }
-  }, []);
 
-  const signup = useCallback(async (
-email: string,
-password: string,
-legalName: string,
-preferredName?: string
-  ): Promise<AuthResponse> => {
-setLoading(true);
-setError(null);
-
-try {
-  // Use existing signUpWithPassword function from auth utilities
-  const authResponse = await signUpWithPassword(email, password);
-  
-  if (authResponse.error) {
-setError(authResponse.error.code);
-return authResponse;
-  }
-
-  if (!authResponse.user) {
+return response;
+  } catch (err) {
 const errorResponse: AuthResponse = {
   user: null,
   error: {
 code: 'AUTHENTICATION_FAILED',
-message: 'Signup succeeded but no user returned',
+message:
+  err instanceof Error
+? err.message
+: 'Login failed due to unexpected error',
   },
 };
 setError('AUTHENTICATION_FAILED');
 return errorResponse;
+  } finally {
+setLoading(false);
   }
+},
+[],
+  );
 
-  // Create name variants using database-direct approach with authenticated client
+  const signup = useCallback(
+async (
+  email: string,
+  password: string,
+  legalName: string,
+  preferredName?: string,
+): Promise<AuthResponse> => {
+  setLoading(true);
+  setError(null);
+
   try {
-const supabase = createClient();
+// Use existing signUpWithPassword function from auth utilities
+const authResponse = await signUpWithPassword(email, password);
 
-// Create LEGAL name (always required)
-await supabase
-  .from('names')
-  .insert({
+if (authResponse.error) {
+  setError(authResponse.error.code);
+  return authResponse;
+}
+
+if (!authResponse.user) {
+  const errorResponse: AuthResponse = {
+user: null,
+error: {
+  code: 'AUTHENTICATION_FAILED',
+  message: 'Signup succeeded but no user returned',
+},
+  };
+  setError('AUTHENTICATION_FAILED');
+  return errorResponse;
+}
+
+// Create name variants using database-direct approach with authenticated client
+try {
+  const supabase = createClient();
+
+  // Create LEGAL name (always required)
+  await supabase.from('names').insert({
 user_id: authResponse.user.id,
 name_text: legalName,
 name_type: 'LEGAL',
@@ -231,11 +248,9 @@ verified: true,
 source: 'signup_form',
   });
 
-// Create PREFERRED name if provided
-if (preferredName && preferredName.trim() !== legalName.trim()) {
-  await supabase
-.from('names')
-.insert({
+  // Create PREFERRED name if provided
+  if (preferredName && preferredName.trim() !== legalName.trim()) {
+await supabase.from('names').insert({
   user_id: authResponse.user.id,
   name_text: preferredName,
   name_type: 'PREFERRED',
@@ -243,32 +258,37 @@ if (preferredName && preferredName.trim() !== legalName.trim()) {
   verified: true,
   source: 'signup_form',
 });
-}
-  } catch (nameError) {
-// Non-blocking name creation - signup succeeds even if names fail
-console.warn('Name creation during signup failed:', nameError);
-// Could log this for monitoring but don't fail the signup
   }
-
-  // Update authentication state on successful signup
-  setUser(authResponse.user);
-  setError(null);
-  
-  return authResponse;
-} catch (err) {
-  const errorResponse: AuthResponse = {
-user: null,
-error: {
-  code: 'AUTHENTICATION_FAILED',
-  message: err instanceof Error ? err.message : 'Signup failed due to unexpected error',
-},
-  };
-  setError('AUTHENTICATION_FAILED');
-  return errorResponse;
-} finally {
-  setLoading(false);
+} catch (nameError) {
+  // Non-blocking name creation - signup succeeds even if names fail
+  console.warn('Name creation during signup failed:', nameError);
+  // Could log this for monitoring but don't fail the signup
 }
-  }, []);
+
+// Update authentication state on successful signup
+setUser(authResponse.user);
+setError(null);
+
+return authResponse;
+  } catch (err) {
+const errorResponse: AuthResponse = {
+  user: null,
+  error: {
+code: 'AUTHENTICATION_FAILED',
+message:
+  err instanceof Error
+? err.message
+: 'Signup failed due to unexpected error',
+  },
+};
+setError('AUTHENTICATION_FAILED');
+return errorResponse;
+  } finally {
+setLoading(false);
+  }
+},
+[],
+  );
 
   const logout = useCallback(async (): Promise<{ error: string | null }> => {
 setLoading(true);
@@ -276,7 +296,7 @@ setLoading(true);
 try {
   // signOut uses official SSR browser client for secure session termination
   const result = await signOut();
-  
+
   if (!result.error) {
 setUser(null);
 setError(null);

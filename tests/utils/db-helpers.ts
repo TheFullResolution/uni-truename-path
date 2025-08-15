@@ -26,9 +26,14 @@ export interface TestName {
   id?: string;
   user_id: string; // Updated from profile_id to match new schema
   name_text: string; // Correct column name is name_text
-  name_type: 'LEGAL' | 'PREFERRED' | 'NICKNAME' | 'ALIAS'; // Updated to use ENUM values
+  name_type:
+| 'LEGAL'
+| 'PREFERRED'
+| 'NICKNAME'
+| 'ALIAS'
+| 'PROFESSIONAL'
+| 'CULTURAL'; // Updated to use ENUM values
   is_preferred?: boolean; // New field for preferred name tracking
-  verified?: boolean;
   source?: string;
 }
 
@@ -199,14 +204,37 @@ await supabase
 
 await supabase.from('user_contexts').delete().eq('user_id', userId);
 
-// Clean test-specific names but keep permanent test names
-await supabase
-  .from('names')
-  .delete()
-  .eq('user_id', userId)
-  .like('name_text', 'Test %');
+// Clean ALL test-specific names to avoid constraint conflicts
+// This includes names with patterns like "Test %", "Preferred Name %", "Legal Name %", etc.
+const testNamePatterns = [
+  'Test %',
+  'Professional Name %',
+  'First Name %',
+  'Second Name %',
+  'Clear Test Name %',
+  'Bulk Name %',
+  'API Test Name %',
+  'Preview Name %',
+  'Assigned Name %',
+  'Cross Tab Name %',
+  'Consistency Name %',
+  'Error Test Name %',
+  'Loading Test Name %',
+  'Preferred Name %',
+  'Legal Name %',
+  'Nick Name %',
+  'Alias Name %',
+];
 
-console.log(`🧹 Cleaned contexts for user: ${userId}`);
+for (const pattern of testNamePatterns) {
+  await supabase
+.from('names')
+.delete()
+.eq('user_id', userId)
+.like('name_text', pattern);
+}
+
+console.log(`🧹 Cleaned contexts and test names for user: ${userId}`);
   }
 
   /**
@@ -363,12 +391,22 @@ email: string,
 persona: {
   names: Array<{
 name_text: string;
-name_type: 'LEGAL' | 'PREFERRED' | 'NICKNAME' | 'ALIAS';
+name_type:
+  | 'LEGAL'
+  | 'PREFERRED'
+  | 'NICKNAME'
+  | 'ALIAS'
+  | 'PROFESSIONAL'
+  | 'CULTURAL';
 is_preferred?: boolean;
   }>;
   contexts: Array<{
 context_name: string;
 description: string;
+// NOTE: Migration 023 auto-creates 3 default contexts (Professional, Social, Public)
+// We keep these default contexts to test real production behavior
+// No cleanup needed - tests should work with default contexts present
+
 assigned_name?: string;
   }>;
 },
@@ -388,7 +426,6 @@ for (const nameData of persona.names) {
 name_text: nameData.name_text,
 name_type: nameData.name_type,
 is_preferred: nameData.is_preferred || false,
-verified: true,
 source: 'test_data',
   });
   names.push(name);
@@ -461,13 +498,19 @@ return await this.createProfile(`test-${uniqueId}@example.com`);
   static async createTestName(
 userId: string,
 nameText: string,
-nameType: 'LEGAL' | 'PREFERRED' | 'NICKNAME' | 'ALIAS',
+nameType:
+  | 'LEGAL'
+  | 'PREFERRED'
+  | 'NICKNAME'
+  | 'ALIAS'
+  | 'PROFESSIONAL'
+  | 'CULTURAL',
+isPreferred: boolean = false,
   ): Promise<any> {
 return await this.createName(userId, {
   name_text: nameText,
   name_type: nameType,
-  is_preferred: nameType === 'PREFERRED',
-  verified: true,
+  is_preferred: isPreferred,
   source: 'test_data',
 });
   }
@@ -493,6 +536,88 @@ return await this.createContextNameAssignment({
   context_id: contextId,
   name_id: nameId,
 });
+  }
+
+  /**
+   * Create diverse name types for testing assignments while respecting the unique preferred name constraint
+   * Returns an array of names with only one marked as preferred
+   */
+  static async createDiverseTestNames(
+userId: string,
+uniqueId: string,
+  ): Promise<{
+preferred: TestName;
+legal: TestName;
+nickname: TestName;
+alias: TestName;
+  }> {
+console.log(`🎭 Creating diverse names for user: ${userId}`);
+
+// Create one preferred name (marked as preferred)
+const preferred = await this.createTestName(
+  userId,
+  `Preferred Name ${uniqueId}`,
+  'PREFERRED',
+  true, // Only this one is marked as preferred
+);
+
+// Create other name types (not marked as preferred)
+const legal = await this.createTestName(
+  userId,
+  `Legal Name ${uniqueId}`,
+  'LEGAL',
+  false,
+);
+
+const nickname = await this.createTestName(
+  userId,
+  `Nick Name ${uniqueId}`,
+  'NICKNAME',
+  false,
+);
+
+const alias = await this.createTestName(
+  userId,
+  `Alias Name ${uniqueId}`,
+  'ALIAS',
+  false,
+);
+
+console.log(
+  `✅ Created diverse names: preferred=${preferred.id}, legal=${legal.id}, nickname=${nickname.id}, alias=${alias.id}`,
+);
+
+return { preferred, legal, nickname, alias };
+  }
+
+  /**
+   * Get or create a single preferred name for a user (handles constraint properly)
+   */
+  static async getOrCreatePreferredName(
+userId: string,
+uniqueId: string,
+  ): Promise<TestName> {
+// Check if user already has a preferred name
+const existingNames = await this.getNamesForUser(userId);
+const existingPreferred = existingNames.find(
+  (n) => n.is_preferred === true,
+);
+
+if (existingPreferred) {
+  console.log(
+`♻️  Using existing preferred name: ${existingPreferred.name_text}`,
+  );
+  return existingPreferred;
+}
+
+// Create new preferred name
+console.log(`🆕 Creating new preferred name for user: ${userId}`);
+return await this.createTestName(
+  userId,
+  `Preferred Name ${uniqueId}`,
+  'PREFERRED',
+  true,
+);
   }
 
   static async createTestConsent(

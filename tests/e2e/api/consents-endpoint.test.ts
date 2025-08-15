@@ -17,9 +17,9 @@ const response = await request.post('http://localhost:3000/api/consents', {
   headers: { 'Content-Type': 'application/json' },
   data: {
 action: 'request',
-granterUserId: 'test-user-1',
-requesterUserId: 'test-user-2',
-contextName: 'Test Context',
+granter_user_id: 'test-user-1',
+requester_user_id: 'test-user-2',
+context_name: 'Test Context',
   },
 });
 
@@ -46,9 +46,9 @@ const response = await request.post('http://localhost:3000/api/consents', {
   },
   data: {
 action: 'request',
-granterUserId: 'test-user-1',
-requesterUserId: 'test-user-2',
-contextName: 'Test Context',
+granter_user_id: 'test-user-1',
+requester_user_id: 'test-user-2',
+context_name: 'Test Context',
   },
 });
 
@@ -179,9 +179,9 @@ Authorization: 'Bearer some-token',
   },
   data: JSON.stringify({
 action: 'request',
-granterUserId: 'test-user-1',
-requesterUserId: 'test-user-2',
-contextName: 'Test Context',
+granter_user_id: 'test-user-1',
+requester_user_id: 'test-user-2',
+context_name: 'Test Context',
   }),
 });
 

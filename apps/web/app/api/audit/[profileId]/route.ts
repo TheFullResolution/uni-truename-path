@@ -5,15 +5,15 @@
 
 // TrueNamePath: Audit Log API Route - JSend Compliant
 import { NextRequest } from 'next/server';
-import type { Json } from '../../../../lib/types/database';
 import {
   withRequiredAuth,
   createSuccessResponse,
   createErrorResponse,
   type AuthenticatedHandler,
-} from '../../../../lib/api/with-auth';
-import { ErrorCodes } from '../../../../lib/api/types';
+} from '../../../../lib/api';
+import { ErrorCodes } from '../../../../lib/api';
 import { z } from 'zod';
+import { Json } from '../../../../types/generated';
 
 /**
  * Query parameter validation schema for audit log requests
@@ -31,7 +31,7 @@ const AuditQuerySchema = z.object({
 .default(50),
 
   action: z
-.enum(['name_resolved', 'consent_granted', 'consent_revoked'])
+.enum(['NAME_DISCLOSED', 'CONSENT_GRANTED', 'CONSENT_REVOKED'] as const)
 .optional(),
 
   startDate: z
@@ -74,13 +74,13 @@ interface AuditFilters {
 interface AuditLogResponseData {
   entries: AuditLogEntry[];
   total: number;
-  profileId: string;
+  profile_id: string;
   filters: AuditFilters;
   metadata: {
-retrievedAt: string;
-requestId: string;
-totalEntries: number;
-filteredEntries: number;
+retrieved_at: string;
+request_id: string;
+total_entries: number;
+filtered_entries: number;
   };
 }
 
@@ -202,7 +202,7 @@ filteredEntries = filteredEntries.filter(
   const responseData: AuditLogResponseData = {
 entries: filteredEntries as AuditLogEntry[],
 total: filteredEntries.length,
-profileId: profileId,
+profile_id: profileId,
 filters: {
   limit: filters.limit,
   action: filters.action,
@@ -210,10 +210,10 @@ filters: {
   endDate: filters.endDate,
 },
 metadata: {
-  retrievedAt: context.timestamp,
-  requestId: context.requestId,
-  totalEntries: data?.length || 0,
-  filteredEntries: filteredEntries.length,
+  retrieved_at: context.timestamp,
+  request_id: context.requestId,
+  total_entries: data?.length || 0,
+  filtered_entries: filteredEntries.length,
 },
   };
 

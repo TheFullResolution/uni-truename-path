@@ -29,7 +29,7 @@
 "test:e2e:ui": "playwright test --ui",
 "test:e2e:headed": "playwright test --headed",
 "format": "prettier . --write",
-"db:types": "supabase gen types typescript --local > packages/database/src/types.ts",
+"db:types": "supabase gen types typescript --local > apps/web/types/generated.ts",
 "diagrams:erd": "mmdc -i docs/report-materials/academic-report-diagrams.md -o enhanced-erd.png -t neutral -s 2 --cssFile docs/mermaid-theme.css",
 "diagrams:architecture": "mmdc -i docs/report-materials/academic-report-diagrams.md -o enhanced-architecture.png -t neutral -s 2 --cssFile docs/mermaid-theme.css",
 "diagrams:flowchart": "mmdc -i docs/report-materials/academic-report-diagrams.md -o enhanced-flowchart.png -t neutral -s 2 --cssFile docs/mermaid-theme.css",

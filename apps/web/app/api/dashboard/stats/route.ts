@@ -4,56 +4,19 @@
 // Academic project REST API with JSend compliance and optimized performance
 
 import { NextRequest } from 'next/server';
-import type { Database } from '../../../../lib/types/database';
 import {
   withRequiredAuth,
   createSuccessResponse,
   createErrorResponse,
   type AuthenticatedHandler,
-} from '../../../../lib/api/with-auth';
-import { ErrorCodes } from '../../../../lib/api/types';
+} from '../../../../lib/api';
+import { ErrorCodes } from '../../../../lib/api';
+import {
+  type NameCategory,
+  type DashboardStats,
+} from '../../../../types/database';
 
-type NameType = Database['public']['Enums']['name_category'];
-
-/**
- * Dashboard statistics response data structure
- */
-interface DashboardStats {
-  // User profile information
-  user_profile: {
-email: string;
-profile_id: string;
-member_since: string;
-  };
-
-  // Name variants statistics
-  name_statistics: {
-total_names: number;
-names_by_type: Record<NameType, number>;
-has_preferred_name: boolean;
-  };
-
-  // Context and consent statistics
-  context_statistics: {
-custom_contexts: number;
-active_consents: number;
-pending_consent_requests: number;
-  };
-
-  // Activity and privacy metrics
-  activity_metrics: {
-recent_activity_count: number; // Last 7 days
-api_calls_today: number;
-total_api_calls: number;
-  };
-
-  // Privacy score calculation
-  privacy_metrics: {
-privacy_score: number; // 0-100 scale
-gdpr_compliance_status: 'compliant' | 'needs_attention';
-audit_retention_days: number;
-  };
-}
+// Using centralized DashboardStats type from database types
 
 /**
  * Authenticated handler for dashboard statistics retrieval
@@ -177,11 +140,13 @@ timestamp,
 
 // Process name statistics
 const names = namesResult.data || [];
-const namesByType: Record<NameType, number> = {
+const namesByType: Record<NameCategory, number> = {
   LEGAL: 0,
   PREFERRED: 0,
   NICKNAME: 0,
   ALIAS: 0,
+  PROFESSIONAL: 0,
+  CULTURAL: 0,
 };
 
 let hasPreferredName = false;

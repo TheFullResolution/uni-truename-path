@@ -70,10 +70,6 @@ test('should allow public routes without authentication', async ({
   await page.goto('/');
   await expect(page).toHaveURL('/');
 
-  // Demo page accessible
-  await page.goto('/demo');
-  await expect(page).toHaveURL('/demo');
-
   // Login page itself accessible
   await page.goto('/auth/login');
   await expect(page).toHaveURL('/auth/login');
@@ -138,7 +134,12 @@ test('should accept API requests with valid authentication', async ({
   const { userId, token } =
 await AuthTestHelper.createTestUserSession(testEmail);
   await DatabaseTestHelper.createProfile(testEmail);
-  await DatabaseTestHelper.createTestName(userId, 'Test Name', 'PREFERRED');
+  await DatabaseTestHelper.createTestName(
+userId,
+'Test Name',
+'PREFERRED',
+true,
+  );
 
   // Test authenticated API request
   const apiResponse = await page.request.get(`/api/names/${userId}`, {

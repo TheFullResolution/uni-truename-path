@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Container, Stack, Text, Loader, Center, Card } from '@mantine/core';
-import { useAuth } from '../../lib/context/AuthProvider';
+import { useAuth } from '../../lib/context';
 
 interface AuthGuardProps {
   children: React.ReactNode;

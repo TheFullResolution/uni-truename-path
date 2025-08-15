@@ -32,7 +32,7 @@ await AuthTestHelper.createTestUserSession(testEmail);
 'Content-Type': 'application/json',
   },
   data: {
-contextName: 'Work Colleagues',
+context_name: 'Work Colleagues',
 description: 'Professional contacts at the office',
   },
 },
@@ -74,7 +74,7 @@ await AuthTestHelper.createTestUserSession(testEmail);
 'Content-Type': 'application/json',
   },
   data: {
-contextName: 'Gaming Friends',
+context_name: 'Gaming Friends',
   },
 },
   );
@@ -101,7 +101,7 @@ headers: {
   'Content-Type': 'application/json',
 },
 data: {
-  contextName: 'Unique Context',
+  context_name: 'Unique Context',
   description: 'First context',
 },
   });
@@ -115,7 +115,7 @@ data: {
 'Content-Type': 'application/json',
   },
   data: {
-contextName: 'Unique Context',
+context_name: 'Unique Context',
 description: 'Duplicate attempt',
   },
 },
@@ -143,7 +143,7 @@ test('should require authentication', async ({ request }) => {
 'Content-Type': 'application/json',
   },
   data: {
-contextName: 'Test Context',
+context_name: 'Test Context',
   },
 },
   );
@@ -156,7 +156,7 @@ contextName: 'Test Context',
   });
 
   test.describe('GET /api/contexts - List Contexts', () => {
-test('should return empty list for new user', async ({ request }) => {
+test('should return default contexts for new user', async ({ request }) => {
   const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
   const testEmail = `test-contexts-${uniqueId}@example.com`;
 
@@ -175,7 +175,11 @@ headers: {
   expect(body).toMatchObject({
 success: true,
 data: {
-  contexts: [],
+  contexts: expect.arrayContaining([
+expect.objectContaining({ context_name: 'Professional' }),
+expect.objectContaining({ context_name: 'Social' }),
+expect.objectContaining({ context_name: 'Public' }),
+  ]),
 },
 requestId: expect.any(String),
 timestamp: expect.any(String),
@@ -196,7 +200,7 @@ headers: {
   'Content-Type': 'application/json',
 },
 data: {
-  contextName: 'Context One',
+  context_name: 'Context One',
   description: 'First context',
 },
   });
@@ -207,7 +211,7 @@ headers: {
   'Content-Type': 'application/json',
 },
 data: {
-  contextName: 'Context Two',
+  context_name: 'Context Two',
 },
   });
 
@@ -221,7 +225,7 @@ headers: {
   const body = await response.json();
 
   expect(body.success).toBe(true);
-  expect(body.data.contexts).toHaveLength(2);
+  expect(body.data.contexts).toHaveLength(5); // 3 default + 2 created
 
   // Check that contexts include statistics
   for (const context of body.data.contexts) {
@@ -262,7 +266,7 @@ await AuthTestHelper.createTestUserSession(testEmail);
 'Content-Type': 'application/json',
   },
   data: {
-contextName: 'Original Name',
+context_name: 'Original Name',
 description: 'Original description',
   },
 },
@@ -280,7 +284,7 @@ description: 'Original description',
 'Content-Type': 'application/json',
   },
   data: {
-contextName: 'Updated Name',
+context_name: 'Updated Name',
 description: 'Updated description',
   },
 },
@@ -320,7 +324,7 @@ await AuthTestHelper.createTestUserSession(testEmail);
 'Content-Type': 'application/json',
   },
   data: {
-contextName: 'To Be Deleted',
+context_name: 'To Be Deleted',
 description: 'This context will be deleted',
   },
 },

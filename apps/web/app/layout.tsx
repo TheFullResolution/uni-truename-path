@@ -8,8 +8,7 @@ import {
 } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import { theme } from '../lib/theme';
-import { AuthProvider } from '../lib/context/AuthProvider';
-import { AuthErrorBoundary } from '../components/AuthErrorBoundary';
+import { AuthProvider } from '../lib/context';
 
 export const metadata = {
   title: 'TrueNamePath - Context-Aware Identity Management',
@@ -25,6 +24,8 @@ export default function RootLayout({
   return (
 <html lang='en' {...mantineHtmlProps}>
   <head>
+<title>{metadata.title}</title>
+<meta name='description' content={metadata.description} />
 <ColorSchemeScript />
 <link rel='shortcut icon' href='/favicon.ico' />
 <link
@@ -53,9 +54,7 @@ export default function RootLayout({
   <body>
 <MantineProvider theme={theme}>
   <Notifications />
-  <AuthErrorBoundary>
-<AuthProvider>{children}</AuthProvider>
-  </AuthErrorBoundary>
+  <AuthProvider>{children}</AuthProvider>
 </MantineProvider>
   </body>
 </html>

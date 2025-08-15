@@ -10,15 +10,16 @@ import {
   createSuccessResponse,
   createErrorResponse,
   type AuthenticatedHandler,
-} from '../../../lib/api/with-auth';
-import { ErrorCodes } from '../../../lib/api/types';
+} from '../../../lib/api';
+import { ErrorCodes } from '../../../lib/api';
+// Removed unused import from centralized database types
 import { z } from 'zod';
 
 /**
  * Input validation schema for creating a context
  */
 const CreateContextSchema = z.object({
-  contextName: z
+  context_name: z
 .string()
 .min(1, 'Context name cannot be empty')
 .max(100, 'Context name cannot exceed 100 characters')
@@ -33,7 +34,7 @@ const CreateContextSchema = z.object({
 });
 
 /**
- * Response type for context with statistics
+ * Response type for context with statistics - omits user_id for security
  */
 interface ContextWithStats {
   id: string;
@@ -64,7 +65,7 @@ const { data: existingContext, error: checkError } = await context.supabase
   .from('user_contexts')
   .select('id')
   .eq('user_id', context.user!.id)
-  .eq('context_name', validatedData.contextName)
+  .eq('context_name', validatedData.context_name)
   .maybeSingle();
 
 if (checkError) {
@@ -83,7 +84,7 @@ if (existingContext) {
 ErrorCodes.VALIDATION_ERROR,
 'Context name already exists',
 context.requestId,
-{ contextName: validatedData.contextName },
+{ context_name: validatedData.context_name },
 context.timestamp,
   );
 }
@@ -93,7 +94,7 @@ const { data: newContext, error: createError } = await context.supabase
   .from('user_contexts')
   .insert({
 user_id: context.user!.id,
-context_name: validatedData.contextName,
+context_name: validatedData.context_name,
 description: validatedData.description,
   })
   .select('id, context_name, description, created_at, updated_at')
@@ -108,7 +109,7 @@ return createErrorResponse(
   ErrorCodes.VALIDATION_ERROR,
   'Context name already exists',
   context.requestId,
-  { contextName: validatedData.contextName },
+  { context_name: validatedData.context_name },
   context.timestamp,
 );
   }

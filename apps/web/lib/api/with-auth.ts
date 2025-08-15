@@ -4,16 +4,20 @@
 // Academic project infrastructure for consistent API patterns
 
 import { NextRequest, NextResponse } from 'next/server';
-import { apiAuth, type AuthenticatedUser, createClientWithToken } from '../auth/server';
-import { 
-  type StandardSuccessResponse, 
+import { Database } from '../../types/generated';
+import {
+  apiAuth,
+  type AuthenticatedUser,
+  createClientWithToken,
+} from '../auth/server';
+import {
+  type StandardSuccessResponse,
   type StandardErrorResponse,
   type StandardResponse,
   type ErrorCode,
-  getStatusCode 
+  getStatusCode,
 } from './types';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '../types/database';
 
 /**
  * Authentication modes for API routes
@@ -49,12 +53,15 @@ export interface WithAuthOptions {
    * - 'optional': Route allows both authenticated and unauthenticated requests
    */
   authMode: AuthMode;
-  
+
   /**
    * Optional custom error handler for authentication failures
    */
-  onAuthError?: (error: { code: string; message: string }, requestId: string) => StandardErrorResponse;
-  
+  onAuthError?: (
+error: { code: string; message: string },
+requestId: string,
+  ) => StandardErrorResponse;
+
   /**
    * Enable request logging for debugging and monitoring
    */
@@ -71,7 +78,7 @@ function generateRequestId(): string {
 
 /**
  * Higher-order function that wraps API route handlers with standardized authentication
- * 
+ *
  * Features:
  * - Consistent authentication patterns across all API routes
  * - Standardized JSend response format
@@ -80,11 +87,11 @@ function generateRequestId(): string {
  * - Comprehensive error handling with proper HTTP status codes
  * - TypeScript-first design with proper type inference
  * - Integration with existing Supabase-based authentication system
- * 
+ *
  * @param handler - The API route handler to wrap with authentication
  * @param options - Configuration options for authentication behavior
  * @returns Wrapped handler that returns standardized responses
- * 
+ *
  * @example
  * ```typescript
  * // Required authentication
@@ -100,14 +107,14 @@ function generateRequestId(): string {
  *   },
  *   { authMode: 'required' }
  * );
- * 
+ *
  * // Optional authentication
  * export const GET = withAuth(
  *   async (request, context) => {
- * const message = context.isAuthenticated 
- *   ? `Hello ${context.user?.email}` 
+ * const message = context.isAuthenticated
+ *   ? `Hello ${context.user?.email}`
  *   : 'Hello anonymous user';
- * 
+ *
  * return {
  *   success: true,
  *   data: { message },
@@ -128,7 +135,8 @@ const requestId = generateRequestId();
 const timestamp = new Date().toISOString();
 
 // Enable logging if configured
-const shouldLog = options.enableLogging ?? process.env.NODE_ENV === 'development';
+const shouldLog =
+  options.enableLogging ?? process.env.NODE_ENV === 'development';
 
 try {
   if (shouldLog) {
@@ -136,13 +144,14 @@ console.log(`API Request [${requestId}]:`, {
   method: request.method,
   url: request.url,
   authMode: options.authMode,
-  userAgent: request.headers.get('user-agent')?.substring(0, 50) + '...',
+  userAgent:
+request.headers.get('user-agent')?.substring(0, 50) + '...',
 });
   }
 
   // 1. Perform authentication check
   const authResult = await apiAuth.authenticateRequest(request);
-  
+
   // 2. Handle authentication based on mode
   if (options.authMode === 'required') {
 if (authResult.error || !authResult.user) {
@@ -151,15 +160,19 @@ authResult.error?.code || 'AUTHENTICATION_REQUIRED',
 authResult.error?.message || 'Authentication required',
 requestId,
 undefined,
-timestamp
+timestamp,
   );
 
   // Allow custom error handler to override default behavior
-  const finalError = options.onAuthError 
-? options.onAuthError({
-code: authResult.error?.code || 'AUTHENTICATION_REQUIRED',
-message: authResult.error?.message || 'Authentication required'
-  }, requestId)
+  const finalError = options.onAuthError
+? options.onAuthError(
+{
+  code: authResult.error?.code || 'AUTHENTICATION_REQUIRED',
+  message:
+authResult.error?.message || 'Authentication required',
+},
+requestId,
+  )
 : errorResponse;
 
   if (shouldLog) {
@@ -169,7 +182,7 @@ console.warn(`API Auth Failure [${requestId}]:`, {
 });
   }
 
-  return NextResponse.json(finalError, { 
+  return NextResponse.json(finalError, {
 status: 401,
 headers: {
   'Content-Type': 'application/json',
@@ -183,10 +196,10 @@ headers: {
   // Extract token for client creation (if using header-based auth)
   const authHeader = request.headers.get('authorization');
   const token = authHeader ? authHeader.replace('Bearer ', '') : undefined;
-  
+
   // Create authenticated client (uses token if available, otherwise cookies)
   const authenticatedClient = await createClientWithToken(token);
-  
+
   const context: AuthenticatedContext = {
 user: authResult.user,
 requestId,
@@ -225,7 +238,6 @@ headers: {
   'X-Request-ID': requestId,
 },
   });
-
 } catch (error) {
   // Handle unexpected errors in the authentication wrapper
   console.error(`API Wrapper Error [${requestId}]:`, {
@@ -238,10 +250,12 @@ url: request.url,
 'INTERNAL_SERVER_ERROR',
 'Internal server error occurred',
 requestId,
-process.env.NODE_ENV === 'development' 
-  ? { message: error instanceof Error ? error.message : 'Unknown error' }
+process.env.NODE_ENV === 'development'
+  ? {
+  message: error instanceof Error ? error.message : 'Unknown error',
+}
   : undefined,
-timestamp
+timestamp,
   );
 
   return NextResponse.json(errorResponse, {

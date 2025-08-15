@@ -51,7 +51,32 @@ expect(names).toHaveLength(3);
 const contexts = await DatabaseTestHelper.getUserContexts(
   userData.profile.id!,
 );
-expect(contexts).toHaveLength(3);
+
+// Debug: Log actual contexts found
+console.log('Found contexts:', contexts.length);
+contexts.forEach((c) => console.log('  -', c.context_name, c.description));
+
+// Migration 023 creates 3 default contexts (Professional, Social, Public) for every new user
+// Test creates 3 additional contexts, so we should expect 6 total contexts
+expect(contexts).toHaveLength(6);
+
+// Verify the 3 default contexts exist
+const defaultContextNames = ['Professional', 'Social', 'Public'];
+const defaultContexts = contexts.filter((c) =>
+  defaultContextNames.includes(c.context_name),
+);
+expect(defaultContexts).toHaveLength(3);
+
+// Verify the 3 test-created contexts exist
+const testContextNames = [
+  'Legal Documents',
+  'Professional Work',
+  'Close Friends',
+];
+const testContexts = contexts.filter((c) =>
+  testContextNames.includes(c.context_name),
+);
+expect(testContexts).toHaveLength(3);
 
 // Test name resolution per context
 const { data: legalName } = await supabase.rpc('resolve_name', {
@@ -219,7 +244,6 @@ for (const name_type of validTypes) {
 name_text: `Test ${name_type} Name`,
 name_type: name_type as any,
 is_preferred: name_type === 'PREFERRED',
-verified: name_type === 'LEGAL',
 source: 'test_data',
   });
   expect(name.name_type).toBe(name_type);

@@ -39,9 +39,9 @@ const response = await request.post(
   {
 headers: { 'Content-Type': 'application/json' },
 data: {
-  targetUserId: targetUser.id,
-  requesterUserId: requesterUser.id,
-  contextName: 'Professional Network',
+  target_user_id: targetUser.id,
+  requester_user_id: requesterUser.id,
+  context_name: 'Professional Network',
 },
   },
 );
@@ -68,41 +68,55 @@ metadata: {
 });
   });
 
-  test('should reject when requesterUserId equals targetUserId', async ({
+  test('should allow self-resolution (dashboard preview use case)', async ({
 request,
   }) => {
 const uniqueId = Math.random().toString(36).substring(7);
 const user = await DatabaseTestHelper.createTestProfile(`user-${uniqueId}`);
+
+// Create name variants for the user
+await DatabaseTestHelper.createTestName(
+  user.id,
+  'Legal Full Name',
+  'LEGAL',
+);
+await DatabaseTestHelper.createTestName(
+  user.id,
+  'Preferred Name',
+  'PREFERRED',
+);
 
 const response = await request.post(
   'http://localhost:3000/api/names/resolve',
   {
 headers: { 'Content-Type': 'application/json' },
 data: {
-  targetUserId: user.id,
-  requesterUserId: user.id, // Same as target - should fail validation
-  contextName: 'Professional Network',
+  target_user_id: user.id,
+  requester_user_id: user.id, // Same as target - this is legitimate for dashboard preview
+  context_name: 'Professional Network',
 },
   },
 );
 
-expect(response.status()).toBe(400);
+expect(response.status()).toBe(200);
 const data = await response.json();
 
 expect(data).toMatchObject({
-  success: false,
-  error: {
-code: 'VALIDATION_ERROR',
-message: 'Invalid request parameters',
-details: expect.arrayContaining([
-  expect.objectContaining({
-field: 'requesterUserId',
-message: 'Requester user ID cannot be the same as target user ID',
-  }),
-]),
-requestId: expect.any(String),
-timestamp: expect.any(String),
+  success: true,
+  data: {
+name: expect.any(String),
+resolvedAt: expect.any(String),
+source: expect.stringMatching(
+  /^(consent|context|preferred|preferred_fallback)$/,
+),
+metadata: {
+  resolutionTimestamp: expect.any(String),
+  hadRequester: true,
+  requestedContext: 'Professional Network',
+},
   },
+  requestId: expect.any(String),
+  timestamp: expect.any(String),
 });
   });
 
@@ -142,9 +156,9 @@ const response = await request.post(
   {
 headers: { 'Content-Type': 'application/json' },
 data: {
-  targetUserId: 'invalid-uuid-format',
-  requesterUserId: '550e8400-e29b-41d4-a716-446655440001',
-  contextName: 'Professional Network',
+  target_user_id: 'invalid-uuid-format',
+  requester_user_id: '550e8400-e29b-41d4-a716-446655440001',
+  context_name: 'Professional Network',
 },
   },
 );
@@ -159,7 +173,7 @@ code: 'VALIDATION_ERROR',
 message: 'Invalid request parameters',
 details: expect.arrayContaining([
   expect.objectContaining({
-field: 'targetUserId',
+field: 'target_user_id',
 message: 'Target user ID must be a valid UUID',
   }),
 ]),
@@ -178,8 +192,8 @@ const response = await request.post(
   {
 headers: { 'Content-Type': 'application/json' },
 data: {
-  targetUserId: user.id,
-  contextName: 'Invalid@Context#Name!', // Contains invalid characters
+  target_user_id: user.id,
+  context_name: 'Invalid@Context#Name!', // Contains invalid characters
 },
   },
 );
@@ -194,7 +208,7 @@ code: 'VALIDATION_ERROR',
 message: 'Invalid request parameters',
 details: expect.arrayContaining([
   expect.objectContaining({
-field: 'contextName',
+field: 'context_name',
 message: 'Context name contains invalid characters',
   }),
 ]),
@@ -210,9 +224,9 @@ const response = await request.post(
   {
 headers: { 'Content-Type': 'application/json' },
 data: {
-  // Missing targetUserId
-  requesterUserId: '550e8400-e29b-41d4-a716-446655440001',
-  contextName: 'Professional Network',
+  // Missing target_user_id
+  requester_user_id: '550e8400-e29b-41d4-a716-446655440001',
+  context_name: 'Professional Network',
 },
   },
 );
@@ -227,7 +241,7 @@ code: 'VALIDATION_ERROR',
 message: 'Invalid request parameters',
 details: expect.arrayContaining([
   expect.objectContaining({
-field: 'targetUserId',
+field: 'target_user_id',
 message: 'Invalid input',
   }),
 ]),
@@ -313,8 +327,8 @@ const response = await request.post(
   {
 headers: { 'Content-Type': 'application/json' },
 data: {
-  targetUserId: targetUser.id,
-  contextName: 'Public Context',
+  target_user_id: targetUser.id,
+  context_name: 'Public Context',
 },
   },
 );

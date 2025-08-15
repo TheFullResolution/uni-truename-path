@@ -1567,11 +1567,11 @@ cookie: "npm:^1.0.1"
   linkType: hard
 
 "@supabase/storage-js@npm:^2.10.4":
-  version: 2.10.5
-  resolution: "@supabase/storage-js@npm:2.10.5"
+  version: 2.11.0
+  resolution: "@supabase/storage-js@npm:2.11.0"
   dependencies:
 "@supabase/node-fetch": "npm:^2.6.14"
-  checksum: 10/a405002d2fd575c47da672c45c7eee497aa3f3e8ee8a42d3dd2e0fad56352378e678b5dfda3b1aeb2ddfea08d95e2a6ab24f244cc844a72786923e8e3bd7d26d
+  checksum: 10/71765f4fa0f209659ac39ee42e5d706e0567367d1c2ec2e3c136d63759a1cccb091b6687fcaa7614be15ccf8ae060c96aff8a5d0816c3502d3d293aa6a0aa272
   languageName: node
   linkType: hard
 
@@ -2317,18 +2317,6 @@ eslint-visitor-keys: "npm:^4.2.1"
   checksum: 10/6d4e4d0b19ebb3f21b692bbb0dcf9961876ca28cdf502296888a78eb4cd802a2ec8d3d5721d19970411edfd1c06f3e272e4057014c859ee1f0546804d07945e3
   languageName: node
   linkType: hard
-
-"@uni-final-project/database@workspace:*, @uni-final-project/database@workspace:packages/database":
-  version: 0.0.0-use.local
-  resolution: "@uni-final-project/database@workspace:packages/database"
-  dependencies:
-"@supabase/ssr": "npm:^0.6.1"
-"@supabase/supabase-js": "npm:^2.55.0"
-"@vitest/coverage-v8": "npm:^3.2.4"
-typescript: "npm:5.8.3"
-vitest: "npm:^3.2.4"
-  languageName: unknown
-  linkType: soft
 
 "@unrs/resolver-binding-darwin-arm64@npm:1.7.2":
   version: 1.7.2
@@ -3986,6 +3974,13 @@ esprima: "npm:^4.0.1"
   dependencies:
 robust-predicates: "npm:^3.0.2"
   checksum: 10/c378a55138d81d471a7214635b1a2c5e74f8ee06582f558df72f0c7c82c25868599ce9a18fb25a245c6c03cab886d17fb574681c78371b539dd069818703f53a
+  languageName: node
+  linkType: hard
+
+"dequal@npm:^2.0.3":
+  version: 2.0.3
+  resolution: "dequal@npm:2.0.3"
+  checksum: 10/6ff05a7561f33603df87c45e389c9ac0a95e3c056be3da1a0c4702149e3a7f6fe5ffbb294478687ba51a9e95f3a60e8b6b9005993acd79c292c7d15f71964b6b
   languageName: node
   linkType: hard
 
@@ -8302,6 +8297,18 @@ has-flag: "npm:^4.0.0"
   languageName: node
   linkType: hard
 
+"swr@npm:^2.3.6":
+  version: 2.3.6
+  resolution: "swr@npm:2.3.6"
+  dependencies:
+dequal: "npm:^2.0.3"
+use-sync-external-store: "npm:^1.4.0"
+  peerDependencies:
+react: ^16.11.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: 10/9948b2d92827c6118b6a66d067fbfd311950d6456180fa7be8ec59aab58634da3d2ba117535ca793c801cf0d676a392c5e48c46f5baf7050b813943d93344388
+  languageName: node
+  linkType: hard
+
 "symbol-tree@npm:^3.2.4":
   version: 3.2.4
   resolution: "symbol-tree@npm:3.2.4"
@@ -8816,12 +8823,13 @@ which-boxed-primitive: "npm:^1.1.1"
 "@mantine/form": "npm:^8.2.4"
 "@mantine/hooks": "npm:8.2.4"
 "@mantine/notifications": "npm:^8.2.4"
+"@supabase/ssr": "npm:^0.6.1"
+"@supabase/supabase-js": "npm:^2.55.0"
 "@tabler/icons-react": "npm:^3.34.1"
 "@types/jsdom": "npm:^21.1.7"
 "@types/node": "npm:24.2.1"
 "@types/react": "npm:19.1.9"
 "@types/react-dom": "npm:19.1.7"
-"@uni-final-project/database": "workspace:*"
 "@vitest/coverage-v8": "npm:^3.2.4"
 "@vitest/ui": "npm:^3.2.4"
 eslint: "npm:9.33.0"
@@ -8833,6 +8841,7 @@ postcss-preset-mantine: "npm:1.18.0"
 postcss-simple-vars: "npm:^7.0.1"
 react: "npm:^19.1.1"
 react-dom: "npm:^19.1.1"
+swr: "npm:^2.3.6"
 typescript: "npm:5.8.3"
 vitest: "npm:^3.2.4"
 zod: "npm:^4.0.17"
@@ -9017,7 +9026,7 @@ react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc
   languageName: node
   linkType: hard
 
-"use-sync-external-store@npm:^1.5.0":
+"use-sync-external-store@npm:^1.4.0, use-sync-external-store@npm:^1.5.0":
   version: 1.5.0
   resolution: "use-sync-external-store@npm:1.5.0"
   peerDependencies:
@@ -9407,7 +9416,7 @@ strip-ansi: "npm:^7.0.1"
   languageName: node
   linkType: hard
 
-"ws@npm:^8.18.0, ws@npm:^8.18.2":
+"ws@npm:^8.18.0":
   version: 8.18.2
   resolution: "ws@npm:8.18.2"
   peerDependencies:
@@ -9422,7 +9431,7 @@ utf-8-validate:
   languageName: node
   linkType: hard
 
-"ws@npm:^8.18.3":
+"ws@npm:^8.18.2, ws@npm:^8.18.3":
   version: 8.18.3
   resolution: "ws@npm:8.18.3"
   peerDependencies:

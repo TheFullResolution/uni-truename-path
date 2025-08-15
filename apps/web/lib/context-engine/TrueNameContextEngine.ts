@@ -5,7 +5,7 @@
 
 import { createClient } from '../../utils/supabase/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '../types/database';
+import { Database } from '../../types/generated';
 
 /**
  * Parameters for name resolution request
@@ -86,12 +86,12 @@ interface AuditEvent {
 
 /**
  * TrueNameContextEngine - Core business logic class
- * 
+ *
  * Implements the 3-layer priority resolution system:
  * 1. Consent-based resolution (highest priority)
- * 2. Context-specific resolution (medium priority) 
+ * 2. Context-specific resolution (medium priority)
  * 3. Preferred name fallback (lowest priority)
- * 
+ *
  * Designed for academic demonstration with comprehensive metadata,
  * audit logging, and performance monitoring capabilities.
  */
@@ -125,13 +125,13 @@ return this.supabase;
 
   /**
    * Main resolution method implementing 3-layer priority system
-   * 
+   *
    * Returns comprehensive metadata for academic evaluation:
    * - Resolution source and timestamp
    * - Context and consent details where applicable
    * - Fallback reasoning for transparency
    * - Performance metrics for benchmarking
-   * 
+   *
    * @param params Resolution parameters
    * @returns Complete name resolution with metadata
    */
@@ -141,7 +141,10 @@ const startTime = this.getPerformanceTime();
 try {
   // Priority 1: Consent-based resolution (highest priority)
   if (params.requesterUserId) {
-const consentResult = await this.resolveNameWithConsent(params, startTime);
+const consentResult = await this.resolveNameWithConsent(
+  params,
+  startTime,
+);
 if (consentResult) {
   await this.logAuditEvent({
 targetUserId: params.targetUserId,
@@ -152,14 +155,17 @@ resolvedName: consentResult.name,
 nameId: consentResult.metadata.nameId,
 metadata: consentResult.metadata,
   });
-  
+
   return consentResult;
 }
   }
 
   // Priority 2: Context-specific resolution (medium priority)
   if (params.contextName && params.contextName.trim() !== '') {
-const contextResult = await this.resolveNameWithContext(params, startTime);
+const contextResult = await this.resolveNameWithContext(
+  params,
+  startTime,
+);
 if (contextResult) {
   await this.logAuditEvent({
 targetUserId: params.targetUserId,
@@ -170,14 +176,17 @@ resolvedName: contextResult.name,
 nameId: contextResult.metadata.nameId,
 metadata: contextResult.metadata,
   });
-  
+
   return contextResult;
 }
   }
 
   // Priority 3: Preferred name fallback (lowest priority)
-  const fallbackResult = await this.resolveNameWithFallback(params, startTime);
-  
+  const fallbackResult = await this.resolveNameWithFallback(
+params,
+startTime,
+  );
+
   await this.logAuditEvent({
 targetUserId: params.targetUserId,
 requesterUserId: params.requesterUserId,
@@ -187,9 +196,8 @@ resolvedName: fallbackResult.name,
 nameId: fallbackResult.metadata.nameId,
 metadata: fallbackResult.metadata,
   });
-  
-  return fallbackResult;
 
+  return fallbackResult;
 } catch (error) {
   console.error('TrueNameContextEngine: Resolution error:', error);
 
@@ -225,10 +233,10 @@ metadata: errorResult.metadata,
 
   /**
    * Priority 1: Consent-based resolution
-   * 
+   *
    * Checks for active consent between target and requester users.
    * Uses get_active_consent() helper function from Migration 19.
-   * 
+   *
    * @param params Resolution parameters
    * @param startTime Performance tracking start time
    * @returns Name resolution or null if no consent found
@@ -241,7 +249,7 @@ if (!params.requesterUserId) return null;
 
 try {
   const supabase = await this.getSupabaseClient();
-  
+
   // Call helper function from Migration 19
   const { data: consent, error } = await supabase.rpc(
 'get_active_consent',
@@ -262,7 +270,7 @@ const consentRecord = consent[0] as ConsentRecord;
 // Get the associated name for this consent
 const nameId = await this.getNameIdFromConsent(
   consentRecord.context_id,
-  params.targetUserId
+  params.targetUserId,
 );
 
 if (!nameId) {
@@ -310,10 +318,10 @@ hadRequester: true,
 
   /**
    * Priority 2: Context-specific resolution
-   * 
+   *
    * Looks up direct name assignment for user-defined context.
    * Uses get_context_assignment() helper function from Migration 19.
-   * 
+   *
    * @param params Resolution parameters
    * @param startTime Performance tracking start time
    * @returns Name resolution or null if no assignment found
@@ -326,7 +334,7 @@ if (!params.contextName) return null;
 
 try {
   const supabase = await this.getSupabaseClient();
-  
+
   // Call helper function from Migration 19
   const { data: assignment, error } = await supabase.rpc(
 'get_context_assignment',
@@ -370,10 +378,10 @@ hadRequester: !!params.requesterUserId,
 
   /**
    * Priority 3: Preferred name fallback with intelligent reasoning
-   * 
+   *
    * Uses get_preferred_name() helper function from Migration 19.
    * Provides detailed fallback reasoning for academic transparency.
-   * 
+   *
    * @param params Resolution parameters
    * @param startTime Performance tracking start time
    * @returns Name resolution (always succeeds with fallback logic)
@@ -384,7 +392,7 @@ startTime: number,
   ): Promise<NameResolution> {
 try {
   const supabase = await this.getSupabaseClient();
-  
+
   // Call helper function from Migration 19
   const { data: preferredName, error } = await supabase.rpc(
 'get_preferred_name',
@@ -425,12 +433,16 @@ error: error.message,
   }
 
   const name =
-preferredName && Array.isArray(preferredName) && preferredName.length > 0
+preferredName &&
+Array.isArray(preferredName) &&
+preferredName.length > 0
   ? (preferredName[0] as PreferredNameRecord).name_text
   : 'Anonymous User';
 
-  const nameId = 
-preferredName && Array.isArray(preferredName) && preferredName.length > 0
+  const nameId =
+preferredName &&
+Array.isArray(preferredName) &&
+preferredName.length > 0
   ? (preferredName[0] as PreferredNameRecord).name_id
   : undefined;
 
@@ -456,18 +468,18 @@ metadata: {
   /**
    * Helper method to get name ID from consent context
    * Handles the join between consents and context_name_assignments
-   * 
+   *
    * @param contextId Context ID from consent
    * @param userId Target user ID
    * @returns Name ID or null if not found
    */
   private async getNameIdFromConsent(
 contextId: string,
-userId: string
+userId: string,
   ): Promise<string | null> {
 try {
   const supabase = await this.getSupabaseClient();
-  
+
   const { data, error } = await supabase
 .from('context_name_assignments')
 .select('name_id')
@@ -489,19 +501,19 @@ return null;
 
   /**
    * Comprehensive audit logging matching SQL function behavior
-   * 
+   *
    * Maintains GDPR-compliant audit trail with:
    * - Complete resolution metadata
    * - Performance metrics
    * - Error tracking
    * - Context-aware logging
-   * 
+   *
    * @param event Audit event to log
    */
   private async logAuditEvent(event: AuditEvent): Promise<void> {
 try {
   const supabase = await this.getSupabaseClient();
-  
+
   const { error } = await supabase.from('audit_log_entries').insert({
 target_user_id: event.targetUserId,
 requester_user_id: event.requesterUserId || null,
@@ -534,14 +546,14 @@ console.error('Audit logging error:', error);
   /**
    * Simple name resolution for basic use cases
    * Wrapper around main resolveName method for convenience
-   * 
+   *
    * @param targetUserId Target user ID
    * @param contextName Optional context name
    * @returns Just the resolved name string
    */
   async resolveNameSimple(
 targetUserId: string,
-contextName?: string
+contextName?: string,
   ): Promise<string> {
 const result = await this.resolveName({
   targetUserId,
@@ -553,27 +565,27 @@ return result.name;
   /**
    * Batch name resolution for multiple users
    * Optimized for multiple resolution requests
-   * 
+   *
    * @param requests Array of resolution requests
    * @returns Array of name resolutions maintaining order
    */
   async resolveNamesAsync(
-requests: ResolveNameParams[]
+requests: ResolveNameParams[],
   ): Promise<NameResolution[]> {
-const promises = requests.map(params => this.resolveName(params));
+const promises = requests.map((params) => this.resolveName(params));
 return Promise.all(promises);
   }
 
   /**
    * Performance benchmarking for academic evaluation
-   * 
+   *
    * @param params Resolution parameters
    * @param iterations Number of iterations to run
    * @returns Performance statistics
    */
   async benchmark(
 params: ResolveNameParams,
-iterations: number = 10
+iterations: number = 10,
   ): Promise<{
 iterations: number;
 averageMs: number;
@@ -609,22 +621,19 @@ return {
    * Falls back to Date.now() if performance API unavailable
    */
   private getPerformanceTime(): number {
-return typeof performance !== 'undefined' 
-  ? performance.now() 
-  : Date.now();
+return typeof performance !== 'undefined' ? performance.now() : Date.now();
   }
-
 }
 
 /**
  * Factory function for creating TrueNameContextEngine instances
  * Useful for dependency injection and testing scenarios
- * 
+ *
  * @param supabaseClient Optional Supabase client
  * @returns New TrueNameContextEngine instance
  */
 export function createTrueNameContextEngine(
-  supabaseClient?: SupabaseClient<Database>
+  supabaseClient?: SupabaseClient<Database>,
 ): TrueNameContextEngine {
   return new TrueNameContextEngine(supabaseClient);
 }
@@ -636,7 +645,7 @@ export class TrueNameEngineError extends Error {
   constructor(
 message: string,
 public readonly code: string,
-public readonly metadata?: Record<string, unknown>
+public readonly metadata?: Record<string, unknown>,
   ) {
 super(message);
 this.name = 'TrueNameEngineError';

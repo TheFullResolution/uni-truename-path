@@ -1,4 +1,5 @@
 import { createBrowserClient } from '@supabase/ssr';
+import { Database } from '../../types/generated';
 
 export function createClient() {
   // Validate environment variables at runtime
@@ -16,7 +17,7 @@ throw new Error(
   }
 
   try {
-return createBrowserClient(supabaseUrl, supabaseAnonKey);
+return createBrowserClient<Database>(supabaseUrl, supabaseAnonKey);
   } catch (error) {
 console.error('Failed to create Supabase browser client:', error);
 throw new Error('Failed to initialize Supabase client');

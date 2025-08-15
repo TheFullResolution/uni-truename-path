@@ -3,7 +3,7 @@
 // Date: August 12, 2025
 
 import { createClient } from '../../utils/supabase/server';
-import type { Database } from '../types/database';
+import { Database } from '../../types/generated';
 
 /**
  * Server-side authentication utilities for JWT Signing Keys system
@@ -123,7 +123,9 @@ export const extractTokenFromHeader = (
 export const createClientWithToken = async (accessToken?: string) => {
   if (accessToken) {
 // Token-based authentication: create client with explicit token
-const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+const { createClient: createSupabaseClient } = await import(
+  '@supabase/supabase-js'
+);
 return createSupabaseClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -133,7 +135,7 @@ global: {
 Authorization: `Bearer ${accessToken}`,
   },
 },
-  }
+  },
 );
   } else {
 // Cookie-based authentication: use existing SSR client
@@ -150,13 +152,12 @@ export const apiAuth = {
    * Uses the same cookie-based authentication as middleware for consistency
    * @param request Next.js request object
    */
-  authenticateRequest: async (
-request: Request,
-  ): Promise<AuthResponse> => {
+  authenticateRequest: async (request: Request): Promise<AuthResponse> => {
 try {
   // First, try cookie-based authentication (consistent with middleware)
   const supabase = await createClient();
-  const { data: authData, error: authError } = await supabase.auth.getUser();
+  const { data: authData, error: authError } =
+await supabase.auth.getUser();
 
   if (!authError && authData.user) {
 // Success with cookie authentication

@@ -17,12 +17,12 @@ import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
 import { IconAlertCircle, IconCheck, IconX } from '@tabler/icons-react';
 import { z } from 'zod';
-import { useAuth } from '../lib/context/AuthProvider';
-import { getErrorMessage, getErrorAction } from '../lib/auth/error-mapping';
+import { useAuth } from '../lib/context';
+import { getErrorMessage, getErrorAction } from '../lib/auth';
 
 // Validation schema for login form
 const loginSchema = z.object({
-  email: z.string().email({ message: 'Invalid email address' }),
+  email: z.email({ message: 'Invalid email address' }),
   password: z
 .string()
 .min(8, { message: 'Password must be at least 8 characters long' }),

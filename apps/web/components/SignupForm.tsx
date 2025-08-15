@@ -18,13 +18,13 @@ import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
 import { IconAlertCircle, IconCheck, IconX } from '@tabler/icons-react';
 import { z } from 'zod';
-import { useAuth } from '../lib/context/AuthProvider';
-import { getErrorMessage, getErrorAction } from '../lib/auth/error-mapping';
+import { useAuth } from '../lib/context';
+import { getErrorMessage, getErrorAction } from '../lib/auth';
 
 // Validation schema for signup form
 const signupSchema = z
   .object({
-email: z.string().email({ message: 'Invalid email address' }),
+email: z.email({ message: 'Invalid email address' }),
 legalName: z
   .string()
   .min(1, { message: 'Legal name is required' })
@@ -57,17 +57,6 @@ allowMarketing: z.boolean().optional(),
 message: 'Passwords do not match',
 path: ['confirmPassword'],
   });
-
-export interface SignupFormData {
-  email: string;
-  legalName: string;
-  preferredName?: string;
-  password: string;
-  confirmPassword: string;
-  agreeToTerms: boolean;
-  consentToProcessing: boolean;
-  allowMarketing?: boolean;
-}
 
 type SignupFormDataInternal = z.infer<typeof signupSchema>;
 

@@ -1,14 +1,6 @@
-import {
-  Container,
-  Title,
-  Text,
-  Button,
-  Stack,
-  Card,
-  Box,
-} from '@mantine/core';
-import Link from 'next/link';
+import { Container, Title, Text, Stack, Card, Box } from '@mantine/core';
 import { LogoWithText } from '../components/branding';
+import { AuthButtons } from '../components/home';
 
 export default function HomePage() {
   return (
@@ -60,40 +52,7 @@ strings. This breaks down when:
 </Stack>
   </Card>
 
-  <Stack gap='md' align='center'>
-<Button
-  component={Link}
-  href='/demo'
-  size='lg'
-  color='brand'
-  variant='filled'
->
-  View Live Demo
-</Button>
-
-<Button
-  component={Link}
-  href='/auth/login'
-  variant='outline'
-  size='md'
-  color='brand'
->
-  Login to TrueNamePath
-</Button>
-  </Stack>
-
-  <Card withBorder p='md' maw={500}>
-<Stack gap='xs'>
-  <Title order={4}>University Final Project</Title>
-  <Text size='sm' c='dimmed'>
-CM3035 Advanced Web Design - Identity & Profile Management API
-  </Text>
-  <Text size='sm' c='dimmed'>
-Demonstrating privacy-by-design, GDPR compliance, and
-context-aware name resolution.
-  </Text>
-</Stack>
-  </Card>
+  <AuthButtons />
 </Stack>
   </Container>
 </Box>

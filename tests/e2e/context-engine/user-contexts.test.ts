@@ -22,7 +22,6 @@ const legalName = await DatabaseTestHelper.createName(profile.id!, {
   name_text: 'Alexandra Smith',
   name_type: 'LEGAL',
   is_preferred: false,
-  verified: true,
   source: 'legal_documents',
 });
 
@@ -30,7 +29,6 @@ const preferredName = await DatabaseTestHelper.createName(profile.id!, {
   name_text: 'Alex',
   name_type: 'PREFERRED',
   is_preferred: true,
-  verified: false,
   source: 'personal_preference',
 });
 
@@ -38,7 +36,6 @@ const alias = await DatabaseTestHelper.createName(profile.id!, {
   name_text: '@CodeAlex',
   name_type: 'ALIAS',
   is_preferred: false,
-  verified: false,
   source: 'online_handle',
 });
 

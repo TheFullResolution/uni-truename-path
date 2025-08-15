@@ -12,13 +12,14 @@ import {
   type AuthenticatedHandler,
 } from '../../../../lib/api/with-auth';
 import { ErrorCodes } from '../../../../lib/api/types';
+// Removed unused import from centralized database types
 import { z } from 'zod';
 
 /**
  * Input validation schema for updating a context
  */
 const UpdateContextSchema = z.object({
-  contextName: z
+  context_name: z
 .string()
 .min(1, 'Context name cannot be empty')
 .max(100, 'Context name cannot exceed 100 characters')
@@ -34,7 +35,7 @@ const UpdateContextSchema = z.object({
 });
 
 /**
- * Context response type
+ * Context response type - omits user_id for security
  */
 interface ContextResponse {
   id: string;
@@ -87,10 +88,13 @@ const body = await request.json();
 const validatedData = UpdateContextSchema.parse(body);
 
 // Check if no updates were provided
-if (!validatedData.contextName && validatedData.description === undefined) {
+if (
+  !validatedData.context_name &&
+  validatedData.description === undefined
+) {
   return createErrorResponse(
 ErrorCodes.VALIDATION_ERROR,
-'At least one field (contextName or description) must be provided for update',
+'At least one field (context_name or description) must be provided for update',
 context.requestId,
 undefined,
 context.timestamp,
@@ -128,15 +132,15 @@ context.timestamp,
 
 // If updating context name, check for duplicates
 if (
-  validatedData.contextName &&
-  validatedData.contextName !== existingContext.context_name
+  validatedData.context_name &&
+  validatedData.context_name !== existingContext.context_name
 ) {
   const { data: duplicateContext, error: duplicateError } =
 await context.supabase
   .from('user_contexts')
   .select('id')
   .eq('user_id', context.user!.id)
-  .eq('context_name', validatedData.contextName)
+  .eq('context_name', validatedData.context_name)
   .neq('id', contextId)
   .maybeSingle();
 
@@ -156,7 +160,7 @@ return createErrorResponse(
   ErrorCodes.VALIDATION_ERROR,
   'Context name already exists',
   context.requestId,
-  { contextName: validatedData.contextName },
+  { context_name: validatedData.context_name },
   context.timestamp,
 );
   }
@@ -171,8 +175,8 @@ const updateData: Partial<{
   updated_at: new Date().toISOString(),
 };
 
-if (validatedData.contextName) {
-  updateData.context_name = validatedData.contextName;
+if (validatedData.context_name) {
+  updateData.context_name = validatedData.context_name;
 }
 
 if (validatedData.description !== undefined) {
@@ -197,7 +201,7 @@ return createErrorResponse(
   ErrorCodes.VALIDATION_ERROR,
   'Context name already exists',
   context.requestId,
-  { contextName: validatedData.contextName },
+  { context_name: validatedData.context_name },
   context.timestamp,
 );
   }
@@ -370,14 +374,15 @@ const forceDelete = url.searchParams.get('force') === 'true';
 
 // If there are impacts and force is not specified, return safeguards info
 if (deletionImpacts.length > 0 && !forceDelete) {
-  return createErrorResponse(
-ErrorCodes.VALIDATION_ERROR,
-'Context has dependencies that will be affected by deletion',
-context.requestId,
+  return createSuccessResponse(
 {
+  context: existingContext,
   safeguards,
-  message: 'Use ?force=true query parameter to proceed with deletion',
+  requiresForce: true,
+  message:
+'Context has dependencies that will be affected by deletion. Use ?force=true to proceed.',
 },
+context.requestId,
 context.timestamp,
   );
 }

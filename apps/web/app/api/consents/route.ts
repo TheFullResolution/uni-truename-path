@@ -19,20 +19,20 @@ import { z } from 'zod';
  */
 const RequestConsentSchema = z.object({
   action: z.literal('request'),
-  granterUserId: z
+  granter_user_id: z
 .string()
 .uuid('Granter user ID must be a valid UUID')
 .min(1, 'Granter user ID is required'),
-  requesterUserId: z
+  requester_user_id: z
 .string()
 .uuid('Requester user ID must be a valid UUID')
 .min(1, 'Requester user ID is required'),
-  contextName: z
+  context_name: z
 .string()
 .min(1, 'Context name cannot be empty')
 .max(100, 'Context name cannot exceed 100 characters')
 .regex(/^[a-zA-Z0-9\s\-_]+$/, 'Context name contains invalid characters'),
-  expiresAt: z
+  expires_at: z
 .string()
 .datetime('Expires at must be a valid ISO datetime')
 .optional()
@@ -41,11 +41,11 @@ const RequestConsentSchema = z.object({
 
 const GrantConsentSchema = z.object({
   action: z.literal('grant'),
-  granterUserId: z
+  granter_user_id: z
 .string()
 .uuid('Granter user ID must be a valid UUID')
 .min(1, 'Granter user ID is required'),
-  requesterUserId: z
+  requester_user_id: z
 .string()
 .uuid('Requester user ID must be a valid UUID')
 .min(1, 'Requester user ID is required'),
@@ -53,11 +53,11 @@ const GrantConsentSchema = z.object({
 
 const RevokeConsentSchema = z.object({
   action: z.literal('revoke'),
-  granterUserId: z
+  granter_user_id: z
 .string()
 .uuid('Granter user ID must be a valid UUID')
 .min(1, 'Granter user ID is required'),
-  requesterUserId: z
+  requester_user_id: z
 .string()
 .uuid('Requester user ID must be a valid UUID')
 .min(1, 'Requester user ID is required'),
@@ -81,29 +81,29 @@ type RevokeConsentRequest = z.infer<typeof RevokeConsentSchema>;
  * Note: Following JSend specification without message field in success responses
  */
 interface RequestConsentData {
-  consentId: string;
+  consent_id: string;
   status: 'PENDING';
-  granterUserId: string;
-  requesterUserId: string;
-  contextName: string;
-  expiresAt?: string;
-  createdAt: string;
+  granter_user_id: string;
+  requester_user_id: string;
+  context_name: string;
+  expires_at?: string;
+  created_at: string;
   message: string; // Business message moved to data payload
 }
 
 interface GrantConsentData {
   granted: boolean;
-  granterUserId: string;
-  requesterUserId: string;
-  grantedAt: string;
+  granter_user_id: string;
+  requester_user_id: string;
+  granted_at: string;
   message: string; // Business message moved to data payload
 }
 
 interface RevokeConsentData {
   revoked: boolean;
-  granterUserId: string;
-  requesterUserId: string;
-  revokedAt: string;
+  granter_user_id: string;
+  requester_user_id: string;
+  revoked_at: string;
   message: string; // Business message moved to data payload
 }
 
@@ -159,8 +159,8 @@ return createErrorResponse(
   }
 
   const isAuthorizedUser =
-params.granterUserId === context.user.id ||
-params.requesterUserId === context.user.id;
+params.granter_user_id === context.user.id ||
+params.requester_user_id === context.user.id;
 
   if (!isAuthorizedUser) {
 return createErrorResponse(
@@ -180,7 +180,7 @@ case 'request': {
   const requestParams = params as RequestConsentRequest;
 
   // Additional business rule validation
-  if (requestParams.granterUserId === requestParams.requesterUserId) {
+  if (requestParams.granter_user_id === requestParams.requester_user_id) {
 return createErrorResponse(
   ErrorCodes.VALIDATION_ERROR,
   'Cannot request consent from yourself',
@@ -191,10 +191,10 @@ return createErrorResponse(
   }
 
   const { data: consentId, error } = await supabase.rpc('request_consent', {
-p_granter_user_id: requestParams.granterUserId,
-p_requester_user_id: requestParams.requesterUserId,
-p_context_name: requestParams.contextName,
-p_expires_at: requestParams.expiresAt || undefined,
+p_granter_user_id: requestParams.granter_user_id,
+p_requester_user_id: requestParams.requester_user_id,
+p_context_name: requestParams.context_name,
+p_expires_at: requestParams.expires_at || undefined,
   });
 
   if (error) {
@@ -208,7 +208,7 @@ if (
   error.message.includes('Context') &&
   error.message.includes('not found')
 ) {
-  errorMessage = `Context "${requestParams.contextName}" not found for granter user`;
+  errorMessage = `Context "${requestParams.context_name}" not found for granter user`;
   errorCode = ErrorCodes.CONTEXT_NOT_FOUND;
 } else if (error.message.includes('cannot be NULL')) {
   errorMessage = 'Invalid user identifiers provided';
@@ -225,22 +225,22 @@ return createErrorResponse(
   }
 
   const responseData: RequestConsentData = {
-consentId: consentId as string,
+consent_id: consentId as string,
 status: 'PENDING',
-granterUserId: requestParams.granterUserId,
-requesterUserId: requestParams.requesterUserId,
-contextName: requestParams.contextName,
-expiresAt: requestParams.expiresAt || undefined,
-createdAt: context.timestamp,
+granter_user_id: requestParams.granter_user_id,
+requester_user_id: requestParams.requester_user_id,
+context_name: requestParams.context_name,
+expires_at: requestParams.expires_at || undefined,
+created_at: context.timestamp,
 message: 'Consent request created successfully',
   };
 
   console.log(`API Request [${context.requestId}] - Consent Request:`, {
 action: 'request',
 consentId: consentId,
-granter: requestParams.granterUserId.substring(0, 8) + '...',
-requester: requestParams.requesterUserId.substring(0, 8) + '...',
-context: requestParams.contextName,
+granter: requestParams.granter_user_id.substring(0, 8) + '...',
+requester: requestParams.requester_user_id.substring(0, 8) + '...',
+context: requestParams.context_name,
   });
 
   // Return success response - status will be set by HOF wrapper to 201
@@ -260,8 +260,8 @@ case 'grant': {
   const grantParams = params as GrantConsentRequest;
 
   const { data: granted, error } = await supabase.rpc('grant_consent', {
-p_granter_user_id: grantParams.granterUserId,
-p_requester_user_id: grantParams.requesterUserId,
+p_granter_user_id: grantParams.granter_user_id,
+p_requester_user_id: grantParams.requester_user_id,
   });
 
   if (error) {
@@ -288,17 +288,17 @@ return createErrorResponse(
 
   const responseData: GrantConsentData = {
 granted: true,
-granterUserId: grantParams.granterUserId,
-requesterUserId: grantParams.requesterUserId,
-grantedAt: context.timestamp,
+granter_user_id: grantParams.granter_user_id,
+requester_user_id: grantParams.requester_user_id,
+granted_at: context.timestamp,
 message: 'Consent granted successfully',
   };
 
   console.log(`API Request [${context.requestId}] - Consent Grant:`, {
 action: 'grant',
 granted: true,
-granter: grantParams.granterUserId.substring(0, 8) + '...',
-requester: grantParams.requesterUserId.substring(0, 8) + '...',
+granter: grantParams.granter_user_id.substring(0, 8) + '...',
+requester: grantParams.requester_user_id.substring(0, 8) + '...',
   });
 
   return createSuccessResponse(
@@ -312,8 +312,8 @@ case 'revoke': {
   const revokeParams = params as RevokeConsentRequest;
 
   const { data: revoked, error } = await supabase.rpc('revoke_consent', {
-p_granter_user_id: revokeParams.granterUserId,
-p_requester_user_id: revokeParams.requesterUserId,
+p_granter_user_id: revokeParams.granter_user_id,
+p_requester_user_id: revokeParams.requester_user_id,
   });
 
   if (error) {
@@ -340,17 +340,17 @@ return createErrorResponse(
 
   const responseData: RevokeConsentData = {
 revoked: true,
-granterUserId: revokeParams.granterUserId,
-requesterUserId: revokeParams.requesterUserId,
-revokedAt: context.timestamp,
+granter_user_id: revokeParams.granter_user_id,
+requester_user_id: revokeParams.requester_user_id,
+revoked_at: context.timestamp,
 message: 'Consent revoked successfully',
   };
 
   console.log(`API Request [${context.requestId}] - Consent Revoke:`, {
 action: 'revoke',
 revoked: true,
-granter: revokeParams.granterUserId.substring(0, 8) + '...',
-requester: revokeParams.requesterUserId.substring(0, 8) + '...',
+granter: revokeParams.granter_user_id.substring(0, 8) + '...',
+requester: revokeParams.requester_user_id.substring(0, 8) + '...',
   });
 
   return createSuccessResponse(

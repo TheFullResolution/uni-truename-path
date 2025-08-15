@@ -123,6 +123,7 @@ export const ErrorCodes = {
   NOT_FOUND: 'NOT_FOUND',
   RESOURCE_NOT_FOUND: 'RESOURCE_NOT_FOUND',
   USER_NOT_FOUND: 'USER_NOT_FOUND',
+  PROFILE_NOT_FOUND: 'PROFILE_NOT_FOUND',
   CONTEXT_NOT_FOUND: 'CONTEXT_NOT_FOUND',
   NAME_NOT_FOUND: 'NAME_NOT_FOUND',
   CONSENT_NOT_FOUND: 'CONSENT_NOT_FOUND',
@@ -139,6 +140,7 @@ export const ErrorCodes = {
   
   // Server & Infrastructure Errors (500 range)
   INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
+  INTERNAL_ERROR: 'INTERNAL_ERROR',
   DATABASE_ERROR: 'DATABASE_ERROR',
   NETWORK_ERROR: 'NETWORK_ERROR',
   TIMEOUT_ERROR: 'TIMEOUT_ERROR',
@@ -184,6 +186,7 @@ export const StatusCodeMap: Record<ErrorCode, number> = {
   [ErrorCodes.NOT_FOUND]: 404,
   [ErrorCodes.RESOURCE_NOT_FOUND]: 404,
   [ErrorCodes.USER_NOT_FOUND]: 404,
+  [ErrorCodes.PROFILE_NOT_FOUND]: 404,
   [ErrorCodes.CONTEXT_NOT_FOUND]: 404,
   [ErrorCodes.NAME_NOT_FOUND]: 404,
   [ErrorCodes.CONSENT_NOT_FOUND]: 404,
@@ -200,6 +203,7 @@ export const StatusCodeMap: Record<ErrorCode, number> = {
   
   // Server Errors (500-504)
   [ErrorCodes.INTERNAL_SERVER_ERROR]: 500,
+  [ErrorCodes.INTERNAL_ERROR]: 500,
   [ErrorCodes.DATABASE_ERROR]: 500,
   [ErrorCodes.NETWORK_ERROR]: 500,
   [ErrorCodes.SERVICE_UNAVAILABLE]: 503,
