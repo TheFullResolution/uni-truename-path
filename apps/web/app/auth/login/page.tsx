@@ -22,9 +22,9 @@ import {
   IconCode,
   IconBrandGithub,
 } from '@tabler/icons-react';
-import { LoginForm } from '../../../components/LoginForm';
-import { useAuth } from '../../../lib/context/AuthProvider';
-import { LogoWithText, Logo } from '../../../components/branding';
+import { LoginForm } from '@/components/LoginForm';
+import { useAuth } from '@/utils/context';
+import { LogoWithText, Logo } from '@/components/branding';
 
 function LoginPageContent() {
   const router = useRouter();
@@ -182,7 +182,7 @@ itemIcon: {
 Powered by Supabase with enterprise authentication
   </List.Item>
   <List.Item>
-RESTful API with comprehensive JWT token handling
+RESTful API with secure cookie-based session management
   </List.Item>
   <List.Item>
 Edge Functions for real-time name resolution
@@ -209,9 +209,9 @@ padding: '16px',
 </Text>
   </Group>
   <Text size='xs' c='gray.7'>
-RESTful API integration with JWT authentication. Standard
-claims, no proprietary APIs. Edge Functions handle the
-complexity - you get clean, context-aware names.
+RESTful API integration with secure cookie-based sessions.
+Standard claims, no proprietary APIs. Edge Functions handle
+the complexity - you get clean, context-aware names.
   </Text>
 </Box>
 

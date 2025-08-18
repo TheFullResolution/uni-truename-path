@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button, Group, Skeleton } from '@mantine/core';
 import { IconArrowRight, IconDashboard } from '@tabler/icons-react';
 import Link from 'next/link';
-import { useAuth } from '../../lib/context';
+import { useAuth } from '../../utils/context';
 
 export function AuthButtons() {
   const { isAuthenticated, loading } = useAuth();

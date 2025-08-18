@@ -9,13 +9,12 @@ import { useSWRConfig } from 'swr';
 import {
   createMutationFetcher,
   formatSWRError,
-} from '../../../lib/swr-fetcher';
-import type { ContextFormData } from '../../../types/database';
+} from '../../../utils/swr-fetcher';
 import type {
-  UpdateContextResponseData,
-  UpdateContextRequest,
   ContextWithStats,
-} from '../../../types/api-responses';
+  ContextFormData,
+  UpdateContextRequest,
+} from '../../../app/api/contexts/types';
 
 interface EditContextModalProps {
   opened: boolean;
@@ -37,9 +36,7 @@ description: '',
   // SWR mutation for updating context
   const { trigger, isMutating } = useSWRMutation(
 context ? `/api/contexts/${context.id}` : null,
-createMutationFetcher<UpdateContextResponseData, UpdateContextRequest>(
-  'PUT',
-),
+createMutationFetcher<ContextWithStats, UpdateContextRequest>('PUT'),
   );
   const { mutate } = useSWRConfig();
 

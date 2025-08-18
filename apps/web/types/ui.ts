@@ -1,9 +1,8 @@
+// UI-specific types that don't belong in database types
+
 export interface DashboardUser {
-  /** User's email address */
-  email?: string;
-  /** User profile information */
-  profile?: {
-/** Profile ID */
-id: string;
-  };
+  id: string;
+  email: string;
+  name?: string;
+  avatar?: string;
 }

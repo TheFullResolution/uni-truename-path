@@ -1,19 +1,20 @@
 'use client';
 
+import { DashboardStatsResponse } from '@/app/api/dashboard/stats/types';
+import { NAME_CATEGORIES } from '@/app/api/names/types';
 import {
-  Paper,
+  Badge,
   Group,
-  Title,
+  Paper,
+  Skeleton,
   Stack,
   Text,
-  Badge,
-  Skeleton,
+  Title,
 } from '@mantine/core';
 import { IconUser } from '@tabler/icons-react';
-import { DashboardStats } from '../../../types/database';
 
 interface NameVariantsCardProps {
-  stats: DashboardStats | null;
+  stats: DashboardStatsResponse | null;
   loading: boolean;
 }
 
@@ -21,8 +22,6 @@ export default function NameVariantsCard({
   stats,
   loading,
 }: NameVariantsCardProps) {
-  const nameTypes = ['LEGAL', 'PREFERRED', 'NICKNAME', 'ALIAS'];
-
   return (
 <Paper p='xl' shadow='md' radius='lg'>
   <Group gap='sm' mb='md'>
@@ -33,7 +32,7 @@ export default function NameVariantsCard({
   </Group>
 
   <Stack gap='xs'>
-{nameTypes.map((type) => {
+{NAME_CATEGORIES.map((type) => {
   const count = stats?.name_statistics.names_by_type[type] || 0;
   return (
 <Group key={type} justify='space-between'>

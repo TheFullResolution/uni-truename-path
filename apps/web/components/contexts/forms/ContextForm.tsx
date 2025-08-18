@@ -6,16 +6,13 @@ import { notifications } from '@mantine/notifications';
 import { IconPlus } from '@tabler/icons-react';
 import { useSWRConfig } from 'swr';
 import useSWRMutation from 'swr/mutation';
-import {
-  createMutationFetcher,
-  formatSWRError,
-} from '../../../lib/swr-fetcher';
-import type { ContextFormData } from '../../../types/database';
+import { createMutationFetcher, formatSWRError } from '@/utils/swr-fetcher';
+import { CACHE_KEYS } from '@/utils/swr-keys';
 import type {
-  CreateContextResponseData,
+  ContextFormData,
   CreateContextRequest,
-} from '../../../types/api-responses';
-import { CACHE_KEYS } from '../../../lib/swr-keys';
+  UserContext,
+} from '@/app/api/contexts/types';
 
 interface ContextFormProps {
   onCancel?: () => void;
@@ -33,9 +30,7 @@ description: '',
   // SWR mutation for context creation
   const { trigger, isMutating } = useSWRMutation(
 CACHE_KEYS.CONTEXTS,
-createMutationFetcher<CreateContextResponseData, CreateContextRequest>(
-  'POST',
-),
+createMutationFetcher<UserContext, CreateContextRequest>('POST'),
 {
   onSuccess: () => {
 // Revalidate contexts cache after creation

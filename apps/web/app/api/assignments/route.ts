@@ -4,23 +4,23 @@
 // Academic project REST API with authentication and validation
 
 import { NextRequest } from 'next/server';
-import {
-  withRequiredAuth,
-  createSuccessResponse,
-  createErrorResponse,
-  type AuthenticatedHandler,
-} from '../../../lib/api';
-import { ErrorCodes } from '../../../lib/api';
-import { z } from 'zod';
-// Import centralized API response types
 import type {
-  AssignmentsResponseData,
   AssignmentWithDetails,
+  AssignmentsResponseData,
   UnassignedContext,
   CreateAssignmentResponseData,
   UpdateAssignmentResponseData,
   DeleteAssignmentResponseData,
-} from '../../../types/api-responses';
+} from './types';
+import {
+  withRequiredAuth,
+  createSuccessResponse,
+  createErrorResponse,
+  handle_method_not_allowed,
+  type AuthenticatedHandler,
+} from '@/utils/api';
+import { ErrorCodes } from '@/utils/api';
+import { z } from 'zod';
 
 /**
  * Query parameter validation schema for GET endpoint
@@ -35,7 +35,7 @@ const QueryParamsSchema = z.object({
   message: 'Limit must be between 1 and 100',
 }),
 
-  contextId: z
+  context_id: z
 .string()
 .uuid('Context ID must be a valid UUID')
 .nullable()
@@ -46,12 +46,12 @@ const QueryParamsSchema = z.object({
  * Request body validation schema for assignment creation
  */
 const CreateAssignmentSchema = z.object({
-  contextId: z
+  context_id: z
 .string()
 .uuid('Context ID must be a valid UUID')
 .min(1, 'Context ID is required'),
 
-  nameId: z
+  name_id: z
 .string()
 .uuid('Name ID must be a valid UUID')
 .min(1, 'Name ID is required'),
@@ -62,25 +62,25 @@ const CreateAssignmentSchema = z.object({
  */
 const UpdateAssignmentSchema = z
   .object({
-assignmentId: z
+assignment_id: z
   .string()
   .uuid('Assignment ID must be a valid UUID')
   .min(1, 'Assignment ID is required'),
 
-contextId: z.string().uuid('Context ID must be a valid UUID').optional(),
+context_id: z.uuid('Context ID must be a valid UUID').optional(),
 
-nameId: z.string().uuid('Name ID must be a valid UUID').optional(),
+name_id: z.uuid('Name ID must be a valid UUID').optional(),
   })
-  .refine((data) => data.contextId || data.nameId, {
+  .refine((data) => data.context_id || data.name_id, {
 message:
-  'At least one field (contextId or nameId) must be provided for update',
+  'At least one field (context_id or name_id) must be provided for update',
   });
 
 /**
  * Request body validation schema for assignment deletion
  */
 const DeleteAssignmentSchema = z.object({
-  assignmentId: z
+  assignment_id: z
 .string()
 .uuid('Assignment ID must be a valid UUID')
 .min(1, 'Assignment ID is required'),
@@ -99,19 +99,19 @@ const handleGET: AuthenticatedHandler<AssignmentsResponseData> = async (
 ) => {
   // 1. Query parameter validation
   const url = new URL(request.url);
-  const queryParams = {
+  const query_params = {
 limit: url.searchParams.get('limit'),
-contextId: url.searchParams.get('contextId'),
+context_id: url.searchParams.get('context_id'),
   };
 
-  const queryValidationResult = QueryParamsSchema.safeParse(queryParams);
+  const query_validation_result = QueryParamsSchema.safeParse(query_params);
 
-  if (!queryValidationResult.success) {
+  if (!query_validation_result.success) {
 return createErrorResponse(
   ErrorCodes.VALIDATION_ERROR,
   'Invalid query parameters',
   requestId,
-  queryValidationResult.error.issues.map((err) => ({
+  query_validation_result.error.issues.map((err) => ({
 field: err.path.join('.'),
 message: err.message,
 code: err.code,
@@ -120,8 +120,8 @@ code: err.code,
 );
   }
 
-  const validatedQueryParams = queryValidationResult.data;
-  const { limit, contextId } = validatedQueryParams;
+  const validated_query_params = query_validation_result.data;
+  const { limit, context_id } = validated_query_params;
 
   // 2. Check user exists
   if (!user) {
@@ -161,8 +161,8 @@ name_type
 .order('created_at', { ascending: false });
 
   // Apply optional filters
-  if (contextId) {
-assignmentQuery = assignmentQuery.eq('context_id', contextId);
+  if (context_id) {
+assignmentQuery = assignmentQuery.eq('context_id', context_id);
   }
 
   if (limit) {
@@ -192,18 +192,18 @@ return createErrorResponse(
   }
 
   // 4. Get all user contexts to identify unassigned ones
-  const { data: allContexts, error: contextError } = await supabase
+  const { data: allContexts, error: context_error } = await supabase
 .from('user_contexts')
 .select('id, context_name, description')
 .eq('user_id', authenticatedUserId)
 .order('context_name');
 
-  if (contextError) {
+  if (context_error) {
 console.error(`Context Query Error [${requestId}]:`, {
-  error: contextError.message,
-  code: contextError.code,
-  details: contextError.details,
-  hint: contextError.hint,
+  error: context_error.message,
+  code: context_error.code,
+  details: context_error.details,
+  hint: context_error.hint,
 });
 
 return createErrorResponse(
@@ -211,7 +211,7 @@ return createErrorResponse(
   'Database query failed while retrieving contexts',
   requestId,
   process.env.NODE_ENV === 'development'
-? contextError.message
+? context_error.message
 : 'Unable to retrieve user contexts',
   timestamp,
 );
@@ -259,12 +259,12 @@ unassigned_contexts,
 total_contexts: (allContexts || []).length,
 assigned_contexts: assignments.length,
 metadata: {
-  retrievalTimestamp: timestamp,
-  filterApplied: {
-contextId: contextId || undefined,
+  retrieval_timestamp: timestamp,
+  filter_applied: {
+context_id: context_id || undefined,
 limit: limit,
   },
-  userId: authenticatedUserId,
+  user_id: authenticatedUserId,
 },
   };
 
@@ -275,8 +275,8 @@ userId: authenticatedUserId.substring(0, 8) + '...',
 totalAssignments: assignments.length,
 totalContexts: (allContexts || []).length,
 unassignedContexts: unassigned_contexts.length,
-filtersApplied: Object.keys(validatedQueryParams).filter(
-  (key) => validatedQueryParams[key as keyof QueryParams] !== undefined,
+filtersApplied: Object.keys(validated_query_params).filter(
+  (key) => validated_query_params[key as keyof QueryParams] !== undefined,
 ).length,
   });
 
@@ -294,7 +294,7 @@ const handlePOST: AuthenticatedHandler = async (
   try {
 // Parse and validate request body
 const body = await request.json();
-const validatedData = CreateAssignmentSchema.parse(body);
+const validated_data = CreateAssignmentSchema.parse(body);
 
 // Check user exists
 if (!user) {
@@ -307,114 +307,114 @@ timestamp,
   );
 }
 
-const authenticatedUserId = user.id;
+const authenticated_user_id = user.id;
 
 // Verify context exists and belongs to user
-const { data: contextCheck, error: contextError } = await supabase
+const { data: context_check, error: context_error } = await supabase
   .from('user_contexts')
   .select('id, context_name')
-  .eq('id', validatedData.contextId)
-  .eq('user_id', authenticatedUserId)
+  .eq('id', validated_data.context_id)
+  .eq('user_id', authenticated_user_id)
   .single();
 
-if (contextError || !contextCheck) {
+if (context_error || !context_check) {
   return createErrorResponse(
 ErrorCodes.CONTEXT_NOT_FOUND,
 'Context not found or access denied',
 requestId,
-{ contextId: validatedData.contextId },
+{ context_id: validated_data.context_id },
 timestamp,
   );
 }
 
 // Verify name exists and belongs to user
-const { data: nameCheck, error: nameError } = await supabase
+const { data: name_check, error: name_error } = await supabase
   .from('names')
   .select('id, name_text, name_type')
-  .eq('id', validatedData.nameId)
-  .eq('user_id', authenticatedUserId)
+  .eq('id', validated_data.name_id)
+  .eq('user_id', authenticated_user_id)
   .single();
 
-if (nameError || !nameCheck) {
+if (name_error || !name_check) {
   return createErrorResponse(
 ErrorCodes.NAME_NOT_FOUND,
 'Name not found or access denied',
 requestId,
-{ nameId: validatedData.nameId },
+{ name_id: validated_data.name_id },
 timestamp,
   );
 }
 
 // Check if context already has an assignment (one name per context rule)
-const { data: existingAssignment, error: existingError } = await supabase
+const { data: existing_assignment, error: existing_error } = await supabase
   .from('context_name_assignments')
   .select('id')
-  .eq('context_id', validatedData.contextId)
-  .eq('user_id', authenticatedUserId)
+  .eq('context_id', validated_data.context_id)
+  .eq('user_id', authenticated_user_id)
   .maybeSingle();
 
-if (existingError) {
-  console.error('Error checking existing assignment:', existingError);
+if (existing_error) {
+  console.error('Error checking existing assignment:', existing_error);
   return createErrorResponse(
 ErrorCodes.DATABASE_ERROR,
 'Failed to check existing assignments',
 requestId,
-{ error: existingError.message },
+{ error: existing_error.message },
 timestamp,
   );
 }
 
-if (existingAssignment) {
+if (existing_assignment) {
   return createErrorResponse(
 ErrorCodes.CONFLICT,
 'Context already has a name assignment',
 requestId,
 {
-  contextId: validatedData.contextId,
-  existingAssignmentId: existingAssignment.id,
+  context_id: validated_data.context_id,
+  existing_assignment_id: existing_assignment.id,
 },
 timestamp,
   );
 }
 
 // Create the new assignment
-const { data: newAssignment, error: createError } = await supabase
+const { data: new_assignment, error: create_error } = await supabase
   .from('context_name_assignments')
   .insert({
-user_id: authenticatedUserId,
-context_id: validatedData.contextId,
-name_id: validatedData.nameId,
+user_id: authenticated_user_id,
+context_id: validated_data.context_id,
+name_id: validated_data.name_id,
 created_at: new Date().toISOString(),
   })
   .select('*')
   .single();
 
-if (createError || !newAssignment) {
-  console.error('Error creating assignment:', createError);
+if (create_error || !new_assignment) {
+  console.error('Error creating assignment:', create_error);
   return createErrorResponse(
 ErrorCodes.NAME_ASSIGNMENT_FAILED,
 'Failed to create context-name assignment',
 requestId,
-{ error: createError?.message },
+{ error: create_error?.message },
 timestamp,
   );
 }
 
-const assignmentResponse: CreateAssignmentResponseData = {
+const assignment_response: CreateAssignmentResponseData = {
   message: 'Context-name assignment created successfully',
   assignment: {
-id: newAssignment.id,
-context_id: newAssignment.context_id,
-context_name: contextCheck.context_name,
+id: new_assignment.id,
+context_id: new_assignment.context_id,
+context_name: context_check.context_name,
 context_description: null, // Not fetched in this endpoint
-name_id: newAssignment.name_id,
-name_text: nameCheck.name_text,
-name_type: nameCheck.name_type,
-created_at: newAssignment.created_at,
+name_id: new_assignment.name_id,
+name_text: name_check.name_text,
+name_type: name_check.name_type,
+created_at: new_assignment.created_at,
   },
 };
 
-return createSuccessResponse(assignmentResponse, requestId, timestamp);
+return createSuccessResponse(assignment_response, requestId, timestamp);
   } catch (error) {
 console.error('Assignment creation error:', error);
 
@@ -449,7 +449,7 @@ const handlePUT: AuthenticatedHandler = async (
   try {
 // Parse and validate request body
 const body = await request.json();
-const validatedData = UpdateAssignmentSchema.parse(body);
+const validated_data = UpdateAssignmentSchema.parse(body);
 
 // Check user exists
 if (!user) {
@@ -463,25 +463,25 @@ timestamp,
 }
 
 // Check if the assignment exists and belongs to the user
-const { data: existingAssignment, error: fetchError } = await supabase
+const { data: existing_assignment, error: fetch_error } = await supabase
   .from('context_name_assignments')
   .select('id, context_id, name_id, user_id, created_at')
-  .eq('id', validatedData.assignmentId)
+  .eq('id', validated_data.assignment_id)
   .eq('user_id', user.id)
   .single();
 
-if (fetchError) {
-  console.error('Assignment fetch failed:', fetchError);
+if (fetch_error) {
+  console.error('Assignment fetch failed:', fetch_error);
   return createErrorResponse(
 ErrorCodes.INTERNAL_SERVER_ERROR,
 'Failed to fetch assignment',
 requestId,
-{ error: fetchError.message },
+{ error: fetch_error.message },
 timestamp,
   );
 }
 
-if (!existingAssignment) {
+if (!existing_assignment) {
   return createErrorResponse(
 ErrorCodes.NOT_FOUND,
 'Assignment not found or access denied',
@@ -491,33 +491,43 @@ timestamp,
   );
 }
 
+// Declare variables for context and name checks
+let context_check: { id: string; context_name: string } | null = null;
+let name_check: {
+  id: string;
+  name_text: string;
+  name_type: string;
+} | null = null;
+
 // Validate context if being updated
-if (validatedData.contextId) {
-  const { data: contextCheck, error: contextError } = await supabase
+if (validated_data.context_id) {
+  const { data: context_data, error: context_error } = await supabase
 .from('user_contexts')
 .select('id, context_name')
-.eq('id', validatedData.contextId)
+.eq('id', validated_data.context_id)
 .eq('user_id', user.id)
 .single();
 
-  if (contextError || !contextCheck) {
+  if (context_error || !context_data) {
 return createErrorResponse(
   ErrorCodes.CONTEXT_NOT_FOUND,
   'Context not found or access denied',
   requestId,
-  { contextId: validatedData.contextId },
+  { context_id: validated_data.context_id },
   timestamp,
 );
   }
 
+  context_check = context_data;
+
   // Check if the new context already has a different assignment
-  if (validatedData.contextId !== existingAssignment.context_id) {
+  if (validated_data.context_id !== existing_assignment.context_id) {
 const { data: conflictCheck, error: conflictError } = await supabase
   .from('context_name_assignments')
   .select('id')
-  .eq('context_id', validatedData.contextId)
+  .eq('context_id', validated_data.context_id)
   .eq('user_id', user.id)
-  .neq('id', validatedData.assignmentId)
+  .neq('id', validated_data.assignment_id)
   .maybeSingle();
 
 if (conflictError) {
@@ -537,7 +547,7 @@ ErrorCodes.CONFLICT,
 'Target context already has a name assignment',
 requestId,
 {
-  contextId: validatedData.contextId,
+  contextId: validated_data.context_id,
   conflictingAssignmentId: conflictCheck.id,
 },
 timestamp,
@@ -547,23 +557,25 @@ timestamp,
 }
 
 // Validate name if being updated
-if (validatedData.nameId) {
-  const { data: nameCheck, error: nameError } = await supabase
+if (validated_data.name_id) {
+  const { data: name_data, error: name_error } = await supabase
 .from('names')
 .select('id, name_text, name_type')
-.eq('id', validatedData.nameId)
+.eq('id', validated_data.name_id)
 .eq('user_id', user.id)
 .single();
 
-  if (nameError || !nameCheck) {
+  if (name_error || !name_data) {
 return createErrorResponse(
   ErrorCodes.NAME_NOT_FOUND,
   'Name not found or access denied',
   requestId,
-  { nameId: validatedData.nameId },
+  { nameId: validated_data.name_id },
   timestamp,
 );
   }
+
+  name_check = name_data;
 }
 
 // Build update object
@@ -572,19 +584,19 @@ const updateData: Partial<{
   name_id: string;
 }> = {};
 
-if (validatedData.contextId) {
-  updateData.context_id = validatedData.contextId;
+if (validated_data.context_id) {
+  updateData.context_id = validated_data.context_id;
 }
 
-if (validatedData.nameId) {
-  updateData.name_id = validatedData.nameId;
+if (validated_data.name_id) {
+  updateData.name_id = validated_data.name_id;
 }
 
 // Update the assignment
 const { data: updatedAssignment, error: updateError } = await supabase
   .from('context_name_assignments')
   .update(updateData)
-  .eq('id', validatedData.assignmentId)
+  .eq('id', validated_data.assignment_id)
   .eq('user_id', user.id)
   .select('id, context_id, name_id, user_id, created_at')
   .single();
@@ -600,9 +612,49 @@ timestamp,
   );
 }
 
+// Get context information if not already fetched
+if (!context_check) {
+  const { data: context_data, error: context_error } = await supabase
+.from('user_contexts')
+.select('id, context_name')
+.eq('id', updatedAssignment.context_id)
+.eq('user_id', user.id)
+.single();
+
+  if (context_data && !context_error) {
+context_check = context_data;
+  }
+}
+
+// Get name information if not already fetched
+if (!name_check) {
+  const { data: name_data, error: name_error } = await supabase
+.from('names')
+.select('id, name_text, name_type')
+.eq('id', updatedAssignment.name_id)
+.eq('user_id', user.id)
+.single();
+
+  if (name_data && !name_error) {
+name_check = name_data;
+  }
+}
+
+// Construct the full assignment response
+const assignmentResponse: AssignmentWithDetails = {
+  id: updatedAssignment.id,
+  context_id: updatedAssignment.context_id,
+  context_name: context_check?.context_name || 'Unknown Context',
+  context_description: null, // Not fetched in this endpoint
+  name_id: updatedAssignment.name_id,
+  name_text: name_check?.name_text || 'Unknown Name',
+  name_type: name_check?.name_type || 'PREFERRED',
+  created_at: updatedAssignment.created_at,
+};
+
 const updateResponse: UpdateAssignmentResponseData = {
   message: 'Context-name assignment updated successfully',
-  assignment: updatedAssignment,
+  assignment: assignmentResponse,
 };
 
 return createSuccessResponse(updateResponse, requestId, timestamp);
@@ -640,7 +692,7 @@ const handleDELETE: AuthenticatedHandler = async (
   try {
 // Parse and validate request body
 const body = await request.json();
-const validatedData = DeleteAssignmentSchema.parse(body);
+const validated_data = DeleteAssignmentSchema.parse(body);
 
 // Check user exists
 if (!user) {
@@ -654,7 +706,7 @@ timestamp,
 }
 
 // Check if the assignment exists and belongs to the user
-const { data: existingAssignment, error: fetchError } = await supabase
+const { data: existing_assignment, error: fetch_error } = await supabase
   .from('context_name_assignments')
   .select(
 `
@@ -667,22 +719,22 @@ user_contexts!inner(
 )
   `,
   )
-  .eq('id', validatedData.assignmentId)
+  .eq('id', validated_data.assignment_id)
   .eq('user_id', user.id)
   .single();
 
-if (fetchError) {
-  console.error('Assignment fetch failed:', fetchError);
+if (fetch_error) {
+  console.error('Assignment fetch failed:', fetch_error);
   return createErrorResponse(
 ErrorCodes.INTERNAL_SERVER_ERROR,
 'Failed to fetch assignment',
 requestId,
-{ error: fetchError.message },
+{ error: fetch_error.message },
 timestamp,
   );
 }
 
-if (!existingAssignment) {
+if (!existing_assignment) {
   return createErrorResponse(
 ErrorCodes.NOT_FOUND,
 'Assignment not found or access denied',
@@ -693,32 +745,32 @@ timestamp,
 }
 
 // Delete the assignment
-const { error: deleteError } = await supabase
+const { error: delete_error } = await supabase
   .from('context_name_assignments')
   .delete()
-  .eq('id', validatedData.assignmentId)
+  .eq('id', validated_data.assignment_id)
   .eq('user_id', user.id);
 
-if (deleteError) {
-  console.error('Assignment deletion failed:', deleteError);
+if (delete_error) {
+  console.error('Assignment deletion failed:', delete_error);
   return createErrorResponse(
 ErrorCodes.INTERNAL_SERVER_ERROR,
 'Failed to delete assignment',
 requestId,
-{ error: deleteError.message },
+{ error: delete_error.message },
 timestamp,
   );
 }
 
-const deleteResponse: DeleteAssignmentResponseData = {
+const delete_response: DeleteAssignmentResponseData = {
   message: 'Context-name assignment deleted successfully',
-  deleted_assignment_id: validatedData.assignmentId,
-  context_id: existingAssignment.context_id,
-  context_name: existingAssignment.user_contexts.context_name,
+  deleted_assignment_id: validated_data.assignment_id,
+  context_id: existing_assignment.context_id,
+  context_name: existing_assignment.user_contexts.context_name,
   deleted_at: new Date().toISOString(),
 };
 
-return createSuccessResponse(deleteResponse, requestId, timestamp);
+return createSuccessResponse(delete_response, requestId, timestamp);
   } catch (error) {
 console.error('Assignment deletion error:', error);
 
@@ -747,3 +799,7 @@ export const GET = withRequiredAuth(handleGET, { enableLogging: true });
 export const POST = withRequiredAuth(handlePOST);
 export const PUT = withRequiredAuth(handlePUT);
 export const DELETE = withRequiredAuth(handleDELETE);
+
+// Method not allowed handlers
+export const PATCH = () =>
+  handle_method_not_allowed(['GET', 'POST', 'PUT', 'DELETE']);

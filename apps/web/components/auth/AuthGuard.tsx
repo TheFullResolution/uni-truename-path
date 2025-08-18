@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React from 'react';
 import { Container, Stack, Text, Loader, Center, Card } from '@mantine/core';
-import { useAuth } from '../../lib/context';
+import { useAuth } from '../../utils/context';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -13,52 +12,34 @@ interface AuthGuardProps {
 }
 
 /**
- * AuthGuard component for protecting routes and handling authentication states
+ * AuthGuard component for handling authentication UI states
+ *
+ * OPTIMIZED: Route protection is now handled by middleware for better performance.
+ * This component focuses purely on UI states and loading indicators.
  *
  * Features:
- * - Automatic redirect to login page for unauthenticated users
  * - Loading state while checking authentication status
+ * - Error handling for authentication failures
  * - Custom fallback component support
- * - Optional redirect destination configuration
  * - Clean integration with AuthProvider context
+ * - Optimized for middleware-first authentication architecture
  *
  * @param children - Content to render when authenticated
- * @param fallback - Custom component to render when not authenticated (instead of redirecting)
+ * @param fallback - Custom component to render when not authenticated
  * @param requireAuth - Whether authentication is required (default: true)
- * @param redirectTo - Custom redirect path (default: '/login')
+ * @param redirectTo - Kept for backward compatibility (not used - middleware handles redirects)
  */
 export function AuthGuard({
   children,
   fallback: FallbackComponent,
   requireAuth = true,
-  redirectTo = '/login',
+  redirectTo = '/login', // eslint-disable-line @typescript-eslint/no-unused-vars
 }: AuthGuardProps) {
   const { isAuthenticated, loading, user, error } = useAuth();
-  const router = useRouter();
+  // Router no longer needed - middleware handles redirects
 
-  useEffect(() => {
-// Only handle redirects if authentication is required
-if (!requireAuth) return;
-
-// Don't redirect while still loading
-if (loading) return;
-
-// If not authenticated and no custom fallback, redirect to login
-if (!isAuthenticated && !FallbackComponent) {
-  // Preserve current path for redirect after login
-  const currentPath =
-typeof window !== 'undefined' ? window.location.pathname : '';
-  const redirectUrl = `${redirectTo}${currentPath !== '/' ? `?returnUrl=${encodeURIComponent(currentPath)}` : ''}`;
-  router.push(redirectUrl);
-}
-  }, [
-isAuthenticated,
-loading,
-requireAuth,
-FallbackComponent,
-redirectTo,
-router,
-  ]);
+  // Note: Redirect logic removed - middleware now handles all route protection
+  // This eliminates duplicate authentication checks and improves performance
 
   // Show loading state while checking authentication
   if (loading) {
@@ -108,6 +89,7 @@ return <>{children}</>;
   }
 
   // If authenticated, render children
+  // Note: Middleware ensures this component only loads for authenticated users on protected routes
   if (isAuthenticated && user) {
 return <>{children}</>;
   }
@@ -117,7 +99,8 @@ return <>{children}</>;
 return <FallbackComponent />;
   }
 
-  // Default fallback for unauthenticated state (shouldn't reach here due to redirect)
+  // Fallback UI for unauthenticated state
+  // This should rarely be seen since middleware handles redirects
   return (
 <Container size='sm' py='xl'>
   <Center>

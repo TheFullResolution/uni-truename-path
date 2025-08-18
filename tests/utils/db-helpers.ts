@@ -224,6 +224,33 @@ const testNamePatterns = [
   'Legal Name %',
   'Nick Name %',
   'Alias Name %',
+  'TestNick%',
+  'User1 Name%',
+  'User2 Name%',
+  'Legal Name%',
+  'Preferred Name%',
+  'Nickname%',
+  'Name 1%',
+  'Name 2%',
+  'Name 3%',
+  'John Professional%',
+  'Test LEGAL Name%',
+  'Test PREFERRED Name%',
+  'Test NICKNAME Name%',
+  'Test ALIAS Name%',
+  'Test PROFESSIONAL Name%',
+  'Test CULTURAL Name%',
+  'New Preferred Name%',
+  'Audit Test Name%',
+  'Whitespace Test Name%',
+  'Default Preferred Test%',
+  'Original Name%',
+  'First Preferred%',
+  'Second Name%',
+  'Only Name%',
+  'Non-Preferred Name%',
+  'First Name%',
+  'Test Name%',
 ];
 
 for (const pattern of testNamePatterns) {
@@ -482,7 +509,7 @@ const { data, error } = await supabase
   .from('audit_log_entries')
   .select('*')
   .eq('target_user_id', targetUserId)
-  .order('created_at', { ascending: false });
+  .order('accessed_at', { ascending: false });
 
 if (error) throw error;
 return data || [];

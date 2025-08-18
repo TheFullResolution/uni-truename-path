@@ -4,21 +4,19 @@
 // Academic project REST API with authentication and validation
 
 import { NextRequest } from 'next/server';
-// Removed unused Database import
+import type {
+  AssignmentWithDetails,
+  BulkAssignmentResponseData,
+} from '../types';
 import {
   withRequiredAuth,
   createSuccessResponse,
   createErrorResponse,
+  handle_method_not_allowed,
   type AuthenticatedHandler,
-} from '../../../../lib/api/with-auth';
-import { ErrorCodes } from '../../../../lib/api/types';
+} from '@/utils/api';
+import { ErrorCodes } from '@/utils/api';
 import { z } from 'zod';
-// Import centralized API response types
-import type {
-  BulkAssignmentResponseData,
-  AssignmentWithDetails,
-} from '../../../../types/api-responses';
-
 /**
  * Request body validation schema for bulk assignment operations
  */
@@ -26,8 +24,8 @@ const BulkAssignmentSchema = z.object({
   assignments: z
 .array(
   z.object({
-context_id: z.string().uuid('Context ID must be a valid UUID'),
-name_id: z.string().uuid('Name ID must be a valid UUID').nullable(),
+context_id: z.uuid('Context ID must be a valid UUID'),
+name_id: z.uuid('Name ID must be a valid UUID').nullable(),
   }),
 )
 .min(1, 'At least one assignment is required')
@@ -48,19 +46,19 @@ const bulkUpdateAssignments: AuthenticatedHandler<
   try {
 // Parse and validate request body
 const body = await request.json();
-const bodyResult = BulkAssignmentSchema.safeParse(body);
+const body_result = BulkAssignmentSchema.safeParse(body);
 
-if (!bodyResult.success) {
+if (!body_result.success) {
   return createErrorResponse(
 ErrorCodes.VALIDATION_ERROR,
 'Invalid request body format',
 requestId,
-bodyResult.error.format(),
+body_result.error.format(),
 timestamp,
   );
 }
 
-const { assignments } = bodyResult.data;
+const { assignments } = body_result.data;
 
 // Get user ID from authenticated user
 if (!user) {
@@ -73,70 +71,72 @@ timestamp,
   );
 }
 
-const userId = user.id;
+const user_id = user.id;
 
 // Validate all context_ids belong to the user
-const contextIds = assignments.map((a) => a.context_id);
-const { data: userContexts, error: contextError } = await supabase
+const context_ids = assignments.map((a) => a.context_id);
+const { data: user_contexts, error: context_error } = await supabase
   .from('user_contexts')
   .select('id')
-  .eq('user_id', userId)
-  .in('id', contextIds);
+  .eq('user_id', user_id)
+  .in('id', context_ids);
 
-if (contextError) {
+if (context_error) {
   return createErrorResponse(
 ErrorCodes.DATABASE_ERROR,
 'Failed to validate user contexts',
 requestId,
-{ error: contextError.message },
+{ error: context_error.message },
 timestamp,
   );
 }
 
-const validContextIds = new Set(userContexts.map((c) => c.id));
-const invalidContexts = contextIds.filter((id) => !validContextIds.has(id));
+const valid_context_ids = new Set(user_contexts.map((c) => c.id));
+const invalid_contexts = context_ids.filter(
+  (id) => !valid_context_ids.has(id),
+);
 
-if (invalidContexts.length > 0) {
+if (invalid_contexts.length > 0) {
   return createErrorResponse(
 ErrorCodes.FORBIDDEN,
 'Some contexts do not belong to the user',
 requestId,
-{ invalid_context_ids: invalidContexts },
+{ invalid_context_ids: invalid_contexts },
 timestamp,
   );
 }
 
 // Validate all name_ids belong to the user (when not null)
-const nameIds = assignments
+const name_ids = assignments
   .map((a) => a.name_id)
   .filter((id): id is string => id !== null);
 
-if (nameIds.length > 0) {
-  const { data: userNames, error: nameError } = await supabase
+if (name_ids.length > 0) {
+  const { data: user_names, error: name_error } = await supabase
 .from('names')
 .select('id')
-.eq('user_id', userId)
-.in('id', nameIds);
+.eq('user_id', user_id)
+.in('id', name_ids);
 
-  if (nameError) {
+  if (name_error) {
 return createErrorResponse(
   ErrorCodes.DATABASE_ERROR,
   'Failed to validate user names',
   requestId,
-  { error: nameError.message },
+  { error: name_error.message },
   timestamp,
 );
   }
 
-  const validNameIds = new Set(userNames.map((n) => n.id));
-  const invalidNames = nameIds.filter((id) => !validNameIds.has(id));
+  const valid_name_ids = new Set(user_names.map((n) => n.id));
+  const invalid_names = name_ids.filter((id) => !valid_name_ids.has(id));
 
-  if (invalidNames.length > 0) {
+  if (invalid_names.length > 0) {
 return createErrorResponse(
   ErrorCodes.FORBIDDEN,
   'Some names do not belong to the user',
   requestId,
-  { invalid_name_ids: invalidNames },
+  { invalid_name_ids: invalid_names },
   timestamp,
 );
   }
@@ -147,61 +147,61 @@ console.log(
   `[${requestId}] Starting pre-filtering of ${assignments.length} assignments`,
 );
 
-const { data: existingAssignments, error: existingError } = await supabase
+const { data: existing_assignments, error: existing_error } = await supabase
   .from('context_name_assignments')
   .select('context_id, name_id')
-  .eq('user_id', userId)
-  .in('context_id', contextIds);
+  .eq('user_id', user_id)
+  .in('context_id', context_ids);
 
-if (existingError) {
-  console.error('Error fetching existing assignments:', existingError);
+if (existing_error) {
+  console.error('Error fetching existing assignments:', existing_error);
   return createErrorResponse(
 ErrorCodes.DATABASE_ERROR,
 'Failed to fetch existing assignments',
 requestId,
-{ error: existingError.message },
+{ error: existing_error.message },
 timestamp,
   );
 }
 
 // Create a map of existing assignments for quick lookup
-const existingAssignmentMap = new Map<string, string | null>();
-existingAssignments.forEach((existing) => {
-  existingAssignmentMap.set(existing.context_id, existing.name_id);
+const existing_assignment_map = new Map<string, string | null>();
+existing_assignments.forEach((existing) => {
+  existing_assignment_map.set(existing.context_id, existing.name_id);
 });
 
 // Filter assignments to process only those that represent actual changes
-const assignmentsToProcess = assignments.filter((assignment) => {
+const assignments_to_process = assignments.filter((assignment) => {
   const { context_id, name_id } = assignment;
-  const existingNameId = existingAssignmentMap.get(context_id);
+  const existing_name_id = existing_assignment_map.get(context_id);
 
   // Case 1: Deleting assignment (name_id = null)
   if (name_id === null) {
-const shouldDelete = existingNameId !== undefined; // Assignment exists and should be deleted
-if (!shouldDelete) {
+const should_delete = existing_name_id !== undefined; // Assignment exists and should be deleted
+if (!should_delete) {
   console.log(
 `[${requestId}] Filtered out deletion for context ${context_id} - no existing assignment`,
   );
 }
-return shouldDelete;
+return should_delete;
   }
 
   // Case 2: Creating/updating assignment (name_id is not null)
-  const shouldProcess = existingNameId !== name_id; // Different from existing or new assignment
-  if (!shouldProcess) {
+  const should_process = existing_name_id !== name_id; // Different from existing or new assignment
+  if (!should_process) {
 console.log(
   `[${requestId}] Filtered out assignment for context ${context_id} - name_id already set to ${name_id}`,
 );
   }
-  return shouldProcess;
+  return should_process;
 });
 
 console.log(
-  `[${requestId}] Pre-filtering complete: ${assignmentsToProcess.length}/${assignments.length} assignments will be processed`,
+  `[${requestId}] Pre-filtering complete: ${assignments_to_process.length}/${assignments.length} assignments will be processed`,
 );
 console.log(
   `[${requestId}] Filtered assignments:`,
-  assignmentsToProcess.map((a) => `${a.context_id}:${a.name_id}`),
+  assignments_to_process.map((a) => `${a.context_id}:${a.name_id}`),
 );
 
 // Process bulk assignment updates (only for filtered assignments)
@@ -209,7 +209,7 @@ let created = 0;
 let updated = 0;
 let deleted = 0;
 
-for (const assignment of assignmentsToProcess) {
+for (const assignment of assignments_to_process) {
   const { context_id, name_id } = assignment;
 
   if (name_id === null) {
@@ -217,16 +217,16 @@ for (const assignment of assignmentsToProcess) {
 console.log(
   `[${requestId}] Deleting assignment for context ${context_id}`,
 );
-const { error: deleteError } = await supabase
+const { error: delete_error } = await supabase
   .from('context_name_assignments')
   .delete()
-  .eq('user_id', userId)
+  .eq('user_id', user_id)
   .eq('context_id', context_id);
 
-if (deleteError) {
+if (delete_error) {
   console.error(
 `[${requestId}] Delete assignment error for context ${context_id}:`,
-deleteError,
+delete_error,
   );
   // Continue processing other assignments
 } else {
@@ -237,20 +237,20 @@ deleteError,
 }
   } else {
 // Determine if this is an update or create based on existing assignment map
-const existingNameId = existingAssignmentMap.get(context_id);
-const isUpdate = existingNameId !== undefined;
+const existing_name_id = existing_assignment_map.get(context_id);
+const is_update = existing_name_id !== undefined;
 
 console.log(
-  `[${requestId}] ${isUpdate ? 'Updating' : 'Creating'} assignment for context ${context_id} with name ${name_id}`,
+  `[${requestId}] ${is_update ? 'Updating' : 'Creating'} assignment for context ${context_id} with name ${name_id}`,
 );
 
 // Upsert assignment (update or create)
 // Use 'context_id' as conflict column since database has UNIQUE (context_id) constraint
-const { error: upsertError } = await supabase
+const { error: upsert_error } = await supabase
   .from('context_name_assignments')
   .upsert(
 {
-  user_id: userId,
+  user_id: user_id,
   context_id,
   name_id,
   created_at: new Date().toISOString(),
@@ -260,15 +260,15 @@ const { error: upsertError } = await supabase
 },
   );
 
-if (upsertError) {
+if (upsert_error) {
   console.error(
 `[${requestId}] Upsert assignment error for context ${context_id}:`,
-upsertError,
+upsert_error,
   );
   // Continue processing other assignments
 } else {
   // Track based on pre-filtering determination
-  if (isUpdate) {
+  if (is_update) {
 updated++;
 console.log(
   `[${requestId}] Successfully updated assignment for context ${context_id}`,
@@ -289,7 +289,7 @@ console.log(
 );
 
 // Get all current assignments for response
-const { data: finalAssignments, error: finalError } = await supabase
+const { data: final_assignments, error: final_error } = await supabase
   .from('context_name_assignments')
   .select(
 `
@@ -306,22 +306,22 @@ names!inner(
 )
   `,
   )
-  .eq('user_id', userId)
+  .eq('user_id', user_id)
   .order('created_at', { ascending: false });
 
-if (finalError) {
-  console.error('Final assignments query error:', finalError);
+if (final_error) {
+  console.error('Final assignments query error:', final_error);
   return createErrorResponse(
 ErrorCodes.DATABASE_ERROR,
 'Failed to retrieve updated assignments',
 requestId,
-{ error: finalError.message },
+{ error: final_error.message },
 timestamp,
   );
 }
 
 // Process final assignments data
-const assignmentResults: AssignmentWithDetails[] = finalAssignments.map(
+const assignment_results: AssignmentWithDetails[] = final_assignments.map(
   (item: {
 id: string;
 context_id: string;
@@ -342,14 +342,14 @@ created_at: item.created_at,
 );
 
 // Prepare response data
-const responseData: BulkAssignmentResponseData = {
+const response_data: BulkAssignmentResponseData = {
   updated,
   created,
   deleted,
-  assignments: assignmentResults,
+  assignments: assignment_results,
 };
 
-return createSuccessResponse(responseData, requestId, timestamp);
+return createSuccessResponse(response_data, requestId, timestamp);
   } catch (error) {
 console.error('Unexpected error in bulk assignment operation:', error);
 return createErrorResponse(
@@ -366,3 +366,9 @@ return createErrorResponse(
  * Export the POST handler with authentication wrapper
  */
 export const POST = withRequiredAuth(bulkUpdateAssignments);
+
+// Method not allowed handlers
+export const GET = () => handle_method_not_allowed(['POST']);
+export const PUT = () => handle_method_not_allowed(['POST']);
+export const DELETE = () => handle_method_not_allowed(['POST']);
+export const PATCH = () => handle_method_not_allowed(['POST']);

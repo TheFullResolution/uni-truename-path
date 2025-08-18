@@ -6,15 +6,9 @@ import { notifications } from '@mantine/notifications';
 import { IconTrash, IconAlertTriangle } from '@tabler/icons-react';
 import useSWRMutation from 'swr/mutation';
 import { useSWRConfig } from 'swr';
-import {
-  createMutationFetcher,
-  formatSWRError,
-} from '../../../lib/swr-fetcher';
-import type {
-  DeleteContextResponseData,
-  ContextWithStats,
-} from '../../../types/api-responses';
-import { CACHE_KEYS } from '../../../lib/swr-keys';
+import { createMutationFetcher, formatSWRError } from '@/utils/swr-fetcher';
+import { CACHE_KEYS } from '@/utils/swr-keys';
+import type { ContextWithStats } from '@/app/api/contexts/types';
 
 interface DeleteContextModalProps {
   opened: boolean;
@@ -32,7 +26,7 @@ export default function DeleteContextModal({
   // SWR mutation for deleting context with conditional key
   const { trigger, isMutating } = useSWRMutation(
 context ? `/api/contexts/${context.id}?force=true` : null,
-createMutationFetcher<DeleteContextResponseData, never>('DELETE'),
+createMutationFetcher<{ deleted_id: string }, never>('DELETE'),
 {
   onSuccess: () => {
 // Revalidate contexts cache after deletion

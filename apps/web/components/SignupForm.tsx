@@ -18,8 +18,7 @@ import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
 import { IconAlertCircle, IconCheck, IconX } from '@tabler/icons-react';
 import { z } from 'zod';
-import { useAuth } from '../lib/context';
-import { getErrorMessage, getErrorAction } from '../lib/auth';
+import { useAuth } from '../utils/context';
 
 // Validation schema for signup form
 const signupSchema = z
@@ -74,7 +73,13 @@ export function SignupForm({
   onBackToLogin,
   showBackToLogin = true,
 }: SignupFormProps) {
-  const { signup, loading, error: contextError } = useAuth();
+  const {
+signup,
+loading,
+error: contextError,
+getErrorMessage,
+getErrorAction,
+  } = useAuth();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Use Mantine form with custom Zod validation
@@ -215,7 +220,7 @@ notifications.show({
 });
   }
 },
-[signup, onSuccess, form],
+[signup, onSuccess, form, getErrorMessage],
   );
 
   // Determine which error to show

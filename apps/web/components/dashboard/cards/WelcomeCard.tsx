@@ -8,12 +8,13 @@ import {
   Skeleton,
 } from '@mantine/core';
 import { IconUser } from '@tabler/icons-react';
-import { DashboardStats } from '../../../types/database';
-import { DashboardUser } from '../../../types/ui';
+
+import { DashboardUser } from '@/types/ui';
+import { DashboardStatsResponse } from '@/app/api/dashboard/stats/types';
 
 interface WelcomeCardProps {
   user: DashboardUser | null;
-  stats: DashboardStats | null;
+  stats: DashboardStatsResponse | null;
   loading: boolean;
 }
 

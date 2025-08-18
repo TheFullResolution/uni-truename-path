@@ -1,488 +1,248 @@
 // TrueNamePath: Consent Management API Route
-// POST /api/consents - Comprehensive consent lifecycle endpoint
-// Date: August 12, 2025
-// Academic project REST API with authentication and validation
-
-// TrueNamePath: Consent Management API Route - JSend Compliant
 import { NextRequest } from 'next/server';
 import {
   withRequiredAuth,
   createSuccessResponse,
   createErrorResponse,
+  handle_method_not_allowed,
   type AuthenticatedHandler,
-} from '../../../lib/api/with-auth';
-import { ErrorCodes } from '../../../lib/api/types';
+} from '@/utils/api';
 import { z } from 'zod';
 
-/**
- * Input validation schemas with comprehensive validation rules
- */
-const RequestConsentSchema = z.object({
-  action: z.literal('request'),
-  granter_user_id: z
-.string()
-.uuid('Granter user ID must be a valid UUID')
-.min(1, 'Granter user ID is required'),
-  requester_user_id: z
-.string()
-.uuid('Requester user ID must be a valid UUID')
-.min(1, 'Requester user ID is required'),
-  context_name: z
-.string()
-.min(1, 'Context name cannot be empty')
-.max(100, 'Context name cannot exceed 100 characters')
-.regex(/^[a-zA-Z0-9\s\-_]+$/, 'Context name contains invalid characters'),
-  expires_at: z
-.string()
-.datetime('Expires at must be a valid ISO datetime')
-.optional()
-.nullable(),
-});
-
-const GrantConsentSchema = z.object({
-  action: z.literal('grant'),
-  granter_user_id: z
-.string()
-.uuid('Granter user ID must be a valid UUID')
-.min(1, 'Granter user ID is required'),
-  requester_user_id: z
-.string()
-.uuid('Requester user ID must be a valid UUID')
-.min(1, 'Requester user ID is required'),
-});
-
-const RevokeConsentSchema = z.object({
-  action: z.literal('revoke'),
-  granter_user_id: z
-.string()
-.uuid('Granter user ID must be a valid UUID')
-.min(1, 'Granter user ID is required'),
-  requester_user_id: z
-.string()
-.uuid('Requester user ID must be a valid UUID')
-.min(1, 'Requester user ID is required'),
-});
-
-const ConsentRequestSchema = z.discriminatedUnion('action', [
-  RequestConsentSchema,
-  GrantConsentSchema,
-  RevokeConsentSchema,
+const consent_schema = z.discriminatedUnion('action', [
+  z.object({
+action: z.literal('request'),
+granter_user_id: z.uuid(),
+requester_user_id: z.uuid(),
+context_name: z.string().min(1).max(100),
+expires_at: z.string().datetime().optional(),
+  }),
+  z.object({
+action: z.literal('grant'),
+granter_user_id: z.uuid(),
+requester_user_id: z.uuid(),
+  }),
+  z.object({
+action: z.literal('revoke'),
+granter_user_id: z.uuid(),
+requester_user_id: z.uuid(),
+  }),
 ]);
 
-/**
- * Validated request types
- */
-type RequestConsentRequest = z.infer<typeof RequestConsentSchema>;
-type GrantConsentRequest = z.infer<typeof GrantConsentSchema>;
-type RevokeConsentRequest = z.infer<typeof RevokeConsentSchema>;
-
-/**
- * API Response data interfaces for type safety and consistency
- * Note: Following JSend specification without message field in success responses
- */
-interface RequestConsentData {
-  consent_id: string;
-  status: 'PENDING';
+interface consent_response {
   granter_user_id: string;
   requester_user_id: string;
-  context_name: string;
+  message: string;
+  timestamp: string;
+  consent_id?: string;
+  status?: 'PENDING';
+  context_name?: string;
   expires_at?: string;
-  created_at: string;
-  message: string; // Business message moved to data payload
+  granted?: boolean;
+  revoked?: boolean;
 }
 
-interface GrantConsentData {
-  granted: boolean;
-  granter_user_id: string;
-  requester_user_id: string;
-  granted_at: string;
-  message: string; // Business message moved to data payload
-}
-
-interface RevokeConsentData {
-  revoked: boolean;
-  granter_user_id: string;
-  requester_user_id: string;
-  revoked_at: string;
-  message: string; // Business message moved to data payload
-}
-
-/**
- * Core handler function implementing the consent management logic
- * This is wrapped by the required authentication HOF
- */
-const handleConsentRequest: AuthenticatedHandler<
-  RequestConsentData | GrantConsentData | RevokeConsentData
-> = async (request: NextRequest, context) => {
-  // 1. Request body parsing with error handling
-  let requestBody: unknown;
+const handle_consent_request: AuthenticatedHandler<consent_response> = async (
+  request: NextRequest,
+  context,
+) => {
+  let body: unknown;
   try {
-requestBody = await request.json();
+body = await request.json();
   } catch {
 return createErrorResponse(
-  ErrorCodes.INVALID_JSON,
-  'Invalid JSON in request body',
+  'INVALID_JSON',
+  'Invalid JSON',
   context.requestId,
-  'Request body must be valid JSON',
+  undefined,
   context.timestamp,
 );
   }
 
-  // 2. Input validation with comprehensive Zod schema
-  const validationResult = ConsentRequestSchema.safeParse(requestBody);
-
-  if (!validationResult.success) {
+  const result = consent_schema.safeParse(body);
+  if (!result.success) {
 return createErrorResponse(
-  ErrorCodes.VALIDATION_ERROR,
-  'Invalid request parameters',
+  'VALIDATION_ERROR',
+  'Invalid parameters',
   context.requestId,
-  validationResult.error.issues.map((err) => ({
-field: err.path.join('.'),
-message: err.message,
-code: err.code,
-  })),
+  result.error.issues,
   context.timestamp,
 );
   }
 
-  const params = validationResult.data;
+  const params = result.data;
 
-  // 3. Business rule validation - ensure user authorization
   if (!context.user) {
 return createErrorResponse(
-  ErrorCodes.AUTHENTICATION_FAILED,
-  'User authentication required',
+  'AUTH_REQUIRED',
+  'Authentication required',
   context.requestId,
-  'No authenticated user found',
+  undefined,
   context.timestamp,
 );
   }
 
-  const isAuthorizedUser =
+  const is_authorized =
 params.granter_user_id === context.user.id ||
 params.requester_user_id === context.user.id;
-
-  if (!isAuthorizedUser) {
+  if (!is_authorized) {
 return createErrorResponse(
-  ErrorCodes.AUTHORIZATION_FAILED,
-  'Unauthorized to manage consent for specified users',
+  'AUTH_FAILED',
+  'Not authorized',
   context.requestId,
-  'User can only manage consents they are involved in',
+  undefined,
   context.timestamp,
 );
   }
 
-  // 4. Business logic execution based on action
   const supabase = context.supabase;
 
   switch (params.action) {
 case 'request': {
-  const requestParams = params as RequestConsentRequest;
-
-  // Additional business rule validation
-  if (requestParams.granter_user_id === requestParams.requester_user_id) {
+  if (params.granter_user_id === params.requester_user_id) {
 return createErrorResponse(
-  ErrorCodes.VALIDATION_ERROR,
+  'VALIDATION_ERROR',
   'Cannot request consent from yourself',
   context.requestId,
-  'Granter and requester cannot be the same user',
+  undefined,
   context.timestamp,
 );
   }
 
-  const { data: consentId, error } = await supabase.rpc('request_consent', {
-p_granter_user_id: requestParams.granter_user_id,
-p_requester_user_id: requestParams.requester_user_id,
-p_context_name: requestParams.context_name,
-p_expires_at: requestParams.expires_at || undefined,
-  });
+  const { data: consent_id, error } = await supabase.rpc(
+'request_consent',
+{
+  p_granter_user_id: params.granter_user_id,
+  p_requester_user_id: params.requester_user_id,
+  p_context_name: params.context_name,
+  p_expires_at: params.expires_at,
+},
+  );
 
   if (error) {
-console.error(`Consent request error [${context.requestId}]:`, error);
-
-// Handle specific database errors
-let errorMessage = 'Failed to create consent request';
-let errorCode: string = ErrorCodes.CONSENT_REQUEST_FAILED;
-
-if (
-  error.message.includes('Context') &&
-  error.message.includes('not found')
-) {
-  errorMessage = `Context "${requestParams.context_name}" not found for granter user`;
-  errorCode = ErrorCodes.CONTEXT_NOT_FOUND;
-} else if (error.message.includes('cannot be NULL')) {
-  errorMessage = 'Invalid user identifiers provided';
-  errorCode = ErrorCodes.VALIDATION_ERROR;
-}
-
 return createErrorResponse(
-  errorCode,
-  errorMessage,
+  'RPC_ERROR',
+  'Request failed',
   context.requestId,
-  process.env.NODE_ENV === 'development' ? error.message : undefined,
+  error.message,
   context.timestamp,
 );
   }
 
-  const responseData: RequestConsentData = {
-consent_id: consentId as string,
-status: 'PENDING',
-granter_user_id: requestParams.granter_user_id,
-requester_user_id: requestParams.requester_user_id,
-context_name: requestParams.context_name,
-expires_at: requestParams.expires_at || undefined,
-created_at: context.timestamp,
-message: 'Consent request created successfully',
-  };
-
-  console.log(`API Request [${context.requestId}] - Consent Request:`, {
-action: 'request',
-consentId: consentId,
-granter: requestParams.granter_user_id.substring(0, 8) + '...',
-requester: requestParams.requester_user_id.substring(0, 8) + '...',
-context: requestParams.context_name,
-  });
-
-  // Return success response - status will be set by HOF wrapper to 201
-  // Note: The HOF wrapper handles status code mapping, but we can override for 201
-  const successResponse = createSuccessResponse(
-responseData,
+  return createSuccessResponse(
+{
+  consent_id: consent_id as string,
+  status: 'PENDING' as const,
+  granter_user_id: params.granter_user_id,
+  requester_user_id: params.requester_user_id,
+  context_name: params.context_name,
+  expires_at: params.expires_at,
+  timestamp: context.timestamp,
+  message: 'Consent requested',
+},
 context.requestId,
 context.timestamp,
   );
-
-  // For 201 status, we need to handle this specially in the HOF or return a special response
-  // For now, return the success response and let the HOF handle it
-  return successResponse;
 }
 
 case 'grant': {
-  const grantParams = params as GrantConsentRequest;
-
   const { data: granted, error } = await supabase.rpc('grant_consent', {
-p_granter_user_id: grantParams.granter_user_id,
-p_requester_user_id: grantParams.requester_user_id,
+p_granter_user_id: params.granter_user_id,
+p_requester_user_id: params.requester_user_id,
   });
 
   if (error) {
-console.error(`Consent grant error [${context.requestId}]:`, error);
-
 return createErrorResponse(
-  ErrorCodes.CONSENT_GRANT_FAILED,
-  'Failed to grant consent',
+  'RPC_ERROR',
+  'Grant failed',
   context.requestId,
-  process.env.NODE_ENV === 'development' ? error.message : undefined,
+  error.message,
   context.timestamp,
 );
   }
 
   if (!granted) {
 return createErrorResponse(
-  ErrorCodes.CONSENT_NOT_FOUND,
-  'No pending consent request found to grant',
+  'NOT_FOUND',
+  'No consent to grant',
   context.requestId,
-  'No pending or revoked consent found between specified users',
+  undefined,
   context.timestamp,
 );
   }
 
-  const responseData: GrantConsentData = {
-granted: true,
-granter_user_id: grantParams.granter_user_id,
-requester_user_id: grantParams.requester_user_id,
-granted_at: context.timestamp,
-message: 'Consent granted successfully',
-  };
-
-  console.log(`API Request [${context.requestId}] - Consent Grant:`, {
-action: 'grant',
-granted: true,
-granter: grantParams.granter_user_id.substring(0, 8) + '...',
-requester: grantParams.requester_user_id.substring(0, 8) + '...',
-  });
-
   return createSuccessResponse(
-responseData,
+{
+  granted: true,
+  granter_user_id: params.granter_user_id,
+  requester_user_id: params.requester_user_id,
+  timestamp: context.timestamp,
+  message: 'Consent granted',
+},
 context.requestId,
 context.timestamp,
   );
 }
 
 case 'revoke': {
-  const revokeParams = params as RevokeConsentRequest;
-
   const { data: revoked, error } = await supabase.rpc('revoke_consent', {
-p_granter_user_id: revokeParams.granter_user_id,
-p_requester_user_id: revokeParams.requester_user_id,
+p_granter_user_id: params.granter_user_id,
+p_requester_user_id: params.requester_user_id,
   });
 
   if (error) {
-console.error(`Consent revoke error [${context.requestId}]:`, error);
-
 return createErrorResponse(
-  ErrorCodes.CONSENT_REVOKE_FAILED,
-  'Failed to revoke consent',
+  'RPC_ERROR',
+  'Revoke failed',
   context.requestId,
-  process.env.NODE_ENV === 'development' ? error.message : undefined,
+  error.message,
   context.timestamp,
 );
   }
 
   if (!revoked) {
 return createErrorResponse(
-  ErrorCodes.CONSENT_NOT_FOUND,
-  'No active consent found to revoke',
+  'NOT_FOUND',
+  'No consent to revoke',
   context.requestId,
-  'No granted consent found between specified users',
+  undefined,
   context.timestamp,
 );
   }
 
-  const responseData: RevokeConsentData = {
-revoked: true,
-granter_user_id: revokeParams.granter_user_id,
-requester_user_id: revokeParams.requester_user_id,
-revoked_at: context.timestamp,
-message: 'Consent revoked successfully',
-  };
-
-  console.log(`API Request [${context.requestId}] - Consent Revoke:`, {
-action: 'revoke',
-revoked: true,
-granter: revokeParams.granter_user_id.substring(0, 8) + '...',
-requester: revokeParams.requester_user_id.substring(0, 8) + '...',
-  });
-
   return createSuccessResponse(
-responseData,
+{
+  revoked: true,
+  granter_user_id: params.granter_user_id,
+  requester_user_id: params.requester_user_id,
+  timestamp: context.timestamp,
+  message: 'Consent revoked',
+},
 context.requestId,
 context.timestamp,
   );
 }
 
-default: {
-  // TypeScript should prevent this, but include for completeness
+default:
   return createErrorResponse(
-ErrorCodes.VALIDATION_ERROR,
-'Invalid action specified',
+'VALIDATION_ERROR',
+'Invalid action',
 context.requestId,
-'Action must be one of: request, grant, revoke',
+undefined,
 context.timestamp,
   );
-}
   }
 };
 
-/**
- * POST /api/consents
- *
- * Comprehensive consent lifecycle endpoint handling three actions:
- * 1. Request consent - Create pending consent requests
- * 2. Grant consent - Approve pending consent requests
- * 3. Revoke consent - Revoke active consent grants
- *
- * Features:
- * - JWT authentication via HOF wrapper
- * - Comprehensive input validation with Zod discriminated unions
- * - Detailed error handling with proper HTTP status codes
- * - GDPR-compliant audit logging via database functions
- * - Academic-quality response metadata
- * - JSend format compliance
- */
-export const POST = withRequiredAuth(handleConsentRequest, {
-  enableLogging: true,
-});
+export const POST = withRequiredAuth(handle_consent_request);
 
 /**
- * Handle unsupported HTTP methods with proper JSend error responses
+ * Handle unsupported HTTP methods using shared utility
  */
-export async function GET(): Promise<Response> {
-  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  const timestamp = new Date().toISOString();
-
-  const errorResponse = createErrorResponse(
-ErrorCodes.METHOD_NOT_ALLOWED,
-'Method not allowed. Use POST to manage consents.',
-requestId,
-{ allowedMethods: ['POST'] },
-timestamp,
-  );
-
-  return new Response(JSON.stringify(errorResponse), {
-status: 405,
-headers: {
-  'Allow': 'POST',
-  'Content-Type': 'application/json',
-  'X-Request-ID': requestId,
-},
-  });
-}
-
-export async function PUT(): Promise<Response> {
-  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  const timestamp = new Date().toISOString();
-
-  const errorResponse = createErrorResponse(
-ErrorCodes.METHOD_NOT_ALLOWED,
-'Method not allowed. Use POST to manage consents.',
-requestId,
-{ allowedMethods: ['POST'] },
-timestamp,
-  );
-
-  return new Response(JSON.stringify(errorResponse), {
-status: 405,
-headers: {
-  'Allow': 'POST',
-  'Content-Type': 'application/json',
-  'X-Request-ID': requestId,
-},
-  });
-}
-
-export async function DELETE(): Promise<Response> {
-  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  const timestamp = new Date().toISOString();
-
-  const errorResponse = createErrorResponse(
-ErrorCodes.METHOD_NOT_ALLOWED,
-'Method not allowed. Use POST to manage consents.',
-requestId,
-{ allowedMethods: ['POST'] },
-timestamp,
-  );
-
-  return new Response(JSON.stringify(errorResponse), {
-status: 405,
-headers: {
-  'Allow': 'POST',
-  'Content-Type': 'application/json',
-  'X-Request-ID': requestId,
-},
-  });
-}
-
-export async function PATCH(): Promise<Response> {
-  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  const timestamp = new Date().toISOString();
-
-  const errorResponse = createErrorResponse(
-ErrorCodes.METHOD_NOT_ALLOWED,
-'Method not allowed. Use POST to manage consents.',
-requestId,
-{ allowedMethods: ['POST'] },
-timestamp,
-  );
-
-  return new Response(JSON.stringify(errorResponse), {
-status: 405,
-headers: {
-  'Allow': 'POST',
-  'Content-Type': 'application/json',
-  'X-Request-ID': requestId,
-},
-  });
-}
+export const GET = () => handle_method_not_allowed(['POST']);
+export const PUT = GET;
+export const DELETE = GET;
+export const PATCH = GET;
 
 /**
  * OPTIONS handler for CORS preflight requests

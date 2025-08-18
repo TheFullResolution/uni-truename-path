@@ -3,49 +3,52 @@ import { updateSession } from './utils/supabase/middleware';
 import { NextResponse } from 'next/server';
 
 /**
- * Official Supabase SSR Middleware for Route Protection
+ * Middleware-First Authentication System
  *
- * Uses the official Supabase SSR middleware pattern with updateSession
- * for automatic token refresh, proper cookie management, and route protection.
+ * This middleware now handles BOTH page routes AND API routes to create a single
+ * source of truth for authentication, eliminating duplicate auth calls.
  *
- * Route protection logic is handled in utils/supabase/middleware.ts
+ * For page routes: Handles redirects and route protection
+ * For API routes: Sets authentication headers for HOF consumption
+ *
+ * Route protection and header logic is handled in utils/supabase/middleware.ts
  */
 
 /**
- * Main middleware function using official Supabase SSR pattern
+ * Main middleware function implementing middleware-first authentication
  */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip middleware for static assets, API routes, and Next.js internals
+  // Skip middleware for static assets and Next.js internals only
+  // Note: API routes are now included in middleware processing
   if (
 pathname.startsWith('/_next/') ||
-pathname.startsWith('/api/') ||
 pathname.startsWith('/favicon') ||
 pathname.includes('.')
   ) {
 return NextResponse.next();
   }
 
-  // Use the official updateSession pattern - this handles both authentication
-  // and route protection in a single, simplified approach
+  // Use the enhanced updateSession pattern that handles both pages and API routes
+  // This creates a single authentication verification point for the entire application
   return await updateSession(request);
 }
 
 /**
  * Middleware configuration
- * Apply to all routes except static assets and API routes
+ * Apply to ALL routes except static assets (API routes are now included)
  */
 export const config = {
   matcher: [
 /*
  * Match all request paths except for the ones starting with:
- * - api (API routes)
  * - _next/static (static files)
  * - _next/image (image optimization files)
  * - favicon.ico (favicon file)
  * - public assets (images, etc.)
+ * Note: API routes are now INCLUDED for authentication header processing
  */
-'/((?!api|_next/static|_next/image|favicon.ico|.*\\.).*)',
+'/((?!_next/static|_next/image|favicon.ico|.*\\.).*)',
   ],
 };

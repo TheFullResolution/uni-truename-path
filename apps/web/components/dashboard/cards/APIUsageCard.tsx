@@ -2,10 +2,10 @@
 
 import { Paper, Group, Title, Stack, Text, Skeleton } from '@mantine/core';
 import { IconApi } from '@tabler/icons-react';
-import { DashboardStats } from '../../../types/database';
+import { DashboardStatsResponse } from '@/app/api/dashboard/stats/types';
 
 interface APIUsageCardProps {
-  stats: DashboardStats | null;
+  stats: DashboardStatsResponse | null;
   loading: boolean;
 }
 

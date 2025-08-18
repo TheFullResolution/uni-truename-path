@@ -26,12 +26,12 @@ import {
   IconEye,
   IconUser,
 } from '@tabler/icons-react';
-import { CACHE_KEYS } from '../../lib/swr-keys';
-import { useAuth } from '../../lib/context';
+import { CACHE_KEYS } from '@/utils/swr-keys';
+import { useAuth } from '@/utils/context';
 import { AuthGuard } from '../../components/auth/AuthGuard';
-import { Logo } from '../../components/branding';
-import { createLogoutHandler } from '../../lib/utils';
-import { swrFetcher } from '../../lib/swr-fetcher';
+import { Logo } from '@/components/branding';
+import { createLogoutHandler } from '@/utils/utils';
+import { swrFetcher } from '@/utils/swr-fetcher';
 import {
   ContextAssignmentPanel,
   AssignmentPreview,
@@ -43,10 +43,7 @@ import {
   EditContextModal,
   DeleteContextModal,
 } from '../../components/contexts';
-import type {
-  ContextsResponseData,
-  ContextWithStats,
-} from '../../types/api-responses';
+import type { ContextWithStats } from '../api/contexts/types';
 
 // Main ContextsContent Component
 function ContextsContent() {
@@ -64,13 +61,13 @@ useState<ContextWithStats | null>(null);
 data: contextsData,
 error: contextsError,
 mutate,
-  } = useSWR<ContextsResponseData>(
+  } = useSWR<ContextWithStats[]>(
 user?.id ? CACHE_KEYS.CONTEXTS : null,
 swrFetcher,
   );
 
   // Derived state from SWR
-  const contexts = contextsData?.contexts || [];
+  const contexts = contextsData || [];
   const contextsLoading = !contextsData && !contextsError;
 
   // Modal states
@@ -83,12 +80,8 @@ deleteModalOpened,
 
   // Handle welcome notification when contexts data changes
   useEffect(() => {
-if (
-  contextsData?.contexts &&
-  contextsData.contexts.length > 0 &&
-  !welcomeShown
-) {
-  const contexts = contextsData.contexts;
+if (contextsData && contextsData.length > 0 && !welcomeShown) {
+  const contexts = contextsData;
   // Show onboarding notification for users with only default contexts
   const defaultContextNames = ['Professional', 'Social', 'Public'];
   const hasOnlyDefaultContexts =

@@ -14,13 +14,26 @@ import {
 import { notifications } from '@mantine/notifications';
 import { IconActivity } from '@tabler/icons-react';
 import useSWR from 'swr';
-import { useAuth } from '../../../lib/context';
-import { swrFetcher } from '../../../lib/swr-fetcher';
-import { formatActivityAction, getActivityIcon } from '../../../lib/utils';
-import { Activity, DashboardStats } from '../../../types/database';
+import { useAuth } from '../../../utils/context';
+import { swrFetcher } from '../../../utils/swr-fetcher';
+import { formatActivityAction, getActivityIcon } from '../../../utils/utils';
+import { DashboardStatsResponse } from '@/app/api/dashboard/stats/types';
+
+// Simple Activity type for this component
+interface Activity {
+  id: string;
+  action: string;
+  created_at: string;
+  metadata?: {
+context_name?: string;
+resolved_name?: string;
+[key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
 
 interface RecentActivityCardProps {
-  stats: DashboardStats | null;
+  stats: DashboardStatsResponse | null;
   loading: boolean;
 }
 

@@ -1,5 +1,5 @@
 import { createBrowserClient } from '@supabase/ssr';
-import { Database } from '../../types/generated';
+import { Database } from '@/generated/database';
 
 export function createClient() {
   // Validate environment variables at runtime

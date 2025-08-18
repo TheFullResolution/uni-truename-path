@@ -23,7 +23,7 @@ import {
   IconBook,
 } from '@tabler/icons-react';
 import { SignupForm } from '../../../components/SignupForm';
-import { useAuth } from '../../../lib/context/AuthProvider';
+import { useAuth } from '../../../utils/context/AuthProvider';
 import { LogoWithText, Logo } from '../../../components/branding';
 
 function SignupPageContent() {
@@ -229,8 +229,8 @@ marginTop: '2px',
 </Title>
 <Text size='sm' c='gray.7' mb='xl'>
   Built on Supabase&apos;s enterprise-grade infrastructure with
-  Edge Functions. Standard JWT implementation means no
-  proprietary integrations required.
+  Edge Functions. Standard cookie-based session management means
+  no proprietary integrations required.
 </Text>
 
 {/* Academic Project Badge */}
@@ -349,7 +349,7 @@ justifyContent: 'flex-start',
 API Documentation
   </Text>
   <Text size='xs' c='gray.6'>
-RESTful API with JWT authentication
+RESTful API with secure session management
   </Text>
 </Box>
   </Button>

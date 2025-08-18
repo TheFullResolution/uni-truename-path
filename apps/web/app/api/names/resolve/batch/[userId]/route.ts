@@ -4,17 +4,16 @@
 // Academic project REST API with authentication and validation
 
 import { NextRequest } from 'next/server';
-import {
-  TrueNameContextEngine,
-  type ResolutionSource,
-} from '../../../../../../lib/context-engine/TrueNameContextEngine';
+import { TrueNameContextEngine } from '@/utils/context-engine/TrueNameContextEngine';
+import type { BatchResolutionData, BatchResolutionItem } from '../../../types';
 import {
   withOptionalAuth,
   createSuccessResponse,
   createErrorResponse,
+  handle_method_not_allowed,
   type AuthenticatedHandler,
-} from '../../../../../../lib/api/with-auth';
-import { ErrorCodes } from '../../../../../../lib/api/types';
+} from '@/utils/api';
+import { ErrorCodes } from '@/utils/api';
 import { z } from 'zod';
 
 /**
@@ -27,29 +26,6 @@ const BatchResolveQuerySchema = z.object({
 .transform((str) => str.split(',').filter(Boolean))
 .refine((arr) => arr.length > 0, 'At least one context is required'),
 });
-
-/**
- * Single resolution result interface
- */
-interface BatchResolutionItem {
-  context: string;
-  resolvedName: string;
-  source: ResolutionSource;
-  responseTimeMs: number;
-  error?: string;
-}
-
-/**
- * Batch resolution response interface
- */
-interface BatchResolutionData {
-  userId: string;
-  resolutions: BatchResolutionItem[];
-  totalContexts: number;
-  successfulResolutions: number;
-  batchTimeMs: number;
-  timestamp: string;
-}
 
 /**
  * Core handler function implementing batch name resolution logic
@@ -121,18 +97,18 @@ const resolutionStartTime = Date.now();
 
 try {
   const nameResolution = await contextEngine.resolveName({
-targetUserId: userId,
-requesterUserId: context.user?.id || undefined,
-contextName: contextName.trim(),
+target_user_id: userId,
+requester_user_id: context.user?.id || undefined,
+context_name: contextName.trim(),
   });
 
   const responseTimeMs = Date.now() - resolutionStartTime;
 
   resolutions.push({
 context: contextName.trim(),
-resolvedName: nameResolution.name,
+resolved_name: nameResolution.name,
 source: nameResolution.source,
-responseTimeMs,
+response_time_ms: responseTimeMs,
   });
 
   successfulResolutions++;
@@ -143,9 +119,9 @@ error instanceof Error ? error.message : 'Unknown error';
 
   resolutions.push({
 context: contextName.trim(),
-resolvedName: 'Error resolving name',
+resolved_name: 'Error resolving name',
 source: 'error_fallback',
-responseTimeMs,
+response_time_ms: responseTimeMs,
 error: errorMessage,
   });
 }
@@ -155,21 +131,13 @@ error: errorMessage,
 
   // Success response with comprehensive batch metadata
   const responseData: BatchResolutionData = {
-userId,
+user_id: userId,
 resolutions,
-totalContexts: contexts.length,
-successfulResolutions,
-batchTimeMs,
+total_contexts: contexts.length,
+successful_resolutions: successfulResolutions,
+batch_time_ms: batchTimeMs,
 timestamp: new Date().toISOString(),
   };
-
-  console.log(`Batch Resolution [${context.requestId}]:`, {
-userId: userId.substring(0, 8) + '...',
-contexts: contexts.length,
-successful: successfulResolutions,
-batchTimeMs,
-authenticated: context.isAuthenticated ? 'yes' : 'no',
-  });
 
   return createSuccessResponse(
 responseData,
@@ -189,7 +157,7 @@ context.timestamp,
  * - contexts: Comma-separated list of context names to resolve
  *
  * Features:
- * - Optional JWT authentication (demo mode compatible)
+ * - Optional cookie-based session authentication (demo mode compatible)
  * - Comprehensive input validation with Zod
  * - Individual resolution timing and error handling
  * - Batch performance metrics
@@ -201,95 +169,12 @@ export const GET = withOptionalAuth(handleBatchResolveRequest, {
 });
 
 /**
- * Handle unsupported HTTP methods with proper JSend error responses
+ * Handle unsupported HTTP methods - shared utility eliminates boilerplate
  */
-export async function POST(): Promise<Response> {
-  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  const timestamp = new Date().toISOString();
-
-  const errorResponse = createErrorResponse(
-ErrorCodes.METHOD_NOT_ALLOWED,
-'Method not allowed. Use GET for batch name resolution.',
-requestId,
-{ allowedMethods: ['GET'] },
-timestamp,
-  );
-
-  return new Response(JSON.stringify(errorResponse), {
-status: 405,
-headers: {
-  'Allow': 'GET',
-  'Content-Type': 'application/json',
-  'X-Request-ID': requestId,
-},
-  });
-}
-
-export async function PUT(): Promise<Response> {
-  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  const timestamp = new Date().toISOString();
-
-  const errorResponse = createErrorResponse(
-ErrorCodes.METHOD_NOT_ALLOWED,
-'Method not allowed. Use GET for batch name resolution.',
-requestId,
-{ allowedMethods: ['GET'] },
-timestamp,
-  );
-
-  return new Response(JSON.stringify(errorResponse), {
-status: 405,
-headers: {
-  'Allow': 'GET',
-  'Content-Type': 'application/json',
-  'X-Request-ID': requestId,
-},
-  });
-}
-
-export async function DELETE(): Promise<Response> {
-  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  const timestamp = new Date().toISOString();
-
-  const errorResponse = createErrorResponse(
-ErrorCodes.METHOD_NOT_ALLOWED,
-'Method not allowed. Use GET for batch name resolution.',
-requestId,
-{ allowedMethods: ['GET'] },
-timestamp,
-  );
-
-  return new Response(JSON.stringify(errorResponse), {
-status: 405,
-headers: {
-  'Allow': 'GET',
-  'Content-Type': 'application/json',
-  'X-Request-ID': requestId,
-},
-  });
-}
-
-export async function PATCH(): Promise<Response> {
-  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  const timestamp = new Date().toISOString();
-
-  const errorResponse = createErrorResponse(
-ErrorCodes.METHOD_NOT_ALLOWED,
-'Method not allowed. Use GET for batch name resolution.',
-requestId,
-{ allowedMethods: ['GET'] },
-timestamp,
-  );
-
-  return new Response(JSON.stringify(errorResponse), {
-status: 405,
-headers: {
-  'Allow': 'GET',
-  'Content-Type': 'application/json',
-  'X-Request-ID': requestId,
-},
-  });
-}
+export const POST = () => handle_method_not_allowed(['GET']);
+export const PUT = POST;
+export const DELETE = POST;
+export const PATCH = POST;
 
 /**
  * OPTIONS handler for CORS preflight requests

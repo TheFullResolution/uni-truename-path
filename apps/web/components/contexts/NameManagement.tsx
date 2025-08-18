@@ -31,13 +31,13 @@ import {
   swrFetcher,
   createMutationFetcher,
   formatSWRError,
-} from '../../lib/swr-fetcher';
+} from '../../utils/swr-fetcher';
 import type { Name } from '../../types/database';
 import type {
   NamesResponseData,
   UpdateNameRequest,
   UpdateNameResponseData,
-} from '../../types/api-responses';
+} from '../../app/api/names/types';
 import DeleteNameModal from './modals/DeleteNameModal';
 
 interface NameManagementProps {
@@ -93,8 +93,8 @@ notifications.show({
   const handleSetPreferred = async (nameId: string) => {
 try {
   await updateName({
-nameId: nameId,
-isPreferred: true,
+name_id: nameId,
+is_preferred: true,
   });
   // Success handling is done via onSuccess callback
 } catch (error) {

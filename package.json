@@ -29,7 +29,8 @@
 "test:e2e:ui": "playwright test --ui",
 "test:e2e:headed": "playwright test --headed",
 "format": "prettier . --write",
-"db:types": "supabase gen types typescript --local > apps/web/types/generated.ts",
+"types": "supabase gen types typescript --local > apps/web/generated/database.ts",
+"types:remote": "supabase gen types typescript --project-id txfcnjvmkaqzblztkjmr > apps/web/generated/database.ts",
 "diagrams:erd": "mmdc -i docs/report-materials/academic-report-diagrams.md -o enhanced-erd.png -t neutral -s 2 --cssFile docs/mermaid-theme.css",
 "diagrams:architecture": "mmdc -i docs/report-materials/academic-report-diagrams.md -o enhanced-architecture.png -t neutral -s 2 --cssFile docs/mermaid-theme.css",
 "diagrams:flowchart": "mmdc -i docs/report-materials/academic-report-diagrams.md -o enhanced-flowchart.png -t neutral -s 2 --cssFile docs/mermaid-theme.css",
@@ -59,5 +60,8 @@
 "*.{js,jsx,ts,tsx,mjs,cjs,json,css,scss,html,md}": [
   "yarn prettier --write"
 ]
+  },
+  "dependencies": {
+"type-fest": "^4.41.0"
   }
 }

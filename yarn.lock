@@ -8695,7 +8695,7 @@ prelude-ls: "npm:^1.2.1"
   languageName: node
   linkType: hard
 
-"type-fest@npm:^4.27.0":
+"type-fest@npm:^4.27.0, type-fest@npm:^4.41.0":
   version: 4.41.0
   resolution: "type-fest@npm:4.41.0"
   checksum: 10/617ace794ac0893c2986912d28b3065ad1afb484cad59297835a0807dc63286c39e8675d65f7de08fafa339afcb8fe06a36e9a188b9857756ae1e92ee8bda212
@@ -8865,6 +8865,7 @@ prettier: "npm:^3.6.2"
 puppeteer: "npm:^24.16.1"
 simple-git-hooks: "npm:^2.13.1"
 turbo: "npm:2.5.5"
+type-fest: "npm:^4.41.0"
 typescript: "npm:^5.8.3"
   languageName: unknown
   linkType: soft

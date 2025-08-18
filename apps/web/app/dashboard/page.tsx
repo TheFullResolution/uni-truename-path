@@ -1,5 +1,6 @@
 'use client';
 
+import { DashboardStatsResponse } from '@/app/api/dashboard/stats/types';
 import {
   Box,
   Button,
@@ -25,7 +26,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 import useSWR from 'swr';
 import { AuthGuard } from '../../components/auth/AuthGuard';
-import { Logo } from '../../components/branding';
+import { Logo } from '@/components/branding';
 import {
   APIUsageCard,
   NameVariantsCard,
@@ -34,10 +35,9 @@ import {
   SettingsPanel,
   WelcomeCard,
 } from '../../components/dashboard';
-import { useAuth } from '../../lib/context';
-import { formatSWRError, swrFetcher } from '../../lib/swr-fetcher';
-import { createLogoutHandler } from '../../lib/utils';
-import { DashboardStats } from '../../types/database';
+import { useAuth } from '@/utils/context';
+import { formatSWRError, swrFetcher } from '@/utils/swr-fetcher';
+import { createLogoutHandler } from '@/utils/utils';
 
 function DashboardContent() {
   const router = useRouter();
@@ -49,7 +49,7 @@ function DashboardContent() {
 data: dashboardStats,
 error: statsError,
 isLoading: statsLoading,
-  } = useSWR<DashboardStats>(
+  } = useSWR<DashboardStatsResponse>(
 user?.profile?.id ? '/api/dashboard/stats' : null,
 swrFetcher,
   );

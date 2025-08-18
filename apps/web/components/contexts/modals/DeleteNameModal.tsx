@@ -9,9 +9,9 @@ import type { Name } from '../../../types/database';
 import {
   createMutationFetcher,
   formatSWRError,
-} from '../../../lib/swr-fetcher';
-import { CACHE_KEYS } from '../../../lib/swr-keys';
-import type { DeleteNameResponseData } from '../../../types/api-responses';
+} from '../../../utils/swr-fetcher';
+import { CACHE_KEYS } from '../../../utils/swr-keys';
+import type { DeleteNameResponseData } from '../../../app/api/names/types';
 
 interface DeleteNameModalProps {
   opened: boolean;
@@ -28,14 +28,16 @@ export default function DeleteNameModal({
 }: DeleteNameModalProps) {
   const { trigger, isMutating } = useSWRMutation(
 CACHE_KEYS.NAMES,
-createMutationFetcher<DeleteNameResponseData, { nameId: string }>('DELETE'),
+createMutationFetcher<DeleteNameResponseData, { name_id: string }>(
+  'DELETE',
+),
   );
 
   const handleDelete = async () => {
 if (!name) return;
 
 try {
-  await trigger({ nameId: name.id });
+  await trigger({ name_id: name.id });
 
   notifications.show({
 title: 'Name Deleted',

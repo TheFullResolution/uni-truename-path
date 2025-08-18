@@ -26,12 +26,12 @@ import { z } from 'zod';
 import {
   createMutationFetcher,
   formatSWRError,
-} from '../../../lib/swr-fetcher';
-import { CACHE_KEYS } from '../../../lib/swr-keys';
+} from '../../../utils/swr-fetcher';
+import { CACHE_KEYS } from '../../../utils/swr-keys';
 import type {
   CreateNameResponseData,
   CreateNameRequest,
-} from '../../../types/api-responses';
+} from '../../../app/api/names/types';
 
 // Name type options - matches database enum values
 const NAME_TYPE_OPTIONS = [

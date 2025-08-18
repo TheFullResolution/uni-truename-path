@@ -13,13 +13,7 @@
 "isolatedModules": true,
 "jsx": "preserve",
 "incremental": true,
-"baseUrl": ".",
-"paths": {
-  "@uni-final-project/ui": ["./packages/ui/src"],
-  "@uni-final-project/database": ["./packages/database/src"],
-  "@uni-final-project/utils": ["./packages/utils/src"],
-  "@uni-final-project/config": ["./packages/config/src"]
-}
+"baseUrl": "."
   },
   "exclude": ["node_modules"]
 }

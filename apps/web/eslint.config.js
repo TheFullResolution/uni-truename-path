@@ -25,6 +25,36 @@ rules: {
 },
   },
   {
+// Client component import protection
+files: [
+  'components/**/*.{ts,tsx}',
+  'app/**/components/**/*.{ts,tsx}',
+  'utils/context/**/*.{ts,tsx}',
+],
+ignores: [
+  'components/server/**', // Convention for server-only components
+],
+rules: {
+  'no-restricted-imports': [
+'error',
+{
+  patterns: [
+{
+  group: ['**/auth/server', '**/supabase/server'],
+  message:
+'Server-only modules cannot be imported in client components. Use the `useAuth()` hook from AuthProvider context or move logic to a Server Component.',
+},
+{
+  group: ['next/headers', 'next/cookies'],
+  message:
+'Next.js server-only modules cannot be used in client components.',
+},
+  ],
+},
+  ],
+},
+  },
+  {
 // Relaxed rules for test files and mocks
 files: [
   '**/__tests__/**/*',

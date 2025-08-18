@@ -23,8 +23,8 @@ import {
   IconAlertCircle,
   IconRefresh,
 } from '@tabler/icons-react';
-import type { ContextWithStats } from '../../../types/api-responses';
-import { formatSWRError } from '../../../lib/swr-fetcher';
+import type { ContextWithStats } from '@/app/api/contexts/types';
+import { formatSWRError } from '@/utils/swr-fetcher';
 
 interface ContextListProps {
   contexts: ContextWithStats[];

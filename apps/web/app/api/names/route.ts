@@ -3,20 +3,17 @@
 // Date: December 2024
 // Academic project REST API with authentication and validation
 
-import { NextRequest } from 'next/server';
+import type { Name, NameCategory } from '@/types/database';
 import {
-  withRequiredAuth,
-  createSuccessResponse,
-  createErrorResponse,
   type AuthenticatedHandler,
-} from '../../../lib/api';
-import { ErrorCodes } from '../../../lib/api';
-import {
-  NAME_CATEGORIES,
-  NameCategory,
-  type Name,
-} from '../../../types/database';
+  createErrorResponse,
+  createSuccessResponse,
+  ErrorCodes,
+  withRequiredAuth,
+} from '@/utils/api';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
+import { NAME_CATEGORIES } from './types';
 
 /**
  * Request body validation schema for name creation
@@ -24,9 +21,9 @@ import { z } from 'zod';
 const CreateNameSchema = z.object({
   name_text: z
 .string()
+.trim()
 .min(1, 'Name text is required')
-.max(100, 'Name text cannot exceed 100 characters')
-.trim(),
+.max(100, 'Name text cannot exceed 100 characters'),
 
   name_type: z.enum(NAME_CATEGORIES),
 
@@ -41,9 +38,9 @@ const UpdateNameSchema = z.object({
   is_preferred: z.boolean().optional(),
   name_text: z
 .string()
+.trim()
 .min(1, 'Name text is required')
 .max(100, 'Name text cannot exceed 100 characters')
-.trim()
 .optional(),
   name_type: z.enum(NAME_CATEGORIES).optional(),
 });
@@ -303,7 +300,9 @@ name_type: validatedData.name_type as
   | 'LEGAL'
   | 'PREFERRED'
   | 'NICKNAME'
-  | 'ALIAS', // Type assertion for enum values
+  | 'ALIAS'
+  | 'PROFESSIONAL'
+  | 'CULTURAL', // Type assertion for enum values
 is_preferred: validatedData.is_preferred,
 created_at: new Date().toISOString(),
   })
@@ -344,6 +343,17 @@ ErrorCodes.VALIDATION_ERROR,
 'Invalid request data',
 requestId,
 { validationErrors: error.issues },
+timestamp,
+  );
+}
+
+// Handle JSON parsing errors
+if (error instanceof SyntaxError && error.message.includes('JSON')) {
+  return createErrorResponse(
+ErrorCodes.VALIDATION_ERROR,
+'Invalid JSON in request body',
+requestId,
+{ error: 'Malformed JSON data' },
 timestamp,
   );
 }
@@ -393,7 +403,7 @@ timestamp,
 if (!existingName) {
   return createErrorResponse(
 ErrorCodes.NOT_FOUND,
-'Name not found or access denied',
+'Name variant not found',
 requestId,
 undefined,
 timestamp,
@@ -483,6 +493,17 @@ timestamp,
   );
 }
 
+// Handle JSON parsing errors
+if (error instanceof SyntaxError && error.message.includes('JSON')) {
+  return createErrorResponse(
+ErrorCodes.VALIDATION_ERROR,
+'Invalid JSON in request body',
+requestId,
+{ error: 'Malformed JSON data' },
+timestamp,
+  );
+}
+
 return createErrorResponse(
   ErrorCodes.INTERNAL_ERROR,
   'An unexpected error occurred while updating the name variant',
@@ -528,7 +549,7 @@ timestamp,
 if (!existingName) {
   return createErrorResponse(
 ErrorCodes.NOT_FOUND,
-'Name not found or access denied',
+'Name variant not found',
 requestId,
 undefined,
 timestamp,
@@ -562,6 +583,9 @@ timestamp,
   );
 }
 
+// If deleting the preferred name and there are other names, auto-set another as preferred
+const isPreferredName = existingName.is_preferred;
+
 // Proceed with deletion
 const { error: deleteError } = await supabase
   .from('names')
@@ -578,6 +602,32 @@ requestId,
 { error: deleteError.message },
 timestamp,
   );
+}
+
+// If we deleted the preferred name and there are other names, auto-set another as preferred
+if (isPreferredName && (totalNames || 0) > 1) {
+  const { data: remainingNames, error: remainingNamesError } =
+await supabase
+  .from('names')
+  .select('id')
+  .eq('user_id', user!.id)
+  .limit(1);
+
+  if (!remainingNamesError && remainingNames && remainingNames.length > 0) {
+const { error: updatePreferredError } = await supabase
+  .from('names')
+  .update({ is_preferred: true })
+  .eq('id', remainingNames[0].id)
+  .eq('user_id', user!.id);
+
+if (updatePreferredError) {
+  console.error(
+'Error setting new preferred name:',
+updatePreferredError,
+  );
+  // Don't fail the deletion, just log the error
+}
+  }
 }
 
 return createSuccessResponse(
@@ -597,6 +647,17 @@ ErrorCodes.VALIDATION_ERROR,
 'Invalid request data',
 requestId,
 { validationErrors: error.issues },
+timestamp,
+  );
+}
+
+// Handle JSON parsing errors
+if (error instanceof SyntaxError && error.message.includes('JSON')) {
+  return createErrorResponse(
+ErrorCodes.VALIDATION_ERROR,
+'Invalid JSON in request body',
+requestId,
+{ error: 'Malformed JSON data' },
 timestamp,
   );
 }

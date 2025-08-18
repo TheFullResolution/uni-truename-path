@@ -252,7 +252,9 @@ let userId: string;
 if (createError && createError.message.includes('already registered')) {
   // User exists, get their ID
   const { data: existingUsers } = await supabase.auth.admin.listUsers();
-  const existingUser = existingUsers?.users?.find((u) => u.email === email);
+  const existingUser = existingUsers?.users?.find(
+(u: any) => u.email === email,
+  );
   userId = existingUser?.id || '';
 } else if (createError) {
   throw new Error(`Failed to create test user: ${createError.message}`);
@@ -301,6 +303,36 @@ if (!token) {
 }
 
 return { userId, token };
+  }
+
+  /**
+   * Login user with cookies for middleware-first authentication
+   * Uses form-based login to get proper Supabase SSR cookies
+   */
+  static async loginUser(page: Page, email: string): Promise<void> {
+// Go to login page
+await page.goto('/auth/login');
+
+// Wait for the login form to load
+await page.waitForSelector('input[placeholder="user@example.com"]');
+
+// Fill out the login form using more specific selectors
+await page.fill('input[placeholder="user@example.com"]', email);
+await page.fill(
+  'input[placeholder="••••••••••••••••"]',
+  'test-password-123',
+);
+
+// Submit the form
+await page.click('button[type="submit"]');
+
+// Wait for login to complete - either redirect to dashboard or see a success message
+await page.waitForLoadState('networkidle');
+
+// Brief wait for cookies to be set by the login process
+await page.waitForTimeout(1000);
+
+console.log('Logged in user via form:', email);
   }
 
   /**

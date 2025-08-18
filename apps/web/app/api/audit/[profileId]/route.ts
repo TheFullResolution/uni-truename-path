@@ -5,84 +5,72 @@
 
 // TrueNamePath: Audit Log API Route - JSend Compliant
 import { NextRequest } from 'next/server';
+import type {
+  AuditLogEntry,
+  AuditFilters,
+  AuditLogResponseData,
+} from '../types';
 import {
   withRequiredAuth,
   createSuccessResponse,
   createErrorResponse,
+  validate_uuid,
+  handle_method_not_allowed,
   type AuthenticatedHandler,
-} from '../../../../lib/api';
-import { ErrorCodes } from '../../../../lib/api';
+} from '@/utils/api';
+import { ErrorCodes } from '@/utils/api';
 import { z } from 'zod';
-import { Json } from '../../../../types/generated';
 
 /**
  * Query parameter validation schema for audit log requests
  */
-const AuditQuerySchema = z.object({
-  limit: z
-.string()
-.regex(/^\d+$/, 'Limit must be a valid number')
-.transform(Number)
-.refine(
-  (num) => num >= 1 && num <= 1000,
-  'Limit must be between 1 and 1000',
-)
-.optional()
-.default(50),
+const AuditQuerySchema = z
+  .object({
+limit: z
+  .string()
+  .regex(/^\d+$/, 'Limit must be a valid number')
+  .transform(Number)
+  .refine(
+(num) => num >= 1 && num <= 1000,
+'Limit must be between 1 and 1000',
+  )
+  .optional()
+  .default(50),
 
-  action: z
-.enum(['NAME_DISCLOSED', 'CONSENT_GRANTED', 'CONSENT_REVOKED'] as const)
-.optional(),
+action: z
+  .enum(['NAME_DISCLOSED', 'CONSENT_GRANTED', 'CONSENT_REVOKED'] as const)
+  .optional(),
 
-  startDate: z
-.string()
-.datetime('Start date must be a valid ISO date')
-.optional(),
+// Support both naming conventions for backward compatibility
+startDate: z
+  .string()
+  .datetime('Start date must be a valid ISO date')
+  .optional(),
 
-  endDate: z.string().datetime('End date must be a valid ISO date').optional(),
-});
+date_from: z
+  .string()
+  .datetime('Start date must be a valid ISO date')
+  .optional(),
 
-/**
- * Validated query parameters type
- */
+endDate: z
+  .string()
+  .datetime('End date must be a valid ISO date')
+  .optional(),
 
-/**
- * Audit log entry interface matching database schema
- */
-interface AuditLogEntry {
-  accessed_at: string;
-  action: string;
-  requester_user_id: string;
-  context_name: string;
-  resolved_name: string;
-  details: Json;
-}
-
-/**
- * Audit filters for response metadata
- */
-interface AuditFilters {
-  limit: number;
-  action?: string;
-  startDate?: string;
-  endDate?: string;
-}
-
-/**
- * API Response interfaces for type safety and consistency
- */
-interface AuditLogResponseData {
-  entries: AuditLogEntry[];
-  total: number;
-  profile_id: string;
-  filters: AuditFilters;
-  metadata: {
-retrieved_at: string;
-request_id: string;
-total_entries: number;
-filtered_entries: number;
-  };
-}
+date_to: z
+  .string()
+  .datetime('End date must be a valid ISO date')
+  .optional(),
+  })
+  .transform((data) => ({
+...data,
+// Normalize to snake_case internally, prioritizing snake_case over camelCase
+date_from: data.date_from || data.startDate,
+date_to: data.date_to || data.endDate,
+// Remove the camelCase versions from the internal object
+startDate: undefined,
+endDate: undefined,
+  }));
 
 /**
  * Core handler function implementing the audit log retrieval logic
@@ -106,10 +94,8 @@ return createErrorResponse(
 );
   }
 
-  // Validate UUID format
-  const uuidRegex =
-/^[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  if (!uuidRegex.test(profileId)) {
+  // Validate UUID format using shared utility
+  if (!validate_uuid(profileId)) {
 return createErrorResponse(
   ErrorCodes.VALIDATION_ERROR,
   'Invalid profile ID format',
@@ -183,18 +169,18 @@ filteredEntries = filteredEntries.filter(
 );
   }
 
-  // Filter by date range
-  if (filters.startDate) {
-const startDate = new Date(filters.startDate);
+  // Filter by date range using normalized snake_case fields
+  if (filters.date_from) {
+const date_from = new Date(filters.date_from);
 filteredEntries = filteredEntries.filter(
-  (entry: AuditLogEntry) => new Date(entry.accessed_at) >= startDate,
+  (entry: AuditLogEntry) => new Date(entry.accessed_at) >= date_from,
 );
   }
 
-  if (filters.endDate) {
-const endDate = new Date(filters.endDate);
+  if (filters.date_to) {
+const date_to = new Date(filters.date_to);
 filteredEntries = filteredEntries.filter(
-  (entry: AuditLogEntry) => new Date(entry.accessed_at) <= endDate,
+  (entry: AuditLogEntry) => new Date(entry.accessed_at) <= date_to,
 );
   }
 
@@ -206,8 +192,8 @@ profile_id: profileId,
 filters: {
   limit: filters.limit,
   action: filters.action,
-  startDate: filters.startDate,
-  endDate: filters.endDate,
+  date_from: filters.date_from,
+  date_to: filters.date_to,
 },
 metadata: {
   retrieved_at: context.timestamp,
@@ -216,19 +202,6 @@ metadata: {
   filtered_entries: filteredEntries.length,
 },
   };
-
-  console.log(`Audit API Request [${context.requestId}]:`, {
-profileId: profileId.substring(0, 8) + '...',
-authenticated: 'yes',
-userId: context.user.id.substring(0, 8) + '...',
-totalEntries: data?.length || 0,
-filteredEntries: filteredEntries.length,
-filters: {
-  limit: filters.limit,
-  action: filters.action,
-  hasDateFilter: !!(filters.startDate || filters.endDate),
-},
-  });
 
   return createSuccessResponse(
 responseData,
@@ -243,7 +216,7 @@ context.timestamp,
  * Retrieves audit log entries for a specific user profile with comprehensive filtering options.
  *
  * Features:
- * - JWT authentication via HOF wrapper
+ * - Cookie-based session authentication via HOF wrapper
  * - Comprehensive query parameter validation with Zod
  * - Direct RPC call to get_user_audit_log() function
  * - GDPR-compliant audit trail access
@@ -257,95 +230,13 @@ export const GET = withRequiredAuth(handleGetAuditLogRequest, {
 });
 
 /**
- * Handle unsupported HTTP methods with proper JSend error responses
+ * Handle unsupported HTTP methods using shared utility
+ * Eliminates 87 lines of boilerplate code
  */
-export async function POST(): Promise<Response> {
-  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  const timestamp = new Date().toISOString();
-
-  const errorResponse = createErrorResponse(
-ErrorCodes.METHOD_NOT_ALLOWED,
-'Method not allowed. Use GET to retrieve audit logs.',
-requestId,
-{ allowedMethods: ['GET'] },
-timestamp,
-  );
-
-  return new Response(JSON.stringify(errorResponse), {
-status: 405,
-headers: {
-  'Allow': 'GET',
-  'Content-Type': 'application/json',
-  'X-Request-ID': requestId,
-},
-  });
-}
-
-export async function PUT(): Promise<Response> {
-  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  const timestamp = new Date().toISOString();
-
-  const errorResponse = createErrorResponse(
-ErrorCodes.METHOD_NOT_ALLOWED,
-'Method not allowed. Use GET to retrieve audit logs.',
-requestId,
-{ allowedMethods: ['GET'] },
-timestamp,
-  );
-
-  return new Response(JSON.stringify(errorResponse), {
-status: 405,
-headers: {
-  'Allow': 'GET',
-  'Content-Type': 'application/json',
-  'X-Request-ID': requestId,
-},
-  });
-}
-
-export async function DELETE(): Promise<Response> {
-  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  const timestamp = new Date().toISOString();
-
-  const errorResponse = createErrorResponse(
-ErrorCodes.METHOD_NOT_ALLOWED,
-'Method not allowed. Use GET to retrieve audit logs.',
-requestId,
-{ allowedMethods: ['GET'] },
-timestamp,
-  );
-
-  return new Response(JSON.stringify(errorResponse), {
-status: 405,
-headers: {
-  'Allow': 'GET',
-  'Content-Type': 'application/json',
-  'X-Request-ID': requestId,
-},
-  });
-}
-
-export async function PATCH(): Promise<Response> {
-  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  const timestamp = new Date().toISOString();
-
-  const errorResponse = createErrorResponse(
-ErrorCodes.METHOD_NOT_ALLOWED,
-'Method not allowed. Use GET to retrieve audit logs.',
-requestId,
-{ allowedMethods: ['GET'] },
-timestamp,
-  );
-
-  return new Response(JSON.stringify(errorResponse), {
-status: 405,
-headers: {
-  'Allow': 'GET',
-  'Content-Type': 'application/json',
-  'X-Request-ID': requestId,
-},
-  });
-}
+export const POST = () => handle_method_not_allowed(['GET']);
+export const PUT = POST;
+export const DELETE = POST;
+export const PATCH = POST;
 
 /**
  * OPTIONS handler for CORS preflight requests

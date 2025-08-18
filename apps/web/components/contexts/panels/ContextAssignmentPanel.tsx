@@ -31,16 +31,15 @@ import {
   swrFetcher,
   createMutationFetcher,
   formatSWRError,
-} from '../../../lib/swr-fetcher';
-import { CACHE_KEYS } from '../../../lib/swr-keys';
+} from '../../../utils/swr-fetcher';
+import { CACHE_KEYS } from '../../../utils/swr-keys';
 // Import centralized types
 import type {
   AssignmentsResponseData,
-  BulkAssignmentResponseData,
-  NamesResponseData,
-  BulkAssignmentRequest,
   AssignmentWithDetails,
-} from '../../../types/api-responses';
+  BulkAssignmentResponseData,
+} from '../../../app/api/assignments/types';
+import type { NamesResponseData } from '../../../app/api/names/types';
 import type { Name } from '../../../types/database';
 
 interface ContextAssignmentPanelProps {
@@ -88,9 +87,10 @@ Record<string, string | null>
   // Bulk operations with explicit revalidation
   const { trigger: bulkUpdate, isMutating: isSaving } = useSWRMutation(
 '/api/assignments/bulk',
-createMutationFetcher<BulkAssignmentResponseData, BulkAssignmentRequest>(
-  'POST',
-),
+createMutationFetcher<
+  BulkAssignmentResponseData,
+  { assignments: Array<{ context_id: string; name_id: string | null }> }
+>('POST'),
 {
   onSuccess: (result) => {
 // EXPLICIT revalidation

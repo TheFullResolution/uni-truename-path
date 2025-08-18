@@ -27,11 +27,9 @@ import {
   IconApi,
   IconClock,
 } from '@tabler/icons-react';
-import { formatSWRError, swrFetcher } from '../../../lib/swr-fetcher';
-import type {
-  ContextsResponseData,
-  BatchResolutionResponseData,
-} from '../../../types/api-responses';
+import { formatSWRError, swrFetcher } from '@/utils/swr-fetcher';
+import type { ContextWithStats } from '@/app/api/contexts/types';
+import type { BatchResolutionData } from '@/app/api/names/types';
 
 // Type definitions
 interface Context {
@@ -53,10 +51,10 @@ export function AssignmentPreview({ userId }: AssignmentPreviewProps) {
 data: contextsData,
 error: contextsError,
 isLoading: contextsLoading,
-  } = useSWR<ContextsResponseData>('/api/contexts', swrFetcher);
+  } = useSWR<ContextWithStats[]>('/api/contexts', swrFetcher);
 
-  // Extract contexts from API response structure
-  const contexts = contextsData?.contexts || [];
+  // Contexts are returned directly now
+  const contexts = contextsData || [];
 
   // Batch resolution using new API endpoint with explicit dependency
   const {
@@ -64,7 +62,7 @@ data: resolutionsData,
 error: resolutionsError,
 mutate: revalidateResolutions,
 isLoading: resolutionsLoading,
-  } = useSWR<BatchResolutionResponseData>(
+  } = useSWR<BatchResolutionData>(
 contexts.length > 0 && userId
   ? `/api/names/resolve/batch/${userId}?contexts=${contexts.map((c: Context) => c.context_name).join(',')}`
   : null,
@@ -77,7 +75,7 @@ useSWRMutation(
   contexts.length > 0 && userId
 ? `/api/names/resolve/batch/${userId}?contexts=${contexts.map((c: Context) => c.context_name).join(',')}`
 : null,
-  swrFetcher<BatchResolutionResponseData>,
+  swrFetcher<BatchResolutionData>,
   {
 onSuccess: () => {
   revalidateResolutions(); // EXPLICIT revalidation
@@ -281,8 +279,8 @@ return (
 
   <Grid.Col span={{ base: 12, md: 7 }}>
 {resolution &&
-resolution.resolvedName &&
-!resolution.errorMessage ? (
+resolution.resolved_name &&
+!resolution.error ? (
   <Stack gap='xs'>
 <Group justify='space-between' align='center'>
   <Code
@@ -294,7 +292,7 @@ p='xs'
 style={{ borderRadius: '4px' }}
 data-testid='resolved-name-display'
   >
-&quot;{resolution.resolvedName}&quot;
+&quot;{resolution.resolved_name}&quot;
   </Code>
   <Group gap='xs'>
 <Badge
@@ -312,7 +310,7 @@ mapSourceValue(
 ),
   )}
 </Badge>
-{resolution.responseTimeMs && (
+{resolution.response_time_ms && (
   <Badge
 size='sm'
 variant='light'
@@ -320,7 +318,7 @@ color='gray'
 leftSection={<IconClock size={12} />}
 data-testid='resolution-time'
   >
-{resolution.responseTimeMs}ms
+{resolution.response_time_ms}ms
   </Badge>
 )}
   </Group>
@@ -343,7 +341,7 @@ color='orange'
 title='Resolution Failed'
   >
 <Text size='xs'>
-  {resolution?.errorMessage ||
+  {resolution?.error ||
 'Unable to resolve name for this context'}
 </Text>
   </Alert>
@@ -365,9 +363,9 @@ Algorithm Performance
   </Text>
 </Group>
 <Text size='xs' c='gray.6' mt='xs'>
-  Batch resolution: {resolutionsData.successfulResolutions}/
-  {resolutionsData.totalContexts} successful
-  {resolutionsData.successfulResolutions > 0 && (
+  Batch resolution: {resolutionsData.successful_resolutions}/
+  {resolutionsData.total_contexts} successful
+  {resolutionsData.successful_resolutions > 0 && (
 <> • Average performance: 2.4ms per resolution</>
   )}
 </Text>

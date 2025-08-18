@@ -5,17 +5,16 @@
 
 // TrueNamePath: Name Resolution API Route - JSend Compliant
 import { NextRequest } from 'next/server';
-import {
-  TrueNameContextEngine,
-  type ResolutionSource,
-} from '../../../../lib/context-engine/TrueNameContextEngine';
+import { TrueNameContextEngine } from '@/utils/context-engine/TrueNameContextEngine';
+import type { ResolveNameData } from '../types';
 import {
   withOptionalAuth,
   createSuccessResponse,
   createErrorResponse,
+  handle_method_not_allowed,
   type AuthenticatedHandler,
-} from '../../../../lib/api';
-import { ErrorCodes } from '../../../../lib/api';
+} from '@/utils/api';
+import { ErrorCodes } from '@/utils/api';
 import { z } from 'zod';
 
 /**
@@ -41,30 +40,6 @@ const ResolveNameRequestSchema = z.object({
 .optional()
 .nullable(),
 });
-
-/**
- * Validated request type
- */
-// type ResolveNameRequest = z.infer<typeof ResolveNameRequestSchema>;
-
-/**
- * API Response interfaces for type safety and consistency
- */
-interface ResolveNameData {
-  name: string;
-  resolvedAt: string;
-  source: ResolutionSource;
-  metadata: {
-resolutionTimestamp: string;
-contextId?: string;
-contextName?: string;
-nameId?: string;
-consentId?: string;
-fallbackReason?: string;
-requestedContext?: string;
-hadRequester?: boolean;
-  };
-}
 
 /**
  * Core handler function implementing the name resolution logic
@@ -111,30 +86,22 @@ code: err.code,
   const contextEngine = new TrueNameContextEngine();
 
   const nameResolution = await contextEngine.resolveName({
-targetUserId: params.target_user_id,
-requesterUserId: params.requester_user_id || undefined,
-contextName: params.context_name || undefined,
+target_user_id: params.target_user_id,
+requester_user_id: params.requester_user_id || undefined,
+context_name: params.context_name || undefined,
   });
 
   // 4. Success response with comprehensive metadata
   const responseData: ResolveNameData = {
-name: nameResolution.name,
-resolvedAt: nameResolution.metadata.resolutionTimestamp,
+resolved_name: nameResolution.name,
 source: nameResolution.source,
 metadata: {
-  ...nameResolution.metadata,
+  context_id: nameResolution.metadata.context_id,
+  context_name: nameResolution.metadata.context_name,
+  consent_id: nameResolution.metadata.consent_id,
+  processing_time_ms: nameResolution.metadata.response_time_ms,
 },
   };
-
-  console.log(`API Request [${context.requestId}]:`, {
-source: nameResolution.source,
-targetUser: params.target_user_id.substring(0, 8) + '...',
-contextRequested: params.context_name || 'none',
-authenticated: context.isAuthenticated ? 'yes' : 'no',
-requesterUser: params.requester_user_id
-  ? params.requester_user_id.substring(0, 8) + '...'
-  : 'none',
-  });
 
   return createSuccessResponse(
 responseData,
@@ -152,7 +119,7 @@ context.timestamp,
  * 3. Preferred name fallback (lowest priority)
  *
  * Features:
- * - Optional JWT authentication (demo mode compatible)
+ * - Optional cookie-based session authentication (demo mode compatible)
  * - Comprehensive input validation with Zod
  * - Detailed error handling with proper HTTP status codes
  * - GDPR-compliant audit logging
@@ -164,95 +131,12 @@ export const POST = withOptionalAuth(handleResolveNameRequest, {
 });
 
 /**
- * Handle unsupported HTTP methods with proper JSend error responses
+ * Handle unsupported HTTP methods - shared utility eliminates boilerplate
  */
-export async function GET(): Promise<Response> {
-  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  const timestamp = new Date().toISOString();
-
-  const errorResponse = createErrorResponse(
-ErrorCodes.METHOD_NOT_ALLOWED,
-'Method not allowed. Use POST to resolve names.',
-requestId,
-{ allowedMethods: ['POST'] },
-timestamp,
-  );
-
-  return new Response(JSON.stringify(errorResponse), {
-status: 405,
-headers: {
-  'Allow': 'POST',
-  'Content-Type': 'application/json',
-  'X-Request-ID': requestId,
-},
-  });
-}
-
-export async function PUT(): Promise<Response> {
-  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  const timestamp = new Date().toISOString();
-
-  const errorResponse = createErrorResponse(
-ErrorCodes.METHOD_NOT_ALLOWED,
-'Method not allowed. Use POST to resolve names.',
-requestId,
-{ allowedMethods: ['POST'] },
-timestamp,
-  );
-
-  return new Response(JSON.stringify(errorResponse), {
-status: 405,
-headers: {
-  'Allow': 'POST',
-  'Content-Type': 'application/json',
-  'X-Request-ID': requestId,
-},
-  });
-}
-
-export async function DELETE(): Promise<Response> {
-  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  const timestamp = new Date().toISOString();
-
-  const errorResponse = createErrorResponse(
-ErrorCodes.METHOD_NOT_ALLOWED,
-'Method not allowed. Use POST to resolve names.',
-requestId,
-{ allowedMethods: ['POST'] },
-timestamp,
-  );
-
-  return new Response(JSON.stringify(errorResponse), {
-status: 405,
-headers: {
-  'Allow': 'POST',
-  'Content-Type': 'application/json',
-  'X-Request-ID': requestId,
-},
-  });
-}
-
-export async function PATCH(): Promise<Response> {
-  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  const timestamp = new Date().toISOString();
-
-  const errorResponse = createErrorResponse(
-ErrorCodes.METHOD_NOT_ALLOWED,
-'Method not allowed. Use POST to resolve names.',
-requestId,
-{ allowedMethods: ['POST'] },
-timestamp,
-  );
-
-  return new Response(JSON.stringify(errorResponse), {
-status: 405,
-headers: {
-  'Allow': 'POST',
-  'Content-Type': 'application/json',
-  'X-Request-ID': requestId,
-},
-  });
-}
+export const GET = () => handle_method_not_allowed(['POST']);
+export const PUT = GET;
+export const DELETE = GET;
+export const PATCH = GET;
 
 /**
  * OPTIONS handler for CORS preflight requests

@@ -9,10 +9,10 @@ import {
   Skeleton,
 } from '@mantine/core';
 import { IconLock } from '@tabler/icons-react';
-import { DashboardStats } from '../../../types/database';
+import { DashboardStatsResponse } from '@/app/api/dashboard/stats/types';
 
 interface PrivacyScoreCardProps {
-  stats: DashboardStats | null;
+  stats: DashboardStatsResponse | null;
   loading: boolean;
 }
 

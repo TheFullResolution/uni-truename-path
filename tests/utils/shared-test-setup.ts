@@ -92,20 +92,61 @@ sharedUser: SharedTestUser,
   ): Promise<void> {
 console.log(`🔐 Authenticating via browser login: ${sharedUser.email}`);
 
-// Go to login page
-await page.goto('/auth/login');
+let attempts = 0;
+const maxAttempts = 3;
+
+while (attempts < maxAttempts) {
+  try {
+attempts++;
+console.log(
+  `🔄 Login attempt ${attempts}/${maxAttempts} for: ${sharedUser.email}`,
+);
+
+// Clear any existing cookies first
+await page.context().clearCookies();
+
+// Go to login page with increased timeout
+await page.goto('/auth/login', {
+  timeout: 15000,
+  waitUntil: 'networkidle',
+});
+
+// Wait for form to be ready
+await page.waitForSelector('input[placeholder="user@example.com"]', {
+  timeout: 5000,
+});
 
 // Fill login form (use more robust selectors for Mantine components)
-await page.fill('input[placeholder="user@example.com"]', sharedUser.email);
+await page.fill(
+  'input[placeholder="user@example.com"]',
+  sharedUser.email,
+);
 await page.fill('input[type="password"]', 'test-password-123'); // Match AuthTestHelper password
 
 // Submit login
 await page.click('button[type="submit"]');
 
 // Wait for successful login (redirect to dashboard or intended page)
-await page.waitForURL(/\/(dashboard|contexts)/, { timeout: 10000 });
+await page.waitForURL(/\/(dashboard|contexts)/, { timeout: 15000 });
 
 console.log(`✅ Browser login successful for: ${sharedUser.email}`);
+return; // Success, exit retry loop
+  } catch (error) {
+console.warn(`⚠️  Login attempt ${attempts} failed:`, error);
+
+if (attempts >= maxAttempts) {
+  console.error(
+`❌ All ${maxAttempts} login attempts failed for: ${sharedUser.email}`,
+  );
+  throw new Error(
+`Authentication failed after ${maxAttempts} attempts: ${error}`,
+  );
+}
+
+// Wait before retrying
+await page.waitForTimeout(2000);
+  }
+}
   }
 
   /**
@@ -193,6 +234,35 @@ cleanupStrategy: 'full' as const, // Auth tests need unique users
   },
   API_ENDPOINTS: {
 suiteName: 'API Endpoints',
+cleanupStrategy: 'contexts-only' as const,
+  },
+  // Specific API test suite configurations for better performance
+  NAMES_API: {
+suiteName: 'Names API',
+cleanupStrategy: 'contexts-only' as const,
+  },
+  CONTEXTS_API: {
+suiteName: 'Contexts API',
+cleanupStrategy: 'contexts-only' as const,
+  },
+  ASSIGNMENTS_API: {
+suiteName: 'Assignments API',
+cleanupStrategy: 'contexts-only' as const,
+  },
+  AUDIT_API: {
+suiteName: 'Audit API',
+cleanupStrategy: 'contexts-only' as const,
+  },
+  CONSENTS_API: {
+suiteName: 'Consents API',
+cleanupStrategy: 'contexts-only' as const,
+  },
+  RESOLVE_API: {
+suiteName: 'Resolve API',
+cleanupStrategy: 'contexts-only' as const,
+  },
+  BATCH_RESOLVE_API: {
+suiteName: 'Batch Resolve API',
 cleanupStrategy: 'contexts-only' as const,
   },
 } as const;
@@ -311,5 +381,43 @@ if (!this.sharedUser) {
 }
 console.log(`🎯 Authenticating shared user for path: ${path}`);
 await SharedTestSetup.goToAuthenticatedPage(page, this.sharedUser, path);
+  }
+
+  /**
+   * Authenticate with shared user for API tests (cookie-based authentication)
+   */
+  async authenticateWithSharedUserForAPI(page: Page): Promise<void> {
+if (!this.sharedUser) {
+  throw new Error('Shared user not available for authentication');
+}
+console.log(
+  `🍪 Setting API authentication cookies for: ${this.sharedUser.email}`,
+);
+
+// Set authentication cookies for API requests
+await page.context().addCookies([
+  {
+name: 'sb-localhost-auth-token',
+value: JSON.stringify({
+  access_token: this.sharedUser.token,
+  refresh_token: 'mock-refresh-token',
+  expires_in: 3600,
+  token_type: 'bearer',
+  user: {
+id: this.sharedUser.userId,
+email: this.sharedUser.email,
+  },
+}),
+domain: 'localhost',
+path: '/',
+httpOnly: false,
+secure: false,
+sameSite: 'Lax',
+  },
+]);
+
+console.log(
+  `✅ API authentication cookies set for: ${this.sharedUser.email}`,
+);
   }
 }

@@ -7,8 +7,8 @@ import {
   mantineHtmlProps,
 } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
-import { theme } from '../lib/theme';
-import { AuthProvider } from '../lib/context';
+import { theme } from '../utils/theme';
+import { AuthProvider } from '../utils/context';
 
 export const metadata = {
   title: 'TrueNamePath - Context-Aware Identity Management',
