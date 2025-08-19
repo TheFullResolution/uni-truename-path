@@ -11,10 +11,21 @@ export default defineConfig({
 environment: 'jsdom',
 
 // Test file patterns
-include: ['lib/**/__tests__/**/*.test.ts', 'lib/**/*.test.ts'],
+include: [
+  'utils/**/__tests__/**/*.test.ts',
+  'utils/**/*.test.ts',
+  'utils/**/__tests__/**/*.test.tsx',
+  'utils/**/*.test.tsx',
+  'app/**/__tests__/**/*.test.ts',
+  'app/**/*.test.ts',
+  'app/**/__tests__/**/*.test.tsx',
+  'app/**/*.test.tsx',
+],
 exclude: [
-  'lib/**/__tests__/**/*.e2e.test.ts', // E2E tests handled by Playwright
-  'lib/**/*.e2e.test.ts',
+  'utils/**/__tests__/**/*.e2e.test.ts', // E2E tests handled by Playwright
+  'utils/**/*.e2e.test.ts',
+  'app/**/__tests__/**/*.e2e.test.ts',
+  'app/**/*.e2e.test.ts',
 ],
 
 // Global test setup
@@ -36,13 +47,17 @@ outputFile: {
 coverage: {
   provider: 'v8',
   reporter: ['text', 'lcov', 'html'],
-  include: ['lib/**/*.ts'],
+  include: ['utils/**/*.ts', 'app/**/*.ts'],
   exclude: [
-'lib/**/*.d.ts',
-'lib/**/__tests__/**',
-'lib/**/__mocks__/**',
-'lib/**/demo.ts',
-'lib/**/types.ts',
+'utils/**/*.d.ts',
+'utils/**/__tests__/**',
+'utils/**/__mocks__/**',
+'utils/**/demo.ts',
+'utils/**/types.ts',
+'app/**/*.d.ts',
+'app/**/__tests__/**',
+'app/**/__mocks__/**',
+'app/**/types.ts',
   ],
   thresholds: {
 global: {

@@ -36,7 +36,8 @@ action: 'Check your credentials and try again',
   },
   SESSION_VERIFICATION_FAILED: {
 message: 'Session verification failed',
-details: 'Unable to verify your authentication session',
+details:
+  'Unable to verify your authentication session. Please sign in again',
 action: 'Please sign in again to continue',
   },
   TOKEN_VERIFICATION_FAILED: {

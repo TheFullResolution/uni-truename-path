@@ -15,16 +15,10 @@ import {
   Badge,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import {
-  IconShield,
-  IconTool,
-  IconLock,
-  IconEye,
-  IconBook,
-} from '@tabler/icons-react';
-import { SignupForm } from '../../../components/SignupForm';
-import { useAuth } from '../../../utils/context/AuthProvider';
-import { LogoWithText, Logo } from '../../../components/branding';
+import { IconShield, IconTool, IconLock, IconBook } from '@tabler/icons-react';
+import { SignupForm } from '@/components/SignupForm';
+import { useAuth } from '@/utils/context';
+import { LogoWithText, Logo } from '@/components/branding';
 
 function SignupPageContent() {
   const router = useRouter();
@@ -52,10 +46,7 @@ autoClose: 2000,
   const handleSignupSuccess = useCallback(() => {
 const returnUrl = searchParams.get('returnUrl') || '/dashboard';
 
-// Small delay to let the success notification show
-setTimeout(() => {
-  router.replace(returnUrl);
-}, 1000);
+router.replace(returnUrl);
   }, [router, searchParams]);
 
   // Handle back to login navigation
@@ -67,11 +58,6 @@ const loginUrl = returnUrl
 
 router.push(loginUrl);
   }, [router, searchParams]);
-
-  // Handle demo navigation
-  const handleViewDemo = useCallback(() => {
-router.push('/demo');
-  }, [router]);
 
   // Handle privacy policy (placeholder)
   const handlePrivacyPolicy = useCallback(() => {
@@ -258,38 +244,6 @@ capabilities.
   <Title order={3} c='gray.7' mb='md' size='h4'>
 Learn More
   </Title>
-
-  <Button
-variant='subtle'
-color='brand'
-fullWidth
-mb='xs'
-justify='flex-start'
-leftSection={<IconEye size={16} />}
-onClick={handleViewDemo}
-styles={{
-  root: {
-'height': 'auto',
-'padding': '12px 16px',
-'whiteSpace': 'normal',
-'&:hover': {
-  backgroundColor: 'rgba(74, 127, 231, 0.1)',
-},
-  },
-  inner: {
-justifyContent: 'flex-start',
-  },
-}}
-  >
-<Box style={{ textAlign: 'left' }}>
-  <Text fw={600} size='sm'>
-Try Live Demo
-  </Text>
-  <Text size='xs' c='gray.6'>
-See context-aware name resolution in action
-  </Text>
-</Box>
-  </Button>
 
   <Button
 variant='subtle'

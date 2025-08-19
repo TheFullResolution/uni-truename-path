@@ -10,18 +10,11 @@ import {
   Text,
   Box,
   List,
-  Button,
   Center,
   Group,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import {
-  IconApi,
-  IconRocket,
-  IconBuilding,
-  IconCode,
-  IconBrandGithub,
-} from '@tabler/icons-react';
+import { IconApi, IconRocket, IconBuilding } from '@tabler/icons-react';
 import { LoginForm } from '@/components/LoginForm';
 import { useAuth } from '@/utils/context';
 import { LogoWithText, Logo } from '@/components/branding';
@@ -52,10 +45,7 @@ autoClose: 2000,
   const handleLoginSuccess = useCallback(() => {
 const returnUrl = searchParams.get('returnUrl') || '/dashboard';
 
-// Small delay to let the success notification show
-setTimeout(() => {
-  router.replace(returnUrl);
-}, 1000);
+router.replace(returnUrl);
   }, [router, searchParams]);
 
   // Handle forgot password
@@ -236,121 +226,6 @@ Enterprise-ready authentication. GDPR compliant by design.
 Seamless integration with existing infrastructure. No major
 architecture changes required.
   </Text>
-</Box>
-
-{/* Demo section */}
-<Box>
-  <Group gap='xs' mb='md'>
-<IconRocket size={20} color='#4A7FE7' />
-<Title order={3} c='gray.7' size='h4'>
-  Try Live Examples
-</Title>
-  </Group>
-
-  <Button
-variant='subtle'
-color='gray'
-fullWidth
-mb='xs'
-justify='flex-start'
-onClick={() => router.push('/demo')}
-styles={{
-  root: {
-'height': 'auto',
-'padding': '15px',
-'whiteSpace': 'normal',
-'&:hover': {
-  backgroundColor: '#e9ecef',
-},
-  },
-  inner: {
-justifyContent: 'flex-start',
-  },
-}}
-  >
-<Box style={{ textAlign: 'left' }}>
-  <Group gap='xs' mb='xs'>
-<IconCode size={16} color='#4A7FE7' />
-<Text fw={600} size='sm'>
-  JJ&apos;s Slack Integration
-</Text>
-  </Group>
-  <Text size='xs' c='gray.6'>
-Team context: Automatically serves &quot;JJ&quot; for
-casual team communication
-  </Text>
-</Box>
-  </Button>
-
-  <Button
-variant='subtle'
-color='gray'
-fullWidth
-mb='xs'
-justify='flex-start'
-onClick={() => router.push('/demo')}
-styles={{
-  root: {
-'height': 'auto',
-'padding': '15px',
-'whiteSpace': 'normal',
-'&:hover': {
-  backgroundColor: '#e9ecef',
-},
-  },
-  inner: {
-justifyContent: 'flex-start',
-  },
-}}
-  >
-<Box style={{ textAlign: 'left' }}>
-  <Group gap='xs' mb='xs'>
-<IconBuilding size={16} color='#27ae60' />
-<Text fw={600} size='sm'>
-  JJ&apos;s HR System Access
-</Text>
-  </Group>
-  <Text size='xs' c='gray.6'>
-Legal context: Automatically serves &quot;Jędrzej
-Lewandowski&quot; for HiBob
-  </Text>
-</Box>
-  </Button>
-
-  <Button
-variant='subtle'
-color='gray'
-fullWidth
-mb='xs'
-justify='flex-start'
-onClick={() => router.push('/demo')}
-styles={{
-  root: {
-'height': 'auto',
-'padding': '15px',
-'whiteSpace': 'normal',
-'&:hover': {
-  backgroundColor: '#e9ecef',
-},
-  },
-  inner: {
-justifyContent: 'flex-start',
-  },
-}}
-  >
-<Box style={{ textAlign: 'left' }}>
-  <Group gap='xs' mb='xs'>
-<IconBrandGithub size={16} color='#333' />
-<Text fw={600} size='sm'>
-  JJ&apos;s GitHub Profile
-</Text>
-  </Group>
-  <Text size='xs' c='gray.6'>
-Professional context: Automatically serves &quot;J.
-Lewandowski&quot; for code contributions
-  </Text>
-</Box>
-  </Button>
 </Box>
   </Box>
 </Grid.Col>

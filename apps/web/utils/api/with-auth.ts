@@ -68,7 +68,7 @@ requestId: string,
  * Generate unique request ID for tracking and debugging
  * Uses timestamp and random string for uniqueness
  */
-function generateRequestId(): string {
+export function generateRequestId(): string {
   return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 

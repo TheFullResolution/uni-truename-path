@@ -12,3 +12,14 @@ export {
 
 // Panel components
 export { SettingsPanel } from './panels';
+
+// Main dashboard components
+export { DashboardContent } from './DashboardContent';
+export { DashboardTabs } from './DashboardTabs';
+export { DashboardSkeleton } from './DashboardSkeleton';
+
+// Performance components
+export { SWRErrorBoundary } from './SWRErrorBoundary';
+
+// Skeleton components
+export * from './skeletons';

@@ -14,7 +14,7 @@ import {
 import { notifications } from '@mantine/notifications';
 import { IconActivity } from '@tabler/icons-react';
 import useSWR from 'swr';
-import { useAuth } from '../../../utils/context';
+import { useAuth } from '@/utils/context';
 import { swrFetcher } from '../../../utils/swr-fetcher';
 import { formatActivityAction, getActivityIcon } from '../../../utils/utils';
 import { DashboardStatsResponse } from '@/app/api/dashboard/stats/types';

@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 // Define protected route patterns
-const PROTECTED_ROUTES = ['/dashboard', '/profile', '/settings', '/contexts'];
+const PROTECTED_ROUTES = ['/dashboard', '/profile', '/settings'];
 
 // Define public routes that should never redirect
 const PUBLIC_ROUTES = [

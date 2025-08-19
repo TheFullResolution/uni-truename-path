@@ -25,7 +25,7 @@ case 'profile_updated':
 case 'name_created':
   return 'Name Added';
 default:
-  return action.replace('_', ' ').toUpperCase();
+  return action.replace(/_/g, ' ').toUpperCase();
   }
 };
 

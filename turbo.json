@@ -6,7 +6,6 @@
   "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
 },
 "dev": {
-  "dependsOn": ["db:types"],
   "persistent": true,
   "cache": false
 },
@@ -30,6 +29,16 @@
   "cache": false
 },
 "test:coverage": {
+  "dependsOn": ["^build"],
+  "outputs": ["coverage/**"],
+  "cache": true
+},
+"test:unit": {
+  "dependsOn": ["^build"],
+  "outputs": ["coverage/**"],
+  "cache": true
+},
+"test:integration": {
   "dependsOn": ["^build"],
   "outputs": ["coverage/**"],
   "cache": true

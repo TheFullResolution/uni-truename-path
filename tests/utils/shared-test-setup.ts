@@ -265,6 +265,10 @@ cleanupStrategy: 'contexts-only' as const,
 suiteName: 'Batch Resolve API',
 cleanupStrategy: 'contexts-only' as const,
   },
+  DASHBOARD_NAV: {
+suiteName: 'Dashboard Navigation',
+cleanupStrategy: 'contexts-only' as const,
+  },
 } as const;
 
 /**
