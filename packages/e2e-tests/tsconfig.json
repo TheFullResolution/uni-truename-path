@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+"target": "ES2022",
+"module": "esnext",
+"lib": ["ES2022", "DOM"],
+"types": ["@playwright/test", "node"],
+"baseUrl": ".",
+"paths": {
+  "@/tests/*": ["./tests/*"],
+  "@/utils/*": ["./tests/utils/*"]
+},
+"strict": true,
+"noEmit": true,
+"esModuleInterop": true,
+"allowSyntheticDefaultImports": true,
+"skipLibCheck": true,
+"resolveJsonModule": true
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "test-results", "playwright-report"]
+}

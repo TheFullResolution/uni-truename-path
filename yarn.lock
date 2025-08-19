@@ -1117,6 +1117,15 @@ fast-glob: "npm:3.3.1"
   languageName: node
   linkType: hard
 
+"@next/eslint-plugin-next@npm:^15.4.7":
+  version: 15.4.7
+  resolution: "@next/eslint-plugin-next@npm:15.4.7"
+  dependencies:
+fast-glob: "npm:3.3.1"
+  checksum: 10/72bd0d387f9026a280917d85466daff7cd1006a5668b1d0a6981b8966253a723c7dfbceec86a7a9c933ce67416d9d7fb96351feefc01214bdf1cd7e81b2ee9ab
+  languageName: node
+  linkType: hard
+
 "@next/swc-darwin-arm64@npm:15.4.6":
   version: 15.4.6
   resolution: "@next/swc-darwin-arm64@npm:15.4.6"
@@ -2324,6 +2333,22 @@ eslint-visitor-keys: "npm:^4.2.1"
   checksum: 10/6d4e4d0b19ebb3f21b692bbb0dcf9961876ca28cdf502296888a78eb4cd802a2ec8d3d5721d19970411edfd1c06f3e272e4057014c859ee1f0546804d07945e3
   languageName: node
   linkType: hard
+
+"@uni-final/e2e-tests@workspace:packages/e2e-tests":
+  version: 0.0.0-use.local
+  resolution: "@uni-final/e2e-tests@workspace:packages/e2e-tests"
+  dependencies:
+"@playwright/test": "npm:^1.54.2"
+"@supabase/supabase-js": "npm:^2.55.0"
+"@types/node": "npm:24.2.1"
+"@typescript-eslint/eslint-plugin": "npm:^8.39.1"
+"@typescript-eslint/parser": "npm:^8.39.1"
+dotenv: "npm:^17.2.1"
+eslint: "npm:^9.33.0"
+globals: "npm:^16.3.0"
+typescript: "npm:^5.8.2"
+  languageName: unknown
+  linkType: soft
 
 "@unrs/resolver-binding-darwin-arm64@npm:1.7.2":
   version: 1.7.2
@@ -8790,6 +8815,16 @@ tsserver: bin/tsserver
   languageName: node
   linkType: hard
 
+"typescript@npm:^5.8.2":
+  version: 5.9.2
+  resolution: "typescript@npm:5.9.2"
+  bin:
+tsc: bin/tsc
+tsserver: bin/tsserver
+  checksum: 10/cc2fe6c822819de5d453fa25aa9f32096bf70dde215d481faa1ad84a283dfb264e33988ed8f6d36bc803dd0b16dbe943efa311a798ef76d5b3892a05dfbfd628
+  languageName: node
+  linkType: hard
+
 "typescript@patch:typescript@npm%3A5.8.3#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^5.8.3#optional!builtin<compat/typescript>":
   version: 5.8.3
   resolution: "typescript@patch:typescript@npm%3A5.8.3#optional!builtin<compat/typescript>::version=5.8.3&hash=5786d5"
@@ -8797,6 +8832,16 @@ tsserver: bin/tsserver
 tsc: bin/tsc
 tsserver: bin/tsserver
   checksum: 10/b9b1e73dabac5dc730c041325dbd9c99467c1b0d239f1b74ec3b90d831384af3e2ba973946232df670519147eb51a2c20f6f96163cea2b359f03de1e2091cc4f
+  languageName: node
+  linkType: hard
+
+"typescript@patch:typescript@npm%3A^5.8.2#optional!builtin<compat/typescript>":
+  version: 5.9.2
+  resolution: "typescript@patch:typescript@npm%3A5.9.2#optional!builtin<compat/typescript>::version=5.9.2&hash=5786d5"
+  bin:
+tsc: bin/tsc
+tsserver: bin/tsserver
+  checksum: 10/bd810ab13e8e557225a8b5122370385440b933e4e077d5c7641a8afd207fdc8be9c346e3c678adba934b64e0e70b0acf5eef9493ea05170a48ce22bef845fdc7
   languageName: node
   linkType: hard
 
@@ -8841,6 +8886,7 @@ which-boxed-primitive: "npm:^1.1.1"
 "@mantine/form": "npm:^8.2.4"
 "@mantine/hooks": "npm:8.2.4"
 "@mantine/notifications": "npm:^8.2.4"
+"@next/eslint-plugin-next": "npm:^15.4.7"
 "@supabase/ssr": "npm:^0.6.1"
 "@supabase/supabase-js": "npm:^2.55.0"
 "@tabler/icons-react": "npm:^3.34.1"
@@ -8872,7 +8918,6 @@ zod: "npm:^4.0.17"
   resolution: "uni-final-project@workspace:."
   dependencies:
 "@mermaid-js/mermaid-cli": "npm:^11.9.0"
-"@playwright/test": "npm:^1.54.2"
 "@typescript-eslint/eslint-plugin": "npm:^8.39.1"
 "@typescript-eslint/parser": "npm:^8.39.1"
 dotenv: "npm:^17.2.1"

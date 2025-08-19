@@ -4,10 +4,18 @@ import { config } from 'dotenv';
 import { existsSync } from 'fs';
 
 // Load environment variables from .env.local if it exists
-if (existsSync('.env.local')) {
-  config({ path: '.env.local' });
-} else if (existsSync('.env')) {
-  config({ path: '.env' });
+// Check both package-local and project root .env files
+if (existsSync('./.env.local')) {
+  config({ path: './.env.local' });
+  console.log('✅ Loaded .env.local from current directory');
+} else if (existsSync('../../.env.local')) {
+  config({ path: '../../.env.local' });
+  console.log('✅ Loaded .env.local from project root');
+} else if (existsSync('./.env')) {
+  config({ path: './.env' });
+  console.log('✅ Loaded .env from current directory');
+} else {
+  console.warn('⚠️  No .env.local or .env file found');
 }
 
 /**
@@ -23,8 +31,10 @@ export default defineConfig({
   workers: 1,
   reporter: [['html'], ['json', { outputFile: 'test-results/results.json' }]],
 
+  // Simplified test infrastructure - no global setup needed
+
   use: {
-baseURL: 'http://localhost:3000',
+baseURL: process.env.TEST_BASE_URL || 'http://localhost:3000',
 trace: 'on-first-retry',
 screenshot: 'only-on-failure',
   },

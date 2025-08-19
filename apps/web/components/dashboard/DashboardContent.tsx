@@ -190,6 +190,7 @@ openDeleteModal();
   return (
 <AuthGuard>
   <Box
+data-testid='dashboard-content'
 style={{
   minHeight: '100vh',
   background:
