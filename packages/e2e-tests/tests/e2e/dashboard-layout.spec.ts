@@ -29,8 +29,7 @@ test('should access all dashboard tabs', async ({ page }) => {
 { path: 'dashboard', name: 'Dashboard Home' },
 { path: 'dashboard/names', name: 'Names' },
 { path: 'dashboard/contexts', name: 'Contexts' },
-{ path: 'dashboard/assign', name: 'Assign' },
-{ path: 'dashboard/preview', name: 'Preview' },
+{ path: 'dashboard/oidc-preview', name: 'OIDC Preview' },
 { path: 'dashboard/consents', name: 'Consents' },
 { path: 'dashboard/settings', name: 'Settings' },
   ];

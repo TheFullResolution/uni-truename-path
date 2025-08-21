@@ -24,6 +24,7 @@ const UpdateContextSchema = z.object({
 .nullable()
 .transform((str) => str?.trim() || null)
 .optional(),
+  visibility: z.enum(['public', 'restricted', 'private']).optional(),
 });
 
 const handlePut: AuthenticatedHandler = async (request, context) => {
@@ -98,6 +99,26 @@ attempted_name: body.context_name,
 );
   }
 
+  // Prevent changing visibility of default context from public
+  if (
+existing.is_permanent &&
+body.visibility &&
+body.visibility !== 'public'
+  ) {
+return createErrorResponse(
+  ErrorCodes.VALIDATION_ERROR,
+  'Default context must always be public',
+  context.requestId,
+  {
+current_visibility: existing.visibility,
+attempted_visibility: body.visibility,
+constraint:
+  'Default context (is_permanent=true) must have visibility=public',
+  },
+  context.timestamp,
+);
+  }
+
   // Build update object with only provided fields
   const updateData: Record<string, unknown> = {
 updated_at: new Date().toISOString(),
@@ -108,6 +129,9 @@ updateData.context_name = body.context_name;
   }
   if (body.description !== undefined) {
 updateData.description = body.description;
+  }
+  if (body.visibility !== undefined) {
+updateData.visibility = body.visibility;
   }
 
   // Update context

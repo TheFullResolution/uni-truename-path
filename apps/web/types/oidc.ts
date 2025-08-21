@@ -1,5 +1,5 @@
 /**
- * OIDC Core 1.0 Compliant Type System for TrueNamePath (Standards-Compliant)
+ * OIDC Core 1.0 Compliant Type System for TrueNamePath (Simplified Schema)
  *
  * This module provides comprehensive TypeScript interfaces for OpenID Connect Core 1.0
  * compliance with TrueNamePath's context-aware identity management innovation.
@@ -7,7 +7,10 @@
  *
  * Academic Project: University Final Project (CM3035 Advanced Web Design)
  * Innovation: Context-aware name resolution within OIDC standard claims
+ * Step 15.7.2: Simplified assignment structure without scope complexity
  */
+
+import type { Enums } from '@/generated/database';
 
 // =============================================================================
 // OIDC Core 1.0 Standard Claims and Scopes
@@ -43,26 +46,6 @@ export const STANDARD_OIDC_CLAIMS = [
 export type StandardOIDCClaim = (typeof STANDARD_OIDC_CLAIMS)[number];
 
 /**
- * Standard OAuth 2.0 Scopes (OAuth 2.0 and OIDC Core 1.0 Compliant)
- * @see https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
- */
-export const STANDARD_OAUTH_SCOPES = [
-  'openid',
-  'profile',
-  'email',
-  'phone',
-  'address',
-] as const;
-
-export type StandardOAuthScope = (typeof STANDARD_OAUTH_SCOPES)[number];
-
-/**
- * Legacy compatibility alias for StandardOAuthScope
- * @deprecated Use StandardOAuthScope instead
- */
-export type OIDCScope = StandardOAuthScope;
-
-/**
  * TrueNamePath resolution source indicating how the name was resolved
  */
 export type OIDCResolutionSource =
@@ -76,7 +59,7 @@ export type OIDCResolutionSource =
 // =============================================================================
 
 /**
- * OIDC-compliant resolution request
+ * OIDC-compliant resolution request (simplified structure)
  * Supports context-aware name resolution within OIDC standard patterns
  */
 export interface OIDCResolveRequest {
@@ -90,7 +73,7 @@ export interface OIDCResolveRequest {
   context_name?: string;
 
   /** OAuth 2.0 scopes determining which claims to include in response */
-  scopes?: StandardOAuthScope[];
+  scopes?: Array<'openid' | 'profile' | 'email' | 'phone' | 'address'>;
 
   /** OAuth client_id or application identifier for analytics */
   client_id?: string;
@@ -190,7 +173,7 @@ country?: string;
 // =============================================================================
 
 /**
- * TrueNamePath-specific extensions to OIDC claims
+ * TrueNamePath-specific extensions to OIDC claims (simplified structure)
  * These maintain OIDC compliance while adding our context-aware innovation
  */
 export interface TrueNamePathOIDCExtensions {
@@ -200,6 +183,9 @@ export interface TrueNamePathOIDCExtensions {
   /** Context used for name resolution (if applicable) */
   context_name?: string;
 
+  /** Context ID used for resolution (if applicable) */
+  context_id?: string;
+
   /** Processing time in milliseconds for performance monitoring */
   processing_time_ms?: number;
 
@@ -207,7 +193,7 @@ export interface TrueNamePathOIDCExtensions {
   request_metadata?: {
 request_id: string;
 timestamp: string;
-scopes_applied: StandardOAuthScope[];
+scopes_applied: Array<'openid' | 'profile' | 'email' | 'phone' | 'address'>;
   };
 }
 
@@ -235,7 +221,7 @@ export interface OIDCResolveResponseData {
 request_id: string;
 timestamp: string;
 processing_time_ms: number;
-scopes_applied: StandardOAuthScope[];
+scopes_applied: Array<'openid' | 'profile' | 'email' | 'phone' | 'address'>;
 analytics_logged?: boolean;
   };
 }
@@ -245,8 +231,8 @@ analytics_logged?: boolean;
 // =============================================================================
 
 /**
- * Database result structure from resolve_oidc_claims function
- * Using generated database types for consistency
+ * Database result structure from simplified OIDC assignment system
+ * Using generated database types for consistency with new schema
  */
 export interface OIDCDatabaseResult {
   property_type: StandardOIDCClaim;
@@ -254,22 +240,34 @@ export interface OIDCDatabaseResult {
   source: string;
   context_id?: string;
   context_name?: string;
+  assignment_id?: string;
 }
+
+// =============================================================================
+// Simplified OIDC Assignment Types (Step 15.7.2)
+// =============================================================================
+
+// Simplified OIDC assignment interfaces removed - use OIDCAssignmentWithDetails from assignments/types.ts
+// OIDC property assignments now handled by the simplified database schema
 
 // =============================================================================
 // Analytics Types
 // =============================================================================
 
 /**
- * Context usage analytics tracking data
+ * Context usage analytics tracking data (simplified structure)
  */
 export interface ContextUsageAnalytics {
   target_user_id: string;
   context_id?: string;
   requesting_application: string;
   application_type: 'oauth_client' | 'oidc_client' | 'api_integration';
-  scopes_requested: StandardOAuthScope[];
-  properties_disclosed: Record<string, unknown>;
+  scopes_requested: Array<'openid' | 'profile' | 'email' | 'phone' | 'address'>;
+  properties_disclosed: Array<{
+property: Enums<'oidc_property'>;
+value: string;
+assignment_id: string;
+  }>;
   response_time_ms: number;
   success: boolean;
   error_type?: string;
@@ -282,32 +280,3 @@ export interface ContextUsageAnalytics {
 // =============================================================================
 // Utility Types
 // =============================================================================
-
-/**
- * Scope to Claims Mapping (OIDC Core 1.0 Compliant)
- * Maps OAuth 2.0 scopes to their corresponding OIDC claims
- * @see https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
- */
-export const SCOPE_TO_CLAIMS: Record<StandardOAuthScope, StandardOIDCClaim[]> =
-  {
-openid: ['sub'],
-profile: [
-  'name',
-  'family_name',
-  'given_name',
-  'middle_name',
-  'nickname',
-  'preferred_username',
-  'profile',
-  'picture',
-  'website',
-  'gender',
-  'birthdate',
-  'zoneinfo',
-  'locale',
-  'updated_at',
-],
-email: ['email', 'email_verified'],
-phone: ['phone_number', 'phone_number_verified'],
-address: ['address'],
-  };

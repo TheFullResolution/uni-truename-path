@@ -13,9 +13,9 @@ import type { Enums } from '@/generated/database';
 /**
  * OIDC property type from database enum (single source of truth)
  */
-export type OIDCProperty = Enums<'oidc_property_enum'>;
+export type OIDCProperty = Enums<'oidc_property'>;
 
-// Helper to extract enum values for Zod validation
+// Helper to extract enum values for Zod validation (simplified schema)
 export const OIDC_PROPERTY_VALUES = [
   'given_name',
   'family_name',
@@ -125,40 +125,17 @@ name_id: NameIdSchema.nullable(), // null means delete assignment
 });
 
 // =============================================================================
-// OIDC-Specific Schemas
+// OIDC-Specific Schemas (Simplified)
 // =============================================================================
 
 /**
- * Standard OAuth 2.0 scopes per OIDC Core 1.0
- */
-export const STANDARD_OAUTH_SCOPES = [
-  'openid',
-  'profile',
-  'email',
-  'phone',
-  'address',
-] as const;
-
-/**
- * OIDC claims supported by our database (from generated enum)
- */
-export const SUPPORTED_OIDC_CLAIMS = OIDC_PROPERTY_VALUES;
-
-/**
- * Schema for OIDC assignment operations (updated for unified table)
+ * Schema for OIDC assignment operations (simplified for new table)
+ * Removed scope and visibility complexity - direct property assignments only
  */
 export const OIDCAssignmentRequestSchema = z.object({
   context_id: ContextIdSchema,
   name_id: NameIdSchema,
   oidc_property: z.enum(OIDC_PROPERTY_VALUES),
-  is_primary: z.boolean().default(true),
-  visibility_level: z
-.enum(['STANDARD', 'RESTRICTED', 'PRIVATE'])
-.default('STANDARD'),
-  allowed_scopes: z
-.array(z.enum(STANDARD_OAUTH_SCOPES))
-.min(1, 'At least one scope must be allowed')
-.default(['openid', 'profile']),
 });
 
 /**
@@ -166,6 +143,23 @@ export const OIDCAssignmentRequestSchema = z.object({
  */
 export const OIDCQueryParamsSchema = z.object({
   context_id: ContextIdSchema.optional(),
+});
+
+/**
+ * Schema for batch OIDC assignment operations (Step 15.7.6)
+ * Handles multiple OIDC property assignments for a single context
+ */
+export const BatchOIDCAssignmentRequestSchema = z.object({
+  context_id: ContextIdSchema,
+  assignments: z
+.array(
+  z.object({
+oidc_property: z.enum(OIDC_PROPERTY_VALUES),
+name_id: NameIdSchema.nullable(), // null means delete/unassign
+  }),
+)
+.min(1, 'At least one assignment is required')
+.max(20, 'Maximum 20 assignments per batch request'),
 });
 
 // =============================================================================
@@ -185,9 +179,11 @@ export type DeleteAssignmentRequest = z.infer<
 export type BulkAssignmentRequest = z.infer<typeof BulkAssignmentRequestSchema>;
 export type OIDCAssignmentRequest = z.infer<typeof OIDCAssignmentRequestSchema>;
 export type OIDCQueryParams = z.infer<typeof OIDCQueryParamsSchema>;
+export type BatchOIDCAssignmentRequest = z.infer<
+  typeof BatchOIDCAssignmentRequestSchema
+>;
 
 // Export types for reuse
-export type StandardOAuthScope = (typeof STANDARD_OAUTH_SCOPES)[number];
 export type SupportedOIDCClaim = OIDCProperty;
 
 // =============================================================================

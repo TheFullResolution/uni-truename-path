@@ -6,11 +6,37 @@
  *
  * Academic Project: University Final Project (CM3035 Advanced Web Design)
  * Innovation: Analytics tracking for context-aware name resolution usage patterns
+ *
+ * =============================================================================
+ * IMPORTANT: OAUTH/OIDC SCOPE HANDLING - FUTURE ENHANCEMENT
+ * =============================================================================
+ *
+ * This file contains legitimate OAuth/OIDC scope handling for analytics purposes.
+ * This is DIFFERENT from the deprecated scope selection UI that was removed in Step 15.
+ *
+ * SCOPE TYPES IN THIS FILE:
+ * - OAuth/OIDC Standard Scopes: 'openid', 'profile', 'email', 'phone', 'address'
+ * - Used for: Analytics tracking of what properties are disclosed to external apps
+ * - Compliance: OIDC Core 1.0 specification compliant
+ * - Status: PRESERVED for future analytics functionality
+ *
+ * TODO - Step 15.7.5: Scope System Cleanup
+ * - Review analytics scope handling for optimization opportunities
+ * - Consider scope validation and sanitization improvements
+ * - Evaluate scope-to-property mapping efficiency
+ * - Assess if additional standard scopes should be supported
+ * - Document scope handling strategy for external integrations
+ *
+ * DISTINCTION FROM REMOVED UI SCOPES:
+ * - The deprecated UI scopes were for user-facing scope selection interfaces
+ * - These analytics scopes are for OAuth/OIDC protocol compliance
+ * - This code maintains proper OIDC standard compliance
+ * - No UI components use these scope definitions
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database';
-import type { OIDCScope, OIDCResolveResponse } from '@/types/oidc';
+import type { OIDCResolveResponse } from '@/types/oidc';
 
 // =============================================================================
 // Types for Analytics Functions
@@ -36,7 +62,8 @@ export interface TrackContextUsageConfig {
   applicationType?: 'oauth_client' | 'oidc_client' | 'api_integration';
 
   /** OAuth/OIDC scopes requested */
-  scopesRequested: OIDCScope[];
+  // TODO: Step 15.7.5 - Consider expanding to support additional OIDC standard scopes
+  scopesRequested: Array<'openid' | 'profile' | 'email' | 'phone' | 'address'>;
 
   /** Actual properties disclosed to the application */
   propertiesDisclosed: Record<string, unknown>;
@@ -164,13 +191,19 @@ return {
  * This helper function converts an OIDC response into the format
  * expected by the analytics tracking system.
  *
+ * TODO: Step 15.7.5 - Enhance scope-to-property mapping
+ * - Add validation for scope-claim relationships
+ * - Consider caching frequently used property mappings
+ * - Add support for custom claim mappings if needed
+ *
  * @param claims OIDC response claims
  * @param scopesRequested Original scopes that were requested
  * @returns Properties disclosed object for analytics
  */
 export function extractPropertiesDisclosed(
   claims: OIDCResolveResponse,
-  scopesRequested: OIDCScope[],
+  // TODO: Step 15.7.5 - Same scope array expansion as TrackContextUsageConfig
+  scopesRequested: Array<'openid' | 'profile' | 'email' | 'phone' | 'address'>,
 ): Record<string, unknown> {
   const disclosed: Record<string, unknown> = {};
 
@@ -181,6 +214,8 @@ disclosed.sub = claims.sub;
 
   // Include profile scope properties if requested
   if (scopesRequested.includes('profile')) {
+// TODO: Step 15.7.5 - Review profile scope property mapping
+// Consider if all OIDC standard profile claims are needed for analytics
 const profileProps = [
   'name',
   'given_name',
@@ -287,6 +322,11 @@ return null;
 /**
  * Simplified function to track successful OIDC resolution
  *
+ * TODO: Step 15.7.5 - Review convenience function scope handling
+ * - Consider if scope parameter validation is needed
+ * - Evaluate if scope defaults should be provided
+ * - Assess scope parameter consistency across functions
+ *
  * @param config Tracking configuration
  * @param claims OIDC response claims
  * @param responseTimeMs Response time in milliseconds
@@ -297,7 +337,8 @@ export async function trackOIDCResolution(
   targetUserId: string,
   contextName: string | undefined,
   requestingApplication: string,
-  scopesRequested: OIDCScope[],
+  // TODO: Step 15.7.5 - Consistent scope type across all functions
+  scopesRequested: Array<'openid' | 'profile' | 'email' | 'phone' | 'address'>,
   claims: OIDCResolveResponse,
   responseTimeMs: number,
   metadata?: TrackContextUsageConfig['metadata'],
@@ -332,6 +373,11 @@ metadata,
 /**
  * Track failed OIDC resolution attempt
  *
+ * TODO: Step 15.7.5 - Consider failure tracking enhancements
+ * - Add error categorization for better analytics
+ * - Consider scope-specific error tracking
+ * - Evaluate if partial scope fulfillment should be tracked
+ *
  * @param config Basic tracking configuration
  * @param errorType Type of error that occurred
  * @param responseTimeMs Response time in milliseconds
@@ -342,7 +388,8 @@ export async function trackOIDCResolutionFailure(
   targetUserId: string,
   contextName: string | undefined,
   requestingApplication: string,
-  scopesRequested: OIDCScope[],
+  // TODO: Step 15.7.5 - Same scope expansion as other functions
+  scopesRequested: Array<'openid' | 'profile' | 'email' | 'phone' | 'address'>,
   errorType: string,
   responseTimeMs: number,
   metadata?: TrackContextUsageConfig['metadata'],

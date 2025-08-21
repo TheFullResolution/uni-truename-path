@@ -162,6 +162,14 @@ env:
   SUPABASE_URL: ${{ env.SUPABASE_URL }}
   SUPABASE_SERVICE_ROLE_KEY: ${{ env.SUPABASE_SERVICE_ROLE_KEY }}
 
+  - name: Validate demo user setup
+run: node scripts/validate-demo-setup.js
+env:
+  # Environment variables are set by setup-supabase-env.sh
+  SUPABASE_URL: ${{ env.SUPABASE_URL }}
+  SUPABASE_SERVICE_ROLE_KEY: ${{ env.SUPABASE_SERVICE_ROLE_KEY }}
+  CI: true
+
   - name: Build for E2E testing
 run: yarn build
 env:

@@ -1,1 +1,1 @@
-# E2E test for the TrueNamePath
+# TrueNamePath E2E Tests

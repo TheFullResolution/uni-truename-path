@@ -1,5 +1,6 @@
 'use client';
 
+import { DeleteNameModal } from '@/components/modals/DeleteNameModal';
 import type { AuthenticatedUser } from '@/utils/context';
 import type { Tables } from '@/generated/database';
 
@@ -31,7 +32,6 @@ import { useState } from 'react';
 import useSWR from 'swr';
 import useSWRMutation from 'swr/mutation';
 import { z } from 'zod';
-import { DeleteNameModal } from '../modals';
 
 interface NamesTabProps {
   user: AuthenticatedUser | null;
@@ -177,6 +177,7 @@ await deleteName({ name_id: nameId });
   onClick={() => setShowAddForm(!showAddForm)}
   variant={showAddForm ? 'light' : 'filled'}
   size='sm'
+  data-testid='toggle-add-name-form'
 >
   {showAddForm ? 'Cancel' : 'Add Name'}
 </Button>

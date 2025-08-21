@@ -167,9 +167,6 @@ Row: {
   id: string
   is_primary: boolean | null
   name_id: string
-  oidc_property:
-| Database["public"]["Enums"]["oidc_property_enum"]
-| null
   user_id: string
 }
 Insert: {
@@ -178,9 +175,6 @@ Insert: {
   id?: string
   is_primary?: boolean | null
   name_id: string
-  oidc_property?:
-| Database["public"]["Enums"]["oidc_property_enum"]
-| null
   user_id: string
 }
 Update: {
@@ -189,9 +183,6 @@ Update: {
   id?: string
   is_primary?: boolean | null
   name_id?: string
-  oidc_property?:
-| Database["public"]["Enums"]["oidc_property_enum"]
-| null
   user_id?: string
 }
 Relationships: [
@@ -220,34 +211,31 @@ referencedColumns: ["id"]
   }
   context_oidc_assignments: {
 Row: {
-  allowed_scopes: string[]
   context_id: string
   created_at: string
   id: string
   name_id: string
+  oidc_property: Database["public"]["Enums"]["oidc_property"]
   updated_at: string | null
   user_id: string
-  visibility_level: string
 }
 Insert: {
-  allowed_scopes?: string[]
   context_id: string
   created_at?: string
   id?: string
   name_id: string
+  oidc_property: Database["public"]["Enums"]["oidc_property"]
   updated_at?: string | null
   user_id: string
-  visibility_level?: string
 }
 Update: {
-  allowed_scopes?: string[]
   context_id?: string
   created_at?: string
   id?: string
   name_id?: string
+  oidc_property?: Database["public"]["Enums"]["oidc_property"]
   updated_at?: string | null
   user_id?: string
-  visibility_level?: string
 }
 Relationships: [
   {
@@ -446,6 +434,7 @@ Row: {
   is_permanent: boolean | null
   updated_at: string | null
   user_id: string
+  visibility: Database["public"]["Enums"]["context_visibility"]
 }
 Insert: {
   context_name: string
@@ -455,6 +444,7 @@ Insert: {
   is_permanent?: boolean | null
   updated_at?: string | null
   user_id: string
+  visibility?: Database["public"]["Enums"]["context_visibility"]
 }
 Update: {
   context_name?: string
@@ -464,6 +454,7 @@ Update: {
   is_permanent?: boolean | null
   updated_at?: string | null
   user_id?: string
+  visibility?: Database["public"]["Enums"]["context_visibility"]
 }
 Relationships: [
   {
@@ -590,6 +581,15 @@ Enums: {
 | "CONTEXT_CREATED"
 | "CONSENT_REQUESTED"
   consent_status: "PENDING" | "GRANTED" | "REVOKED" | "EXPIRED"
+  context_visibility: "public" | "restricted" | "private"
+  oidc_property:
+| "given_name"
+| "family_name"
+| "name"
+| "nickname"
+| "display_name"
+| "preferred_username"
+| "middle_name"
   oidc_property_enum:
 | "given_name"
 | "family_name"
@@ -736,6 +736,16 @@ Enums: {
 "CONSENT_REQUESTED",
   ],
   consent_status: ["PENDING", "GRANTED", "REVOKED", "EXPIRED"],
+  context_visibility: ["public", "restricted", "private"],
+  oidc_property: [
+"given_name",
+"family_name",
+"name",
+"nickname",
+"display_name",
+"preferred_username",
+"middle_name",
+  ],
   oidc_property_enum: [
 "given_name",
 "family_name",

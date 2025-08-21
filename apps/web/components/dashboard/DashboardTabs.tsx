@@ -1,7 +1,6 @@
 'use client';
 
 import type { DashboardStatsResponse } from '@/app/api/dashboard/stats/types';
-import { AssignmentsTabSkeleton } from '@/components/skeletons/AssignmentsTabSkeleton';
 import { ConsentsTabSkeleton } from '@/components/skeletons/ConsentsTabSkeleton';
 import { ContextsTabSkeleton } from '@/components/skeletons/ContextsTabSkeleton';
 import { NamesTabSkeleton } from '@/components/skeletons/NamesTabSkeleton';
@@ -62,17 +61,6 @@ ssr: false,
   },
 );
 
-const OIDCAssignmentsTab = dynamic(
-  () =>
-import('@/components/tabs/OIDCAssignmentsTab').then((mod) => ({
-  default: mod.OIDCAssignmentsTab,
-})),
-  {
-loading: () => <AssignmentsTabSkeleton />,
-ssr: false,
-  },
-);
-
 const OIDCPreviewTab = dynamic(
   () =>
 import('@/components/tabs/OIDCPreviewTab').then((mod) => ({
@@ -111,10 +99,6 @@ statsLoading={statsLoading}
 
   <Suspense fallback={<NamesTabSkeleton />}>
 <NamesTab user={user} />
-  </Suspense>
-
-  <Suspense fallback={<AssignmentsTabSkeleton />}>
-<OIDCAssignmentsTab />
   </Suspense>
 
   <Suspense fallback={<PreviewTabSkeleton />}>

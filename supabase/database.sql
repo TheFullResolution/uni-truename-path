@@ -39,7 +39,6 @@ CREATE TABLE public.context_name_assignments (
  context_id uuid NOT NULL,
  name_id uuid NOT NULL,
  created_at timestamp with time zone NOT NULL DEFAULT now(),
- oidc_property text CHECK (oidc_property IS NULL OR (oidc_property = ANY (ARRAY['given_name'::text, 'family_name'::text, 'nickname'::text, 'display_name'::text, 'preferred_username'::text, 'name'::text]))),
  is_primary boolean DEFAULT false,
  CONSTRAINT context_name_assignments_pkey PRIMARY KEY (id),
  CONSTRAINT context_name_assignments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
@@ -50,9 +49,8 @@ CREATE TABLE public.context_oidc_assignments (
  id uuid NOT NULL DEFAULT gen_random_uuid(),
  user_id uuid NOT NULL,
  context_id uuid NOT NULL,
+ oidc_property USER-DEFINED NOT NULL,
  name_id uuid NOT NULL,
- visibility_level character varying NOT NULL DEFAULT 'STANDARD'::character varying CHECK (visibility_level::text = ANY (ARRAY['STANDARD'::character varying, 'RESTRICTED'::character varying, 'PRIVATE'::character varying]::text[])),
- allowed_scopes ARRAY NOT NULL DEFAULT '{openid,profile}'::text[],
  created_at timestamp with time zone NOT NULL DEFAULT now(),
  updated_at timestamp with time zone DEFAULT now(),
  CONSTRAINT context_oidc_assignments_pkey PRIMARY KEY (id),
@@ -118,6 +116,7 @@ CREATE TABLE public.user_contexts (
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   is_permanent boolean DEFAULT false,
+  visibility USER-DEFINED NOT NULL DEFAULT 'restricted'::context_visibility,
   CONSTRAINT user_contexts_pkey PRIMARY KEY (id),
   CONSTRAINT user_contexts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );

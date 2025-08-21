@@ -9,9 +9,7 @@ import {
   Badge,
   Button,
   Card,
-  Grid,
   Group,
-  MultiSelect,
   SegmentedControl,
   Select,
   Stack,
@@ -65,10 +63,6 @@ swrFetcher<ConsentsResponseData>,
   );
 
   const [selectedContext, setSelectedContext] = useState<string>('');
-  const [selectedScopes, setSelectedScopes] = useState<string[]>([
-'openid',
-'profile',
-  ]);
   const [audienceType, setAudienceType] = useState<'consent' | 'direct'>(
 'direct',
   );
@@ -109,7 +103,6 @@ throw new Error(
   const params = new URLSearchParams({
 context: selectedContext,
 requester_id: requesterId,
-scopes: selectedScopes.join(','),
   });
 
   const res = await fetch(`/api/names/resolve?${params}`, {
@@ -148,8 +141,6 @@ consents?.data?.filter(
   OAuth/OIDC flows.
 </Text>
 
-<Grid>
-  <Grid.Col span={{ base: 12, sm: 6 }}>
 <Select
   label='Context'
   placeholder='Select context to test'
@@ -163,25 +154,6 @@ contexts?.data?.map((c) => ({
   value={selectedContext}
   onChange={(value) => setSelectedContext(value || '')}
 />
-  </Grid.Col>
-
-  <Grid.Col span={{ base: 12, sm: 6 }}>
-<MultiSelect
-  label='OAuth Scopes'
-  placeholder='Select scopes'
-  description='Scopes that would be requested'
-  data={[
-{ value: 'openid', label: 'OpenID' },
-{ value: 'profile', label: 'Profile' },
-{ value: 'email', label: 'Email' },
-{ value: 'address', label: 'Address' },
-{ value: 'phone', label: 'Phone' },
-  ]}
-  value={selectedScopes}
-  onChange={setSelectedScopes}
-/>
-  </Grid.Col>
-</Grid>
 
 <SegmentedControl
   value={audienceType}

@@ -1,47 +1,37 @@
 'use client';
 
+import type { ContextWithStats } from '@/app/api/contexts/types';
+import { AssignmentModal } from '@/components/contexts/AssignmentModal';
+import { DeleteContextModal } from '@/components/modals/DeleteContextModal';
 import type { AuthenticatedUser } from '@/utils/context';
-import type { Tables } from '@/generated/database';
-
-type UserContext = Tables<'user_contexts'>;
 import {
-  swrFetcher,
   createMutationFetcher,
   formatSWRError,
+  swrFetcher,
 } from '@/utils/swr-fetcher';
 import {
-  ActionIcon,
   Alert,
-  Badge,
   Button,
-  Card,
+  Center,
   Group,
+  Loader,
   Paper,
+  Select,
   Stack,
   Tabs,
   Text,
-  TextInput,
   Textarea,
+  TextInput,
   Title,
-  Loader,
-  Center,
-  Divider,
-  Tooltip,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
-import {
-  IconPlus,
-  IconTrash,
-  IconEdit,
-  IconAlertTriangle,
-  IconLock,
-} from '@tabler/icons-react';
+import { IconAlertTriangle, IconEdit, IconPlus } from '@tabler/icons-react';
 import { useState } from 'react';
 import useSWR from 'swr';
 import useSWRMutation from 'swr/mutation';
 import { z } from 'zod';
-import { DeleteContextModal } from '../modals';
+import { ContextCard } from '../contexts/ContextCard';
 
 interface ContextsTabProps {
   user: AuthenticatedUser | null;
@@ -59,20 +49,32 @@ const contextSchema = z.object({
 .string()
 .max(500, 'Description cannot exceed 500 characters')
 .optional(),
+  visibility: z.enum(['public', 'restricted', 'private']).default('restricted'),
 });
 
 type ContextFormData = z.infer<typeof contextSchema>;
 
+// Visibility options for the dropdown
+const visibilityOptions = [
+  { value: 'public', label: 'Public (visible to everyone)' },
+  { value: 'restricted', label: 'Restricted (limited visibility)' },
+  { value: 'private', label: 'Private (hidden/disabled)' },
+] as const;
+
 export function ContextsTab({ user }: ContextsTabProps) {
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingContext, setEditingContext] =
-useState<Tables<'user_contexts'> | null>(null);
+  const [editingContext, setEditingContext] = useState<ContextWithStats | null>(
+null,
+  );
   const [deletingContext, setDeletingContext] =
-useState<Tables<'user_contexts'> | null>(null);
+useState<ContextWithStats | null>(null);
   const [dependencyImpact, setDependencyImpact] = useState<{
 name_assignments?: number;
 active_consents?: number;
   } | null>(null);
+  const [assignmentModalOpened, setAssignmentModalOpened] = useState(false);
+  const [selectedContextForAssignments, setSelectedContextForAssignments] =
+useState<ContextWithStats | null>(null);
 
   // Fetch contexts
   const {
@@ -110,8 +112,26 @@ notifications.show({
 
   // Update context mutation
   const { trigger: updateContext, isMutating: isUpdating } = useSWRMutation(
-'/api/contexts',
-createMutationFetcher('PUT'),
+'/api/contexts/update',
+async (url, { arg }: { arg: { context_id: string } & ContextFormData }) => {
+  const updateUrl = `/api/contexts/${arg.context_id}`;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { context_id, ...body } = arg;
+
+  const response = await fetch(updateUrl, {
+method: 'PUT',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify(body),
+credentials: 'include',
+  });
+
+  if (!response.ok) {
+const error = await response.json();
+throw new Error(error.message || 'Update failed');
+  }
+
+  return response.json();
+},
 {
   onSuccess: () => {
 notifications.show({
@@ -180,6 +200,7 @@ notifications.show({
 initialValues: {
   context_name: '',
   description: '',
+  visibility: 'restricted',
 },
 validate: {
   context_name: (value) => {
@@ -187,6 +208,16 @@ const result = contextSchema.shape.context_name.safeParse(value);
 return result.success
   ? null
   : result.error.issues[0]?.message || 'Invalid context name';
+  },
+  visibility: (value) => {
+// Ensure permanent contexts remain public
+if (editingContext?.is_permanent && value !== 'public') {
+  return 'Default contexts must remain public';
+}
+const result = contextSchema.shape.visibility.safeParse(value);
+return result.success
+  ? null
+  : result.error.issues[0]?.message || 'Invalid visibility';
   },
 },
   });
@@ -204,7 +235,7 @@ context_id: editingContext.id,
 }
   };
 
-  const handleEdit = (context: Tables<'user_contexts'>) => {
+  const handleEdit = (context: ContextWithStats) => {
 // Prevent editing permanent contexts
 if (context.is_permanent) {
   notifications.show({
@@ -220,11 +251,14 @@ setEditingContext(context);
 form.setValues({
   context_name: context.context_name,
   description: context.description || '',
+  visibility: context.is_permanent
+? 'public'
+: context.visibility || 'restricted',
 });
 setShowAddForm(true);
   };
 
-  const handleDelete = async (context: Tables<'user_contexts'>) => {
+  const handleDelete = async (context: ContextWithStats) => {
 try {
   // Check for dependencies using the safe can-delete endpoint
   const response = await fetch(`/api/contexts/${context.id}/can-delete`, {
@@ -302,7 +336,17 @@ setEditingContext(null);
 form.reset();
   };
 
-  const contexts = (contextsResponse as UserContext[]) || [];
+  const handleOpenAssignments = (context: ContextWithStats) => {
+setSelectedContextForAssignments(context);
+setAssignmentModalOpened(true);
+  };
+
+  const handleCloseAssignments = () => {
+setAssignmentModalOpened(false);
+setSelectedContextForAssignments(null);
+  };
+
+  const contexts = (contextsResponse as ContextWithStats[]) || [];
   const isLoading = !contextsResponse && !contextsError;
 
   return (
@@ -349,6 +393,20 @@ Your default context is permanent and cannot be deleted.
   rows={3}
   data-testid='context-description-input'
   {...form.getInputProps('description')}
+/>
+
+<Select
+  label='Visibility'
+  placeholder='Select visibility level'
+  data={visibilityOptions}
+  disabled={editingContext?.is_permanent === true}
+  description={
+editingContext?.is_permanent === true
+  ? 'Default contexts must remain public'
+  : 'Control who can see and use this context'
+  }
+  data-testid='context-visibility-select'
+  {...form.getInputProps('visibility')}
 />
 
 <Group justify='flex-end'>
@@ -420,106 +478,15 @@ icon={<IconAlertTriangle size={16} />}
   </Paper>
 ) : (
   <Stack gap='sm'>
-{contexts.map((context: Tables<'user_contexts'>) => {
-  const isPermanent = context.is_permanent === true;
-
-  return (
-<Card key={context.id} p='md' withBorder>
-  <Stack gap='sm'>
-<Group justify='space-between'>
-  <Group>
-<div>
-  <Group gap='xs' align='center'>
-<Text fw={600} size='lg'>
-  {context.context_name}
-</Text>
-{isPermanent && (
-  <Tooltip
-label='This is your default context and cannot be deleted or renamed'
-withArrow
-position='top'
-  >
-<Badge
-  size='sm'
-  variant='light'
-  color='blue'
-  leftSection={<IconLock size={12} />}
->
-  Default
-</Badge>
-  </Tooltip>
-)}
-  </Group>
-  {context.description && (
-<Text size='sm' c='dimmed' mt={4}>
-  {context.description}
-</Text>
-  )}
-</div>
-  </Group>
-
-  <Group>
-{/* Only show edit button for non-permanent contexts */}
-{!isPermanent && (
-  <ActionIcon
-variant='light'
-color='blue'
-onClick={() => handleEdit(context)}
-data-testid='edit-context-button'
-  >
-<IconEdit size={16} />
-  </ActionIcon>
-)}
-
-{/* Only show delete button for non-permanent contexts */}
-{!isPermanent && (
-  <ActionIcon
-color='red'
-variant='light'
-onClick={() => handleDelete(context)}
-data-testid='delete-context-button'
-  >
-<IconTrash size={16} />
-  </ActionIcon>
-)}
-
-{/* Show lock icon for permanent contexts instead of action buttons */}
-{isPermanent && (
-  <Tooltip
-label='Default context cannot be edited or deleted'
-withArrow
-position='top'
-  >
-<ActionIcon
-  variant='light'
-  color='gray'
-  disabled
-  data-testid='permanent-context-indicator'
->
-  <IconLock size={16} />
-</ActionIcon>
-  </Tooltip>
-)}
-  </Group>
-</Group>
-
-<Divider />
-
-<Group>
-  <Text size='sm' c='dimmed'>
-Created:{' '}
-{new Date(context.created_at).toLocaleDateString()}
-  </Text>
-  {isPermanent && (
-<Text size='sm' c='dimmed' fs='italic'>
-  • System Default
-</Text>
-  )}
-</Group>
-  </Stack>
-</Card>
-  );
-})}
+{contexts.map((context: ContextWithStats) => (
+  <ContextCard
+key={context.id}
+context={context}
+onEdit={handleEdit}
+onDelete={handleDelete}
+onEditAssignments={handleOpenAssignments}
+  />
+))}
   </Stack>
 )}
 
@@ -536,6 +503,14 @@ setDependencyImpact(null);
   onConfirmDelete={handleConfirmDelete}
   dependencyImpact={dependencyImpact}
   isPermanent={deletingContext?.is_permanent || false}
+/>
+
+{/* Assignment Modal */}
+<AssignmentModal
+  opened={assignmentModalOpened}
+  onClose={handleCloseAssignments}
+  contextId={selectedContextForAssignments?.id || ''}
+  contextName={selectedContextForAssignments?.context_name || ''}
 />
   </Stack>
 </Tabs.Panel>

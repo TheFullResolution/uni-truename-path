@@ -25,7 +25,6 @@ import {
   IconShieldCheck,
   IconTags,
   IconUser,
-  IconKey,
   IconCode,
 } from '@tabler/icons-react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -37,7 +36,6 @@ type ValidTab =
   | 'dashboard'
   | 'names'
   | 'contexts'
-  | 'oidc-assign'
   | 'oidc-preview'
   | 'consents'
   | 'settings';
@@ -95,7 +93,6 @@ value &&
   'dashboard',
   'names',
   'contexts',
-  'oidc-assign',
   'oidc-preview',
   'consents',
   'settings',
@@ -182,13 +179,6 @@ Sign Out
   data-testid='tab-names'
 >
   Names
-</Tabs.Tab>
-<Tabs.Tab
-  value='oidc-assign'
-  leftSection={<IconKey size={16} />}
-  data-testid='tab-oidc-assign'
->
-  OIDC Assignments
 </Tabs.Tab>
 <Tabs.Tab
   value='oidc-preview'
