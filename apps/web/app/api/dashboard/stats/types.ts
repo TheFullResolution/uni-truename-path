@@ -1,10 +1,17 @@
-import type { Database } from '@/generated/database';
+import type { QueryData } from '@supabase/supabase-js';
+import { createClient } from '@/utils/supabase/client';
 
-// RPC function response type - uses generated database types
-export type DashboardStatsRPC =
-  Database['public']['Functions']['get_dashboard_stats']['Returns'];
+// Query for dashboard statistics
+export const getDashboardStatsQuery = (profileId: string) =>
+  createClient().rpc('get_dashboard_stats', {
+p_profile_id: profileId,
+  });
 
-// Full dashboard response type (includes user profile data)
+export type DashboardStatsRPCResult = QueryData<
+  ReturnType<typeof getDashboardStatsQuery>
+>;
+
+// Type for the complete dashboard stats response that includes user profile data
 export interface DashboardStatsResponse {
   user_profile: {
 email: string;
@@ -20,15 +27,30 @@ has_preferred_name: boolean;
 custom_contexts: number;
 active_consents: number;
 pending_consent_requests: number;
+active_contexts_today: number;
+active_contexts_week: number;
   };
-  activity_metrics: {
-recent_activity_count: number;
-api_calls_today: number;
-total_api_calls: number;
+  usage_analytics: {
+total_applications: number;
+applications_today: number;
+applications_this_week: number;
+total_context_usages: number;
+context_usages_today: number;
+context_usages_week: number;
+top_application_today: string | null;
+top_context_today: string | null;
+unique_properties_disclosed_week: number;
+  };
+  performance_metrics: {
+avg_response_time_today_ms: number;
+avg_response_time_week_ms: number;
+success_rate_today_percent: number;
+target_response_time_ms: number;
   };
   privacy_metrics: {
 privacy_score: number;
 gdpr_compliance_status: 'compliant' | 'needs_attention';
 audit_retention_days: number;
+context_usage_tracked: boolean;
   };
 }

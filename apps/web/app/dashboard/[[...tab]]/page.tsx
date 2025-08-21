@@ -7,8 +7,8 @@ type ValidTab =
   | 'dashboard'
   | 'names'
   | 'contexts'
-  | 'assign'
-  | 'preview'
+  | 'oidc-assign'
+  | 'oidc-preview'
   | 'consents'
   | 'settings';
 
@@ -16,8 +16,8 @@ const VALID_TABS: ValidTab[] = [
   'dashboard',
   'names',
   'contexts',
-  'assign',
-  'preview',
+  'oidc-assign',
+  'oidc-preview',
   'consents',
   'settings',
 ];

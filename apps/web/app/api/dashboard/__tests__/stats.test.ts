@@ -21,6 +21,35 @@ status: 'error',
 code,
 message,
   })),
+  get_user_profile_data: vi.fn((user, requestId, timestamp) => {
+if (!user) {
+  return {
+error: {
+  status: 'error',
+  code: 'AUTHENTICATION_REQUIRED',
+  message: 'User authentication required',
+},
+  };
+}
+if (!user.profile?.id) {
+  return {
+error: {
+  status: 'error',
+  code: 'AUTHENTICATION_REQUIRED',
+  message: 'User profile not found',
+},
+  };
+}
+return {
+  authenticated_user_id: user.id,
+  profile_id: user.profile.id,
+  user_profile: {
+email: user.email || '',
+profile_id: user.profile.id,
+member_since: user.created_at || new Date().toISOString(),
+  },
+};
+  }),
   ErrorCodes: {
 AUTHENTICATION_REQUIRED: 'AUTHENTICATION_REQUIRED',
 DATABASE_ERROR: 'DATABASE_ERROR',

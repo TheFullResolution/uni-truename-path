@@ -1,16 +1,6 @@
-import type { Name, NameCategory } from '@/types/database';
+import type { Tables } from '@/generated/database';
 import { createClient } from '@/utils/supabase/client';
 import type { QueryData } from '@supabase/supabase-js';
-
-// Constants for validation
-export const NAME_CATEGORIES: NameCategory[] = [
-  'LEGAL',
-  'PREFERRED',
-  'NICKNAME',
-  'ALIAS',
-  'PROFESSIONAL',
-  'CULTURAL',
-];
 
 // Query for names (co-located with API)
 export const getNamesQuery = (userId: string) =>
@@ -22,33 +12,50 @@ export const getNamesQuery = (userId: string) =>
 
 export type NamesQueryResult = QueryData<ReturnType<typeof getNamesQuery>>;
 
-// Request types (snake_case to match existing API patterns)
+// Request types (simplified, snake_case to match existing API patterns)
 export interface CreateNameRequest {
   name_text: string;
-  name_type: NameCategory;
   is_preferred?: boolean;
   source?: string;
+  oidc_properties?: {
+description?: string;
+pronunciation_guide?: string;
+locale?: string;
+// Allow additional properties for form flexibility
+[key: string]: unknown;
+  };
 }
 
 export interface UpdateNameRequest {
   name_id?: string;
   name_text?: string;
-  name_type?: NameCategory;
   is_preferred?: boolean;
-  source?: string;
+  oidc_properties?: {
+description?: string;
+pronunciation_guide?: string;
+locale?: string;
+  };
 }
 
 // Response types
 export interface NamesResponseData {
-  names: Name[];
+  names: Tables<'names'>[];
+  total: number;
+  metadata: {
+retrieval_timestamp: string;
+filter_applied?: {
+  limit?: number;
+};
+userId: string;
+  };
 }
 
 export interface CreateNameResponseData {
-  name: Name;
+  name: Tables<'names'>;
 }
 
 export interface UpdateNameResponseData {
-  name: Name;
+  name: Tables<'names'>;
 }
 
 export interface DeleteNameResponseData {

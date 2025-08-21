@@ -1,7 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import type { DashboardStatsResponse } from '@/app/api/dashboard/stats/types';
+import { AuthGuard } from '@/components/auth/AuthGuard';
+import { Logo } from '@/components/branding/Logo';
+import { useAuth } from '@/utils/context';
+import { formatSWRError, swrFetcher } from '@/utils/swr-fetcher';
+import { CACHE_KEYS } from '@/utils/swr-keys';
+import { createLogoutHandler } from '@/utils/utils';
 import {
   Box,
   Button,
@@ -12,7 +17,6 @@ import {
   Text,
   Title,
 } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import {
   IconDashboard,
@@ -21,30 +25,20 @@ import {
   IconShieldCheck,
   IconTags,
   IconUser,
-  IconUserCheck,
-  IconEye,
+  IconKey,
+  IconCode,
 } from '@tabler/icons-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
 import useSWR from 'swr';
-import { AuthGuard } from '@/components/auth/AuthGuard';
-import { Logo } from '@/components/branding';
-import { useAuth } from '@/utils/context';
-import { formatSWRError, swrFetcher } from '@/utils/swr-fetcher';
-import { createLogoutHandler } from '@/utils/utils';
-import { CACHE_KEYS } from '@/utils/swr-keys';
-import type { DashboardStatsResponse } from '@/app/api/dashboard/stats/types';
-import type { ContextWithStats } from '@/app/api/contexts/types';
 import { DashboardTabs } from './DashboardTabs';
-import {
-  EditContextModal,
-  DeleteContextModal,
-} from '@/components/contexts/modals';
 
 type ValidTab =
   | 'dashboard'
   | 'names'
   | 'contexts'
-  | 'assign'
-  | 'preview'
+  | 'oidc-assign'
+  | 'oidc-preview'
   | 'consents'
   | 'settings';
 
@@ -58,17 +52,6 @@ export function DashboardContent({ initialTab }: DashboardContentProps) {
   const { user, logout, loading } = useAuth();
 
   const [activeTab, setActiveTab] = useState<ValidTab>(initialTab);
-  const [selectedContext, setSelectedContext] =
-useState<ContextWithStats | null>(null);
-  const [welcomeShown, setWelcomeShown] = useState(false);
-
-  // Modal states for context management
-  const [editModalOpened, { open: openEditModal, close: closeEditModal }] =
-useDisclosure(false);
-  const [
-deleteModalOpened,
-{ open: openDeleteModal, close: closeDeleteModal },
-  ] = useDisclosure(false);
 
   // SWR data fetching for dashboard statistics
   const {
@@ -80,60 +63,22 @@ user?.profile?.id ? CACHE_KEYS.STATS : null,
 swrFetcher,
   );
 
-  // SWR hook for contexts data
-  const {
-data: contextsData,
-error: contextsError,
-mutate: mutateContexts,
-  } = useSWR<ContextWithStats[]>(
-user?.id ? CACHE_KEYS.CONTEXTS : null,
-swrFetcher,
-  );
-
-  // Derived state from SWR
-  const contexts = contextsData || [];
-  const contextsLoading = !contextsData && !contextsError;
-
-  // Handle welcome notification when contexts data changes
-  useEffect(() => {
-if (contextsData && contextsData.length > 0 && !welcomeShown) {
-  const contexts = contextsData;
-  // Show onboarding notification for users with only default contexts
-  const defaultContextNames = ['Professional', 'Social', 'Public'];
-  const hasOnlyDefaultContexts =
-contexts.length === 3 &&
-contexts.every((ctx: ContextWithStats) =>
-  defaultContextNames.includes(ctx.context_name),
-);
-
-  if (contexts.length === 0 || hasOnlyDefaultContexts) {
-notifications.show({
-  title: 'Welcome to Context Management!',
-  message: hasOnlyDefaultContexts
-? "We've created three starter contexts for you: Professional, Social, and Public. You can customize these names, create new contexts, or assign your name variants to these contexts to control how different audiences see your name."
-: 'Create your first context to organize how different audiences see your name. Start with something like "Work Colleagues" or "HR Systems" to get going.',
-  color: 'blue',
-  autoClose: false,
-});
-setWelcomeShown(true);
-  }
-}
-  }, [contextsData, welcomeShown]);
-
   // Synchronize tab state with URL parameter
   useEffect(() => {
 setActiveTab(initialTab);
   }, [initialTab]);
 
   // Handle SWR errors
-  if (statsError) {
-notifications.show({
-  title: 'Error Loading Dashboard',
-  message: formatSWRError(statsError),
-  color: 'red',
-  autoClose: 5000,
-});
-  }
+  useEffect(() => {
+if (statsError) {
+  notifications.show({
+title: 'Error Loading Dashboard',
+message: formatSWRError(statsError),
+color: 'red',
+autoClose: 5000,
+  });
+}
+  }, [statsError]);
 
   // Handle logout using utility function
   const handleLogout = useCallback(
@@ -150,8 +95,8 @@ value &&
   'dashboard',
   'names',
   'contexts',
-  'assign',
-  'preview',
+  'oidc-assign',
+  'oidc-preview',
   'consents',
   'settings',
 ].includes(value)
@@ -174,18 +119,6 @@ router.push(newUrl, { scroll: false });
 },
 [router, urlSearchParams],
   );
-
-  // Handle edit context
-  const handleEditContext = (context: ContextWithStats) => {
-setSelectedContext(context);
-openEditModal();
-  };
-
-  // Handle delete context
-  const handleDeleteContext = (context: ContextWithStats) => {
-setSelectedContext(context);
-openDeleteModal();
-  };
 
   return (
 <AuthGuard>
@@ -251,18 +184,18 @@ Sign Out
   Names
 </Tabs.Tab>
 <Tabs.Tab
-  value='assign'
-  leftSection={<IconUserCheck size={16} />}
-  data-testid='tab-assign'
+  value='oidc-assign'
+  leftSection={<IconKey size={16} />}
+  data-testid='tab-oidc-assign'
 >
-  Assignments
+  OIDC Assignments
 </Tabs.Tab>
 <Tabs.Tab
-  value='preview'
-  leftSection={<IconEye size={16} />}
-  data-testid='tab-preview'
+  value='oidc-preview'
+  leftSection={<IconCode size={16} />}
+  data-testid='tab-oidc-preview'
 >
-  Preview
+  OIDC Preview
 </Tabs.Tab>
 <Tabs.Tab
   value='consents'
@@ -285,30 +218,10 @@ Sign Out
 user={user}
 dashboardStats={dashboardStats}
 statsLoading={statsLoading}
-contexts={contexts}
-contextsLoading={contextsLoading}
-contextsError={contextsError}
-onEditContext={handleEditContext}
-onDeleteContext={handleDeleteContext}
-onRefreshContexts={mutateContexts}
   />
 </Tabs>
   </Paper>
 </Container>
-
-{/* Edit Modal */}
-<EditContextModal
-  opened={editModalOpened}
-  onClose={closeEditModal}
-  context={selectedContext}
-/>
-
-{/* Delete Modal */}
-<DeleteContextModal
-  opened={deleteModalOpened}
-  onClose={closeDeleteModal}
-  context={selectedContext}
-/>
   </Box>
 </AuthGuard>
   );

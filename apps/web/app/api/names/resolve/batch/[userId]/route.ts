@@ -1,193 +1,183 @@
-// TrueNamePath: Batch Name Resolution API Route
-// GET /api/names/resolve/batch/[userId] - Batch name resolution endpoint
-// Date: August 15, 2025
-// Academic project REST API with authentication and validation
-
-import { NextRequest } from 'next/server';
-import { TrueNameContextEngine } from '@/utils/context-engine/TrueNameContextEngine';
-import type { BatchResolutionData, BatchResolutionItem } from '../../../types';
+import { z } from 'zod';
 import {
-  withOptionalAuth,
+  withRequiredAuth,
+  type AuthenticatedHandler,
   createSuccessResponse,
   createErrorResponse,
-  handle_method_not_allowed,
-  type AuthenticatedHandler,
+  ErrorCodes,
 } from '@/utils/api';
-import { ErrorCodes } from '@/utils/api';
-import { z } from 'zod';
+import type {
+  BatchResolutionData,
+  BatchResolutionItem,
+  ResolutionSource,
+} from '../../../types';
 
-/**
- * Query validation schema for batch resolution
- */
-const BatchResolveQuerySchema = z.object({
+// =============================================================================
+// Batch Name Resolution Endpoint
+// =============================================================================
+// Efficiently resolves names for multiple contexts using
+// resolve_name() function with batch processing optimization
+
+// Query parameters validation
+const batchQuerySchema = z.object({
   contexts: z
 .string()
-.min(1, 'Contexts parameter is required')
 .transform((str) => str.split(',').filter(Boolean))
-.refine((arr) => arr.length > 0, 'At least one context is required'),
+.pipe(z.array(z.string().min(1)).min(1, 'At least one context required')),
 });
 
-/**
- * Core handler function implementing batch name resolution logic
- */
-const handleBatchResolveRequest: AuthenticatedHandler<
-  BatchResolutionData
-> = async (request: NextRequest, context) => {
-  const { pathname } = new URL(request.url);
-  const userId = pathname.split('/').pop();
+// Main handler function for batch resolution
+const handleGET: AuthenticatedHandler<BatchResolutionData> = async (
+  request,
+  context,
+) => {
+  const batch_start = Date.now();
 
-  if (!userId) {
-return createErrorResponse(
-  ErrorCodes.VALIDATION_ERROR,
-  'User ID is required',
-  context.requestId,
-  'User ID must be provided in the URL path',
-  context.timestamp,
-);
-  }
+  try {
+// Extract userId from URL path
+const target_user_id = request.url.split('/').slice(-1)[0]?.split('?')[0];
 
-  // Validate UUID format
-  const uuidRegex =
-/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidRegex.test(userId)) {
-return createErrorResponse(
-  ErrorCodes.VALIDATION_ERROR,
-  'Invalid user ID format',
-  context.requestId,
-  'User ID must be a valid UUID',
-  context.timestamp,
-);
-  }
-
-  // Parse query parameters
-  const url = new URL(request.url);
-  const queryParams = {
-contexts: url.searchParams.get('contexts'),
-  };
-
-  // Validate query parameters
-  const validationResult = BatchResolveQuerySchema.safeParse(queryParams);
-
-  if (!validationResult.success) {
-return createErrorResponse(
-  ErrorCodes.VALIDATION_ERROR,
-  'Invalid query parameters',
-  context.requestId,
-  validationResult.error.issues.map((err) => ({
-field: err.path.join('.'),
-message: err.message,
-code: err.code,
-  })),
-  context.timestamp,
-);
-  }
-
-  const { contexts } = validationResult.data;
-  const batchStartTime = Date.now();
-
-  // Initialize context engine
-  const contextEngine = new TrueNameContextEngine();
-
-  // Process each context resolution
-  const resolutions: BatchResolutionItem[] = [];
-  let successfulResolutions = 0;
-
-  for (const contextName of contexts) {
-const resolutionStartTime = Date.now();
-
-try {
-  const nameResolution = await contextEngine.resolveName({
-target_user_id: userId,
-requester_user_id: context.user?.id || undefined,
-context_name: contextName.trim(),
-  });
-
-  const responseTimeMs = Date.now() - resolutionStartTime;
-
-  resolutions.push({
-context: contextName.trim(),
-resolved_name: nameResolution.name,
-source: nameResolution.source,
-response_time_ms: responseTimeMs,
-  });
-
-  successfulResolutions++;
-} catch (error) {
-  const responseTimeMs = Date.now() - resolutionStartTime;
-  const errorMessage =
-error instanceof Error ? error.message : 'Unknown error';
-
-  resolutions.push({
-context: contextName.trim(),
-resolved_name: 'Error resolving name',
-source: 'error_fallback',
-response_time_ms: responseTimeMs,
-error: errorMessage,
-  });
-}
-  }
-
-  const batchTimeMs = Date.now() - batchStartTime;
-
-  // Success response with comprehensive batch metadata
-  const responseData: BatchResolutionData = {
-user_id: userId,
-resolutions,
-total_contexts: contexts.length,
-successful_resolutions: successfulResolutions,
-batch_time_ms: batchTimeMs,
-timestamp: new Date().toISOString(),
-  };
-
-  return createSuccessResponse(
-responseData,
+// Validate target user ID
+if (!target_user_id || !/^[0-9a-f-]{36}$/.test(target_user_id)) {
+  return createErrorResponse(
+ErrorCodes.VALIDATION_ERROR,
+'Invalid target user ID format',
 context.requestId,
+{ target_user_id },
 context.timestamp,
   );
+}
+
+// Parse and validate query parameters
+const url = new URL(request.url);
+const queryParams = {
+  contexts: url.searchParams.get('contexts') || '',
 };
 
-/**
- * GET /api/names/resolve/batch/[userId]
- *
- * Batch name resolution endpoint for multiple contexts at once.
- * Optimized for dashboard preview components that need to show
- * name resolution across multiple contexts simultaneously.
- *
- * Query Parameters:
- * - contexts: Comma-separated list of context names to resolve
- *
- * Features:
- * - Optional cookie-based session authentication (demo mode compatible)
- * - Comprehensive input validation with Zod
- * - Individual resolution timing and error handling
- * - Batch performance metrics
- * - Academic-quality response metadata
- * - JSend format compliance
- */
-export const GET = withOptionalAuth(handleBatchResolveRequest, {
+const { contexts } = batchQuerySchema.parse(queryParams);
+
+// Use authenticated Supabase client from context
+const { supabase } = context;
+
+// Validate target user exists
+const { data: targetUser, error: targetUserError } = await supabase
+  .from('profiles')
+  .select('id, email')
+  .eq('id', target_user_id)
+  .single();
+
+if (targetUserError || !targetUser) {
+  return createErrorResponse(
+ErrorCodes.USER_NOT_FOUND,
+'Target user not found',
+context.requestId,
+{ target_user_id, error: targetUserError?.message },
+context.timestamp,
+  );
+}
+
+// Process batch resolutions with performance tracking
+const resolutions: BatchResolutionItem[] = [];
+let successful_resolutions = 0;
+
+// Process each context sequentially for consistent audit logging
+for (const context_name of contexts) {
+  const resolution_start = Date.now();
+
+  try {
+// Call simplified PostgreSQL function for this context
+const { data: resolvedName, error: resolveError } = await supabase.rpc(
+  'resolve_name',
+  {
+p_target_user_id: target_user_id,
+p_requester_user_id: context.user?.id,
+p_context_name: context_name,
+  },
+);
+
+const resolution_time = Date.now() - resolution_start;
+
+if (resolveError || !resolvedName) {
+  // Failed resolution
+  resolutions.push({
+context: context_name,
+resolved_name: 'Unknown',
+source: 'error' as ResolutionSource,
+response_time_ms: resolution_time,
+error: resolveError?.message || 'No name data found',
+  });
+  continue;
+}
+
+// Successful resolution - resolve_name returns the actual name text
+resolutions.push({
+  context: context_name,
+  resolved_name: resolvedName || 'Unknown',
+  source: 'context_specific' as ResolutionSource,
+  response_time_ms: resolution_time,
+});
+
+successful_resolutions++;
+  } catch (contextError) {
+console.error(
+  `Batch resolution error for context ${context_name}:`,
+  contextError,
+);
+
+resolutions.push({
+  context: context_name,
+  resolved_name: 'Error',
+  source: 'error' as ResolutionSource,
+  response_time_ms: Date.now() - resolution_start,
+  error: 'Resolution processing failed',
+});
+  }
+}
+
+// Build batch response
+const total_time = Date.now() - batch_start;
+
+const batchData: BatchResolutionData = {
+  user_id: target_user_id,
+  resolutions,
+  total_contexts: contexts.length,
+  successful_resolutions,
+  batch_time_ms: total_time,
+  timestamp: new Date().toISOString(),
+};
+
+return createSuccessResponse(
+  batchData,
+  context.requestId,
+  context.timestamp,
+);
+  } catch (error) {
+console.error('Batch resolve error:', error);
+
+if (error instanceof z.ZodError) {
+  return createErrorResponse(
+ErrorCodes.VALIDATION_ERROR,
+'Invalid query parameters',
+context.requestId,
+{ validationErrors: error.issues },
+context.timestamp,
+  );
+}
+
+return createErrorResponse(
+  ErrorCodes.INTERNAL_SERVER_ERROR,
+  'Internal server error during batch resolution',
+  context.requestId,
+  { error: error instanceof Error ? error.message : 'Unknown error' },
+  context.timestamp,
+);
+  }
+};
+
+// Export with authentication wrapper and performance logging
+export const GET = withRequiredAuth(handleGET, {
   enableLogging: true,
 });
 
-/**
- * Handle unsupported HTTP methods - shared utility eliminates boilerplate
- */
-export const POST = () => handle_method_not_allowed(['GET']);
-export const PUT = POST;
-export const DELETE = POST;
-export const PATCH = POST;
-
-/**
- * OPTIONS handler for CORS preflight requests
- */
-export async function OPTIONS(): Promise<Response> {
-  return new Response(null, {
-status: 200,
-headers: {
-  'Allow': 'GET, OPTIONS',
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Access-Control-Max-Age': '86400',
-},
-  });
-}
+// Export types for frontend usage
+export type { BatchResolutionData, BatchResolutionItem };

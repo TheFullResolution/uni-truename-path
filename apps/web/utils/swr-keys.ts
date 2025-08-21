@@ -3,4 +3,7 @@ export const CACHE_KEYS = {
   NAMES: '/api/names',
   STATS: '/api/dashboard/stats',
   ASSIGNMENTS: '/api/assignments',
+  OIDC_ASSIGNMENTS: '/api/assignments/oidc',
+  OIDC_RESOLVE: '/api/names/resolve',
+  CONSENTS: '/api/consents',
 };

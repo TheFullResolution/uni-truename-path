@@ -1,9 +1,7 @@
-// TrueNamePath: Names Creation API Route
-// POST /api/names - Create a new name variant for the authenticated user
-// Date: December 2024
-// Academic project REST API with authentication and validation
+// TrueNamePath: Names API Route - Step 15.4 OAuth Compatible Structure
+// CRUD operations for simplified name variants (text only)
+// Date: August 2025 - Step 15.4 Remove name_type, OIDC properties managed at assignment level
 
-import type { Name, NameCategory } from '@/types/database';
 import {
   type AuthenticatedHandler,
   createErrorResponse,
@@ -13,10 +11,13 @@ import {
 } from '@/utils/api';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { NAME_CATEGORIES } from './types';
+
+// Import generated database types directly
+import type { Tables, TablesInsert, TablesUpdate } from '@/generated/database';
 
 /**
  * Request body validation schema for name creation
+ * Simplified structure - only name_text required, OIDC properties managed at context assignment level
  */
 const CreateNameSchema = z.object({
   name_text: z
@@ -24,10 +25,6 @@ const CreateNameSchema = z.object({
 .trim()
 .min(1, 'Name text is required')
 .max(100, 'Name text cannot exceed 100 characters'),
-
-  name_type: z.enum(NAME_CATEGORIES),
-
-  is_preferred: z.boolean().default(false),
 });
 
 /**
@@ -35,14 +32,12 @@ const CreateNameSchema = z.object({
  */
 const UpdateNameSchema = z.object({
   name_id: z.string().uuid('Name ID must be a valid UUID'),
-  is_preferred: z.boolean().optional(),
   name_text: z
 .string()
 .trim()
 .min(1, 'Name text is required')
 .max(100, 'Name text cannot exceed 100 characters')
 .optional(),
-  name_type: z.enum(NAME_CATEGORIES).optional(),
 });
 
 /**
@@ -53,7 +48,7 @@ const DeleteNameSchema = z.object({
 });
 
 /**
- * Query parameter validation schema for filtering and pagination (GET)
+ * Query parameter validation schema for filtering and pagination
  */
 const QueryParamsSchema = z.object({
   limit: z
@@ -64,43 +59,24 @@ const QueryParamsSchema = z.object({
 .refine((val) => !val || (val > 0 && val <= 100), {
   message: 'Limit must be between 1 and 100',
 }),
-
-  nameType: z.enum(NAME_CATEGORIES).nullable().optional(),
 });
-
-/**
- * Name variant interface based on centralized database types
- * Using snake_case to match component expectations
- */
-interface NameVariant {
-  id: string;
-  name_text: string;
-  name_type: NameCategory;
-  is_preferred: boolean;
-  source: string | null;
-  created_at: string;
-  updated_at: string | null;
-}
 
 /**
  * API Response interface for GET endpoint
  */
 interface NamesResponseData {
-  names: NameVariant[];
+  names: Tables<'names'>[];
   total: number;
   metadata: {
-retrievalTimestamp: string;
-filterApplied?: {
-  nameType?: string;
+retrieval_timestamp: string;
+filter_applied?: {
   limit?: number;
 };
 userId: string;
   };
 }
 
-// Type inference for schema validation
 type QueryParams = z.infer<typeof QueryParamsSchema>;
-// type CreateNameRequest = z.infer<typeof CreateNameSchema>;
 
 /**
  * GET /api/names - Retrieve all name variants for authenticated user
@@ -114,7 +90,6 @@ const handleGET: AuthenticatedHandler<NamesResponseData> = async (
   const url = new URL(request.url);
   const queryParams = {
 limit: url.searchParams.get('limit'),
-nameType: url.searchParams.get('nameType'),
   };
 
   const queryValidationResult = QueryParamsSchema.safeParse(queryParams);
@@ -155,18 +130,11 @@ return createErrorResponse(
 .eq('user_id', authenticatedUserId);
 
   // Apply optional filters
-  if (validatedQueryParams.nameType) {
-query = query.eq(
-  'name_type',
-  validatedQueryParams.nameType as NameCategory,
-);
-  }
-
   if (validatedQueryParams.limit) {
 query = query.limit(validatedQueryParams.limit);
   }
 
-  // Order by creation date (newest first) and preferred status
+  // Order by preferred status and creation date
   query = query
 .order('is_preferred', { ascending: false })
 .order('created_at', { ascending: false });
@@ -192,25 +160,16 @@ return createErrorResponse(
 );
   }
 
-  // 4. Transform database results to API format (snake_case for component compatibility)
-  const nameVariants: NameVariant[] = (namesData || []).map((name: Name) => ({
-id: name.id,
-name_text: name.name_text,
-name_type: name.name_type,
-is_preferred: name.is_preferred,
-source: name.source,
-created_at: name.created_at,
-updated_at: name.updated_at,
-  }));
+  // 4. Use database results directly
+  const nameVariants = namesData || [];
 
   // 5. Success response with comprehensive metadata
   const responseData: NamesResponseData = {
 names: nameVariants,
 total: nameVariants.length,
 metadata: {
-  retrievalTimestamp: timestamp,
-  filterApplied: {
-nameType: validatedQueryParams.nameType || undefined,
+  retrieval_timestamp: timestamp,
+  filter_applied: {
 limit: validatedQueryParams.limit,
   },
   userId: authenticatedUserId,
@@ -271,41 +230,15 @@ timestamp,
   );
 }
 
-// Check if setting as preferred and unset other preferred names
-if (validatedData.is_preferred) {
-  const { error: unsetError } = await supabase
-.from('names')
-.update({ is_preferred: false })
-.eq('user_id', profile.id);
+// Create the new name variant with simplified structure
+const nameData: TablesInsert<'names'> = {
+  user_id: profile.id,
+  name_text: validatedData.name_text,
+};
 
-  if (unsetError) {
-console.error('Error unsetting previous preferred names:', unsetError);
-return createErrorResponse(
-  ErrorCodes.DATABASE_ERROR,
-  'Failed to update preferred name status',
-  requestId,
-  { error: unsetError.message },
-  timestamp,
-);
-  }
-}
-
-// Create the new name variant
 const { data: newName, error: createError } = await supabase
   .from('names')
-  .insert({
-user_id: profile.id,
-name_text: validatedData.name_text,
-name_type: validatedData.name_type as
-  | 'LEGAL'
-  | 'PREFERRED'
-  | 'NICKNAME'
-  | 'ALIAS'
-  | 'PROFESSIONAL'
-  | 'CULTURAL', // Type assertion for enum values
-is_preferred: validatedData.is_preferred,
-created_at: new Date().toISOString(),
-  })
+  .insert(nameData)
   .select('*')
   .single();
 
@@ -326,9 +259,9 @@ message: 'Name variant created successfully',
 name: {
   id: newName.id,
   name_text: newName.name_text,
-  name_type: newName.name_type,
   is_preferred: newName.is_preferred,
   created_at: newName.created_at,
+  updated_at: newName.updated_at,
 },
   },
   requestId,
@@ -384,7 +317,7 @@ const validatedData = UpdateNameSchema.parse(body);
 // Check if the name exists and belongs to the user
 const { data: existingName, error: fetchError } = await supabase
   .from('names')
-  .select('id, name_text, name_type, is_preferred, user_id')
+  .select('id, name_text, is_preferred, user_id, created_at, updated_at')
   .eq('id', validatedData.name_id)
   .eq('user_id', user!.id)
   .maybeSingle();
@@ -410,46 +343,13 @@ timestamp,
   );
 }
 
-// If setting as preferred, unset other preferred names
-if (validatedData.is_preferred === true) {
-  const { error: unsetError } = await supabase
-.from('names')
-.update({ is_preferred: false })
-.eq('user_id', user!.id)
-.neq('id', validatedData.name_id);
-
-  if (unsetError) {
-console.error('Error unsetting other preferred names:', unsetError);
-return createErrorResponse(
-  ErrorCodes.DATABASE_ERROR,
-  'Failed to update preferred name status',
-  requestId,
-  { error: unsetError.message },
-  timestamp,
-);
-  }
-}
-
-// Build update object
-const updateData: Partial<{
-  name_text: string;
-  name_type: NameCategory;
-  is_preferred: boolean;
-  updated_at: string;
-}> = {
+// Build update object using generated types
+const updateData: TablesUpdate<'names'> = {
   updated_at: new Date().toISOString(),
 };
 
 if (validatedData.name_text) {
   updateData.name_text = validatedData.name_text;
-}
-
-if (validatedData.name_type) {
-  updateData.name_type = validatedData.name_type as NameCategory;
-}
-
-if (validatedData.is_preferred !== undefined) {
-  updateData.is_preferred = validatedData.is_preferred;
 }
 
 // Update the name
@@ -458,7 +358,7 @@ const { data: updatedName, error: updateError } = await supabase
   .update(updateData)
   .eq('id', validatedData.name_id)
   .eq('user_id', user!.id)
-  .select('id, name_text, name_type, is_preferred, created_at, updated_at')
+  .select('id, name_text, is_preferred, created_at, updated_at')
   .single();
 
 if (updateError) {
@@ -517,6 +417,7 @@ return createErrorResponse(
 /**
  * DELETE /api/names - Delete a name variant
  * Deletes a specific name variant for the authenticated user
+ * Uses the new can_delete_name RPC function to check if deletion is allowed
  */
 const handleDELETE: AuthenticatedHandler = async (
   request: NextRequest,
@@ -530,7 +431,7 @@ const validatedData = DeleteNameSchema.parse(body);
 // Check if the name exists and belongs to the user
 const { data: existingName, error: fetchError } = await supabase
   .from('names')
-  .select('id, name_text, name_type, is_preferred, created_at, updated_at')
+  .select('id, name_text, is_preferred, created_at, updated_at')
   .eq('id', validatedData.name_id)
   .eq('user_id', user!.id)
   .maybeSingle();
@@ -556,35 +457,43 @@ timestamp,
   );
 }
 
-// Check if this is the user's only name
-const { count: totalNames, error: countError } = await supabase
-  .from('names')
-  .select('*', { count: 'exact', head: true })
-  .eq('user_id', user!.id);
+// Use the new can_delete_name RPC function to check if deletion is allowed
+const { data: deletionCheck, error: checkError } = await supabase.rpc(
+  'can_delete_name',
+  {
+p_user_id: user!.id,
+p_name_id: validatedData.name_id,
+  },
+);
 
-if (countError) {
-  console.error('Failed to count user names:', countError);
+if (checkError) {
+  console.error('Error checking name deletion permissions:', checkError);
   return createErrorResponse(
 ErrorCodes.INTERNAL_SERVER_ERROR,
 'Failed to validate deletion',
 requestId,
-{ error: countError.message },
+{ error: checkError.message },
 timestamp,
   );
 }
 
-if ((totalNames || 0) <= 1) {
+const checkData = deletionCheck as {
+  can_delete: boolean;
+  reason?: string;
+  action_required?: string;
+};
+if (!checkData?.can_delete) {
   return createErrorResponse(
 ErrorCodes.VALIDATION_ERROR,
-'Cannot delete your only name variant',
+checkData?.reason || 'Cannot delete this name variant',
 requestId,
-{ totalNames },
+{
+  reason: checkData?.reason,
+  action_required: checkData?.action_required,
+},
 timestamp,
   );
 }
-
-// If deleting the preferred name and there are other names, auto-set another as preferred
-const isPreferredName = existingName.is_preferred;
 
 // Proceed with deletion
 const { error: deleteError } = await supabase
@@ -602,32 +511,6 @@ requestId,
 { error: deleteError.message },
 timestamp,
   );
-}
-
-// If we deleted the preferred name and there are other names, auto-set another as preferred
-if (isPreferredName && (totalNames || 0) > 1) {
-  const { data: remainingNames, error: remainingNamesError } =
-await supabase
-  .from('names')
-  .select('id')
-  .eq('user_id', user!.id)
-  .limit(1);
-
-  if (!remainingNamesError && remainingNames && remainingNames.length > 0) {
-const { error: updatePreferredError } = await supabase
-  .from('names')
-  .update({ is_preferred: true })
-  .eq('id', remainingNames[0].id)
-  .eq('user_id', user!.id);
-
-if (updatePreferredError) {
-  console.error(
-'Error setting new preferred name:',
-updatePreferredError,
-  );
-  // Don't fail the deletion, just log the error
-}
-  }
 }
 
 return createSuccessResponse(

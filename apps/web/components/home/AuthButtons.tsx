@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useAuth } from '@/utils/context';
 import { Button, Group, Skeleton } from '@mantine/core';
 import { IconArrowRight, IconDashboard } from '@tabler/icons-react';
 import Link from 'next/link';
-import { useAuth } from '../../utils/context';
+import { useEffect, useState } from 'react';
 
 export function AuthButtons() {
   const { isAuthenticated, loading } = useAuth();

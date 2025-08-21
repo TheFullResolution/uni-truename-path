@@ -16,12 +16,14 @@ const UpdateContextSchema = z.object({
 .min(1)
 .max(100)
 .regex(/^[a-zA-Z0-9\s\-_]+$/)
-.trim(),
+.trim()
+.optional(),
   description: z
 .string()
 .max(500)
 .nullable()
-.transform((str) => str?.trim() || null),
+.transform((str) => str?.trim() || null)
+.optional(),
 });
 
 const handlePut: AuthenticatedHandler = async (request, context) => {
@@ -47,13 +49,15 @@ context.supabase
   .eq('id', contextId)
   .eq('user_id', context.user!.id)
   .maybeSingle(),
-context.supabase
+body.context_name
+  ? context.supabase
   .from('user_contexts')
   .select('id')
   .eq('user_id', context.user!.id)
   .eq('context_name', body.context_name)
   .neq('id', contextId)
-  .maybeSingle(),
+  .maybeSingle()
+  : Promise.resolve({ data: null }),
   ]);
 
   if (!existing) {
@@ -76,14 +80,40 @@ return createErrorResponse(
 );
   }
 
+  // Prevent renaming permanent contexts
+  if (
+existing.is_permanent &&
+body.context_name &&
+body.context_name !== existing.context_name
+  ) {
+return createErrorResponse(
+  ErrorCodes.VALIDATION_ERROR,
+  'Cannot rename the default context',
+  context.requestId,
+  {
+current_name: existing.context_name,
+attempted_name: body.context_name,
+  },
+  context.timestamp,
+);
+  }
+
+  // Build update object with only provided fields
+  const updateData: Record<string, unknown> = {
+updated_at: new Date().toISOString(),
+  };
+
+  if (body.context_name !== undefined) {
+updateData.context_name = body.context_name;
+  }
+  if (body.description !== undefined) {
+updateData.description = body.description;
+  }
+
   // Update context
   const { data: updated } = await context.supabase
 .from('user_contexts')
-.update({
-  context_name: body.context_name,
-  description: body.description,
-  updated_at: new Date().toISOString(),
-})
+.update(updateData)
 .eq('id', contextId)
 .eq('user_id', context.user!.id)
 .select()
@@ -121,6 +151,20 @@ return createErrorResponse(
   'Context not found',
   context.requestId,
   undefined,
+  context.timestamp,
+);
+  }
+
+  // Prevent deletion of permanent contexts
+  if (existing.is_permanent) {
+return createErrorResponse(
+  ErrorCodes.VALIDATION_ERROR,
+  'Cannot delete the default context',
+  context.requestId,
+  {
+context_name: existing.context_name,
+suggestion: 'Default context cannot be deleted as it is permanent',
+  },
   context.timestamp,
 );
   }

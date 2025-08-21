@@ -28,8 +28,9 @@
 "test:e2e": "yarn workspace @uni-final/e2e-tests test",
 "test:e2e:ui": "yarn workspace @uni-final/e2e-tests test:ui",
 "test:e2e:headed": "yarn workspace @uni-final/e2e-tests test:headed",
+"generate:local:users": "node packages/e2e-tests/create-demo-users.js",
 "format": "prettier . --write",
-"types": "supabase gen types typescript --local > apps/web/generated/database.ts",
+"db:types": "supabase gen types typescript --local > apps/web/generated/database.ts",
 "types:remote": "supabase gen types typescript --project-id txfcnjvmkaqzblztkjmr > apps/web/generated/database.ts",
 "diagrams:erd": "mmdc -i docs/report-materials/academic-report-diagrams.md -o enhanced-erd.png -t neutral -s 2 --cssFile docs/mermaid-theme.css",
 "diagrams:architecture": "mmdc -i docs/report-materials/academic-report-diagrams.md -o enhanced-architecture.png -t neutral -s 2 --cssFile docs/mermaid-theme.css",
@@ -49,7 +50,7 @@
 "prettier": "^3.6.2",
 "puppeteer": "^24.16.1",
 "simple-git-hooks": "^2.13.1",
-"turbo": "2.5.5",
+"turbo": "2.5.6",
 "typescript": "^5.8.3"
   },
   "simple-git-hooks": {

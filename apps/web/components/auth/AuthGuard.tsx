@@ -1,8 +1,8 @@
 'use client';
 
+import { useAuth } from '@/utils/context';
+import { Card, Center, Container, Loader, Stack, Text } from '@mantine/core';
 import React from 'react';
-import { Container, Stack, Text, Loader, Center, Card } from '@mantine/core';
-import { useAuth } from '../../utils/context';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -118,5 +118,3 @@ return <FallbackComponent />;
 </Container>
   );
 }
-
-export default AuthGuard;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, Suspense } from 'react';
+import { useCallback, useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Container,
@@ -16,14 +16,28 @@ import {
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconShield, IconTool, IconLock, IconBook } from '@tabler/icons-react';
-import { SignupForm } from '@/components/SignupForm';
+import {
+  SignupStep1Form,
+  type SignupStep1Data,
+} from '@/components/forms/SignupStep1Form';
+import {
+  SignupStep2Form,
+  type SignupStep2Data,
+} from '@/components/forms/SignupStep2Form';
 import { useAuth } from '@/utils/context';
-import { LogoWithText, Logo } from '@/components/branding';
+import { LogoWithText } from '@/components/branding/LogoWithText';
+import { Logo } from '@/components/branding/Logo';
 
 function SignupPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, user, loading } = useAuth();
+
+  // Two-step signup state management
+  const [currentStep, setCurrentStep] = useState<1 | 2>(1);
+  const [step1Data, setStep1Data] = useState<SignupStep1Data | null>(null);
+  const [step2Loading, setStep2Loading] = useState(false);
+  const [step2Error, setStep2Error] = useState<string | null>(null);
 
   // Handle redirect logic
   useEffect(() => {
@@ -42,12 +56,114 @@ autoClose: 2000,
 }
   }, [isAuthenticated, loading, user, router, searchParams]);
 
-  // Handle successful signup
-  const handleSignupSuccess = useCallback(() => {
-const returnUrl = searchParams.get('returnUrl') || '/dashboard';
+  // Handle step 1 completion (email/password/consent)
+  const handleStep1Complete = useCallback((data: SignupStep1Data) => {
+setStep1Data(data);
+setCurrentStep(2);
+setStep2Error(null);
+  }, []);
 
+  // Handle step 2 completion (OIDC name properties)
+  const handleStep2Complete = useCallback(
+async (step2Data: SignupStep2Data) => {
+  if (!step1Data) {
+setStep2Error('Step 1 data is missing. Please start over.');
+return;
+  }
+
+  setStep2Loading(true);
+  setStep2Error(null);
+
+  try {
+// First, create the Supabase account with email/password
+const { createClient } = await import('@/utils/supabase/client');
+const supabase = createClient();
+
+const { data: authData, error: authError } = await supabase.auth.signUp(
+  {
+email: step1Data.email,
+password: step1Data.password,
+options: {
+  data: {
+// Store consent data in user metadata
+agreeToTerms: step1Data.agreeToTerms,
+consentToProcessing: step1Data.consentToProcessing,
+allowMarketing: step1Data.allowMarketing || false,
+  },
+},
+  },
+);
+
+if (authError) {
+  setStep2Error(authError.message);
+  return;
+}
+
+if (!authData.user) {
+  setStep2Error('Account creation failed. Please try again.');
+  return;
+}
+
+// Wait for the session to be established before calling the API
+// This ensures the authentication middleware can recognize the user
+await new Promise((resolve) => setTimeout(resolve, 1000));
+
+// Verify session is established
+const {
+  data: { session },
+} = await supabase.auth.getSession();
+if (!session) {
+  setStep2Error(
+'Session not established. Please try logging in manually.',
+  );
+  return;
+}
+
+// Then, complete the signup with OIDC name properties
+const response = await fetch('/api/auth/complete-signup', {
+  method: 'POST',
+  headers: {
+'Content-Type': 'application/json',
+  },
+  credentials: 'include',
+  body: JSON.stringify(step2Data),
+});
+
+const result = await response.json();
+
+if (!response.ok) {
+  setStep2Error(result.message || 'Failed to complete registration');
+  return;
+}
+
+// Success! Show notification and redirect
+notifications.show({
+  title: 'Welcome to TrueNamePath!',
+  message: `Account created successfully with ${result.data.created_names.length} name variants`,
+  color: 'green',
+  autoClose: 5000,
+});
+
+const returnUrl = searchParams.get('returnUrl') || '/dashboard';
 router.replace(returnUrl);
-  }, [router, searchParams]);
+  } catch (error) {
+const errorMessage =
+  error instanceof Error
+? error.message
+: 'An unexpected error occurred';
+setStep2Error(errorMessage);
+  } finally {
+setStep2Loading(false);
+  }
+},
+[step1Data, router, searchParams],
+  );
+
+  // Handle back to step 1
+  const handleBackToStep1 = useCallback(() => {
+setCurrentStep(1);
+setStep2Error(null);
+  }, []);
 
   // Handle back to login navigation
   const handleBackToLogin = useCallback(() => {
@@ -318,12 +434,22 @@ RESTful API with secure session management
   Create Account
 </Title>
 
-{/* Integrated SignupForm component */}
-<SignupForm
-  onSuccess={handleSignupSuccess}
-  onBackToLogin={handleBackToLogin}
-  showBackToLogin={true}
-/>
+{/* Two-Step Signup Flow */}
+{currentStep === 1 ? (
+  <SignupStep1Form
+onStepComplete={handleStep1Complete}
+onBackToLogin={handleBackToLogin}
+showBackToLogin={true}
+loading={loading}
+  />
+) : (
+  <SignupStep2Form
+onComplete={handleStep2Complete}
+onBack={handleBackToStep1}
+loading={step2Loading}
+error={step2Error}
+  />
+)}
   </Box>
 </Grid.Col>
   </Grid>

@@ -24,3 +24,4 @@ build
 .npmrc
 .next
 **/mockServiceWorker.js
+/apps/web/generated/database.ts

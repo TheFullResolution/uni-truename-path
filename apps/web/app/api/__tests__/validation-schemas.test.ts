@@ -5,15 +5,8 @@
 import { describe, test, expect } from 'vitest';
 import { z } from 'zod';
 
-// Mock the types/database module to provide test data
-const NAME_CATEGORIES = [
-  'LEGAL',
-  'PREFERRED',
-  'NICKNAME',
-  'ALIAS',
-  'PROFESSIONAL',
-  'CULTURAL',
-] as const;
+// Simplified schemas for testing (Step 15: OIDC Simplification - No property type selection)
+// These match the actual simplified API implementation
 
 // Recreate the schemas for testing (since they're not exported)
 const CreateNameSchema = z.object({
@@ -22,8 +15,15 @@ const CreateNameSchema = z.object({
 .trim()
 .min(1, 'Name text is required')
 .max(100, 'Name text cannot exceed 100 characters'),
-  name_type: z.enum(NAME_CATEGORIES),
   is_preferred: z.boolean().default(false),
+  oidc_properties: z
+.object({
+  description: z.string().optional(),
+  pronunciation_guide: z.string().optional(),
+  locale: z.string().optional(),
+})
+.optional(),
+  source: z.string().optional(),
 });
 
 const UpdateNameSchema = z.object({
@@ -35,7 +35,13 @@ const UpdateNameSchema = z.object({
 .min(1, 'Name text is required')
 .max(100, 'Name text cannot exceed 100 characters')
 .optional(),
-  name_type: z.enum(NAME_CATEGORIES).optional(),
+  oidc_properties: z
+.object({
+  description: z.string().optional(),
+  pronunciation_guide: z.string().optional(),
+  locale: z.string().optional(),
+})
+.optional(),
 });
 
 const DeleteNameSchema = z.object({
@@ -51,7 +57,7 @@ const QueryParamsSchema = z.object({
 .refine((val) => !val || (val > 0 && val <= 100), {
   message: 'Limit must be between 1 and 100',
 }),
-  nameType: z.enum(NAME_CATEGORIES).nullable().optional(),
+  // Note: oidcPropertyType removed per OIDC simplification
 });
 
 const ResolveNameRequestSchema = z.object({
@@ -181,8 +187,11 @@ describe('API Validation Schemas', () => {
 test('validates correct name creation data', () => {
   const validData = {
 name_text: 'John Doe',
-name_type: 'LEGAL' as const,
 is_preferred: false,
+oidc_properties: {
+  description: 'Full legal name',
+  locale: 'en-US',
+},
   };
 
   const result = CreateNameSchema.parse(validData);
@@ -192,7 +201,7 @@ is_preferred: false,
 test('trims whitespace from name_text', () => {
   const data = {
 name_text: '  John Doe  ',
-name_type: 'PREFERRED' as const,
+source: 'manual',
   };
 
   const result = CreateNameSchema.parse(data);
@@ -202,7 +211,6 @@ name_type: 'PREFERRED' as const,
 test('defaults is_preferred to false', () => {
   const data = {
 name_text: 'John',
-name_type: 'NICKNAME' as const,
   };
 
   const result = CreateNameSchema.parse(data);
@@ -212,7 +220,6 @@ name_type: 'NICKNAME' as const,
 test('rejects empty name_text', () => {
   const data = {
 name_text: '',
-name_type: 'LEGAL' as const,
   };
 
   expect(() => CreateNameSchema.parse(data)).toThrow(
@@ -223,7 +230,6 @@ name_type: 'LEGAL' as const,
 test('rejects name_text exceeding 100 characters', () => {
   const data = {
 name_text: 'a'.repeat(101),
-name_type: 'LEGAL' as const,
   };
 
   expect(() => CreateNameSchema.parse(data)).toThrow(
@@ -231,25 +237,28 @@ name_type: 'LEGAL' as const,
   );
 });
 
-test('rejects invalid name_type', () => {
+test('validates optional oidc_properties', () => {
   const data = {
-name_text: 'John',
-name_type: 'INVALID_TYPE',
+name_text: 'John Doe',
+oidc_properties: {
+  description: 'Professional name',
+  pronunciation_guide: 'john-DOH',
+  locale: 'en-US',
+},
   };
 
-  expect(() => CreateNameSchema.parse(data)).toThrow();
+  const result = CreateNameSchema.parse(data);
+  expect(result.oidc_properties).toEqual(data.oidc_properties);
 });
 
-test('validates all name categories', () => {
-  NAME_CATEGORIES.forEach((category) => {
-const data = {
-  name_text: 'Test Name',
-  name_type: category,
-};
+test('validates without oidc_properties', () => {
+  const data = {
+name_text: 'Test Name',
+  };
 
-const result = CreateNameSchema.parse(data);
-expect(result.name_type).toBe(category);
-  });
+  const result = CreateNameSchema.parse(data);
+  expect(result.name_text).toBe('Test Name');
+  expect(result.oidc_properties).toBeUndefined();
 });
   });
 
@@ -258,8 +267,10 @@ test('validates correct update data', () => {
   const validData = {
 name_id: '550e8400-e29b-41d4-a716-446655440000',
 name_text: 'Updated Name',
-name_type: 'PREFERRED' as const,
 is_preferred: true,
+oidc_properties: {
+  description: 'Updated description',
+},
   };
 
   const result = UpdateNameSchema.parse(validData);
@@ -326,12 +337,10 @@ name_id: 'not-a-uuid',
 test('validates query parameters with limit', () => {
   const data = {
 limit: '50',
-nameType: 'LEGAL' as const,
   };
 
   const result = QueryParamsSchema.parse(data);
   expect(result.limit).toBe(50);
-  expect(result.nameType).toBe('LEGAL');
 });
 
 test('transforms string limit to number', () => {
@@ -343,12 +352,10 @@ test('transforms string limit to number', () => {
 test('handles null values', () => {
   const data = {
 limit: null,
-nameType: null,
   };
 
   const result = QueryParamsSchema.parse(data);
   expect(result.limit).toBeUndefined();
-  expect(result.nameType).toBeNull();
 });
 
 test('handles limit validation properly', () => {

@@ -15,9 +15,10 @@ import {
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconApi, IconRocket, IconBuilding } from '@tabler/icons-react';
-import { LoginForm } from '@/components/LoginForm';
+import { LoginForm } from '@/components/forms/LoginForm';
 import { useAuth } from '@/utils/context';
-import { LogoWithText, Logo } from '@/components/branding';
+import { LogoWithText } from '@/components/branding/LogoWithText';
+import { Logo } from '@/components/branding/Logo';
 
 function LoginPageContent() {
   const router = useRouter();
@@ -29,7 +30,6 @@ function LoginPageContent() {
 if (!loading && isAuthenticated) {
   // User is already authenticated, redirect them
   const returnUrl = searchParams.get('returnUrl') || '/dashboard';
-
   notifications.show({
 title: 'Already signed in',
 message: `Welcome back, ${user?.email || 'user'}!`,

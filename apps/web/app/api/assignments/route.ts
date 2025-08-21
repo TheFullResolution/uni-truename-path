@@ -3,6 +3,11 @@
 // Date: August 15, 2025
 // Academic project REST API with authentication and validation
 
+// TrueNamePath: Context-Name Assignments API Route
+// Consolidated REST API for managing context-name assignments
+// Date: August 20, 2025
+// Academic project REST API with authentication and validation
+
 import { NextRequest } from 'next/server';
 import type {
   AssignmentWithDetails,
@@ -13,109 +18,75 @@ import type {
   DeleteAssignmentResponseData,
 } from './types';
 import {
+  ListQueryParamsSchema,
+  CreateAssignmentRequestSchema,
+  UpdateAssignmentRequestSchema,
+  DeleteAssignmentRequestSchema,
+  type ListQueryParams,
+  createValidationErrorResponse as sharedCreateValidationErrorResponse,
+} from './schemas';
+import {
   withRequiredAuth,
   createSuccessResponse,
   createErrorResponse,
   handle_method_not_allowed,
   type AuthenticatedHandler,
+  type AuthenticatedContext,
+  validate_authenticated_user,
+  handle_database_error,
 } from '@/utils/api';
 import { ErrorCodes } from '@/utils/api';
 import { z } from 'zod';
 
-/**
- * Query parameter validation schema for GET endpoint
- */
-const QueryParamsSchema = z.object({
-  limit: z
-.string()
-.nullable()
-.optional()
-.transform((val) => (val ? parseInt(val, 10) : undefined))
-.refine((val) => !val || (val > 0 && val <= 100), {
-  message: 'Limit must be between 1 and 100',
-}),
-
-  context_id: z
-.string()
-.uuid('Context ID must be a valid UUID')
-.nullable()
-.optional(),
-});
+// =============================================================================
+// Helper Functions
+// =============================================================================
 
 /**
- * Request body validation schema for assignment creation
+ * Validates query parameters using shared schema
  */
-const CreateAssignmentSchema = z.object({
-  context_id: z
-.string()
-.uuid('Context ID must be a valid UUID')
-.min(1, 'Context ID is required'),
-
-  name_id: z
-.string()
-.uuid('Name ID must be a valid UUID')
-.min(1, 'Name ID is required'),
-});
-
-/**
- * Request body validation schema for assignment updates
- */
-const UpdateAssignmentSchema = z
-  .object({
-assignment_id: z
-  .string()
-  .uuid('Assignment ID must be a valid UUID')
-  .min(1, 'Assignment ID is required'),
-
-context_id: z.uuid('Context ID must be a valid UUID').optional(),
-
-name_id: z.uuid('Name ID must be a valid UUID').optional(),
-  })
-  .refine((data) => data.context_id || data.name_id, {
-message:
-  'At least one field (context_id or name_id) must be provided for update',
-  });
-
-/**
- * Request body validation schema for assignment deletion
- */
-const DeleteAssignmentSchema = z.object({
-  assignment_id: z
-.string()
-.uuid('Assignment ID must be a valid UUID')
-.min(1, 'Assignment ID is required'),
-});
-
-// Type inference for schema validation
-type QueryParams = z.infer<typeof QueryParamsSchema>;
-
-/**
- * GET /api/assignments - Retrieve all context-name assignments for a profile
- * Returns assignments with context and name details, plus unassigned contexts
- */
-const handleGET: AuthenticatedHandler<AssignmentsResponseData> = async (
-  request: NextRequest,
-  { user, supabase, requestId, timestamp },
-) => {
-  // 1. Query parameter validation
+function validateQueryParams(request: NextRequest) {
   const url = new URL(request.url);
   const query_params = {
 limit: url.searchParams.get('limit'),
 context_id: url.searchParams.get('context_id'),
   };
 
-  const query_validation_result = QueryParamsSchema.safeParse(query_params);
+  return ListQueryParamsSchema.safeParse(query_params);
+}
+
+/**
+ * Creates standardized validation error response using shared helper
+ */
+function createValidationErrorResponse(
+  result: z.ZodSafeParseResult<unknown>,
+  requestId: string,
+  timestamp: string,
+) {
+  return sharedCreateValidationErrorResponse(
+result,
+requestId,
+timestamp,
+createErrorResponse,
+ErrorCodes,
+  );
+}
+
+/**
+ * GET /api/assignments - Retrieve all context-name assignments for a profile
+ * Returns assignments with context and name details, plus unassigned contexts
+ */
+const handleGET = async (
+  request: NextRequest,
+  { user, supabase, requestId, timestamp }: AuthenticatedContext,
+) => {
+  // 1. Query parameter validation
+  const query_validation_result = validateQueryParams(request);
 
   if (!query_validation_result.success) {
-return createErrorResponse(
-  ErrorCodes.VALIDATION_ERROR,
-  'Invalid query parameters',
+return createValidationErrorResponse(
+  query_validation_result,
   requestId,
-  query_validation_result.error.issues.map((err) => ({
-field: err.path.join('.'),
-message: err.message,
-code: err.code,
-  })),
   timestamp,
 );
   }
@@ -123,21 +94,20 @@ code: err.code,
   const validated_query_params = query_validation_result.data;
   const { limit, context_id } = validated_query_params;
 
-  // 2. Check user exists
-  if (!user) {
-return createErrorResponse(
-  ErrorCodes.AUTHENTICATION_REQUIRED,
-  'User authentication required',
-  requestId,
-  {},
-  timestamp,
-);
+  // 2. Validate user authentication
+  const user_validation = validate_authenticated_user(
+user,
+requestId,
+timestamp,
+  );
+  if ('error' in user_validation) {
+return user_validation.error;
   }
 
-  const authenticatedUserId = user.id;
+  const { authenticated_user_id } = user_validation;
 
   // 3. Build query for assignments with context and name details
-  let assignmentQuery = supabase
+  let assignment_query = supabase
 .from('context_name_assignments')
 .select(
   `
@@ -152,73 +122,54 @@ description
   ),
   names!inner(
 id,
-name_text,
-name_type
+name_text
   )
 `,
 )
-.eq('user_id', authenticatedUserId)
+.eq('user_id', authenticated_user_id)
 .order('created_at', { ascending: false });
 
   // Apply optional filters
   if (context_id) {
-assignmentQuery = assignmentQuery.eq('context_id', context_id);
+assignment_query = assignment_query.eq('context_id', context_id);
   }
 
   if (limit) {
-assignmentQuery = assignmentQuery.limit(limit);
+assignment_query = assignment_query.limit(limit);
   }
 
-  const { data: assignmentData, error: assignmentError } =
-await assignmentQuery;
+  const { data: assignment_data, error: assignment_error } =
+await assignment_query;
 
-  if (assignmentError) {
-console.error(`Assignment Query Error [${requestId}]:`, {
-  error: assignmentError.message,
-  code: assignmentError.code,
-  details: assignmentError.details,
-  hint: assignmentError.hint,
-});
-
-return createErrorResponse(
-  ErrorCodes.DATABASE_ERROR,
-  'Database query failed while retrieving assignments',
+  if (assignment_error) {
+return handle_database_error(
+  assignment_error,
+  'Assignment query',
   requestId,
-  process.env.NODE_ENV === 'development'
-? assignmentError.message
-: 'Unable to retrieve context assignments',
   timestamp,
+  'Unable to retrieve context assignments',
 );
   }
 
   // 4. Get all user contexts to identify unassigned ones
-  const { data: allContexts, error: context_error } = await supabase
+  const { data: all_contexts, error: context_error } = await supabase
 .from('user_contexts')
 .select('id, context_name, description')
-.eq('user_id', authenticatedUserId)
+.eq('user_id', authenticated_user_id)
 .order('context_name');
 
   if (context_error) {
-console.error(`Context Query Error [${requestId}]:`, {
-  error: context_error.message,
-  code: context_error.code,
-  details: context_error.details,
-  hint: context_error.hint,
-});
-
-return createErrorResponse(
-  ErrorCodes.DATABASE_ERROR,
-  'Database query failed while retrieving contexts',
+return handle_database_error(
+  context_error,
+  'Context query',
   requestId,
-  process.env.NODE_ENV === 'development'
-? context_error.message
-: 'Unable to retrieve user contexts',
   timestamp,
+  'Unable to retrieve user contexts',
 );
   }
 
   // 6. Transform database results to API format
-  const assignments: AssignmentWithDetails[] = (assignmentData || []).map(
+  const assignments: AssignmentWithDetails[] = (assignment_data || []).map(
 (item: {
   id: string;
   context_id: string;
@@ -229,7 +180,10 @@ id: string;
 context_name: string;
 description: string | null;
   };
-  names: { id: string; name_text: string; name_type: string };
+  names: {
+id: string;
+name_text: string;
+  };
 }) => ({
   id: item.id,
   context_id: item.context_id,
@@ -237,15 +191,14 @@ description: string | null;
   context_description: item.user_contexts.description,
   name_id: item.name_id,
   name_text: item.names.name_text,
-  name_type: item.names.name_type as AssignmentWithDetails['name_type'],
   created_at: item.created_at,
 }),
   );
 
   // 7. Identify unassigned contexts
-  const assignedContextIds = new Set(assignments.map((a) => a.context_id));
-  const unassigned_contexts: UnassignedContext[] = (allContexts || [])
-.filter((context) => !assignedContextIds.has(context.id))
+  const assigned_context_ids = new Set(assignments.map((a) => a.context_id));
+  const unassigned_contexts: UnassignedContext[] = (all_contexts || [])
+.filter((context) => !assigned_context_ids.has(context.id))
 .map((context) => ({
   id: context.id,
   context_name: context.context_name,
@@ -256,7 +209,7 @@ description: string | null;
   const responseData: AssignmentsResponseData = {
 assignments,
 unassigned_contexts,
-total_contexts: (allContexts || []).length,
+total_contexts: (all_contexts || []).length,
 assigned_contexts: assignments.length,
 metadata: {
   retrieval_timestamp: timestamp,
@@ -264,19 +217,20 @@ metadata: {
 context_id: context_id || undefined,
 limit: limit,
   },
-  user_id: authenticatedUserId,
+  user_id: authenticated_user_id,
 },
   };
 
   console.log(`API Request [${requestId}]:`, {
 endpoint: '/api/assignments',
 method: 'GET',
-userId: authenticatedUserId.substring(0, 8) + '...',
+userId: authenticated_user_id.substring(0, 8) + '...',
 totalAssignments: assignments.length,
-totalContexts: (allContexts || []).length,
+totalContexts: (all_contexts || []).length,
 unassignedContexts: unassigned_contexts.length,
 filtersApplied: Object.keys(validated_query_params).filter(
-  (key) => validated_query_params[key as keyof QueryParams] !== undefined,
+  (key) =>
+validated_query_params[key as keyof ListQueryParams] !== undefined,
 ).length,
   });
 
@@ -294,7 +248,7 @@ const handlePOST: AuthenticatedHandler = async (
   try {
 // Parse and validate request body
 const body = await request.json();
-const validated_data = CreateAssignmentSchema.parse(body);
+const validated_data = CreateAssignmentRequestSchema.parse(body);
 
 // Check user exists
 if (!user) {
@@ -330,7 +284,7 @@ timestamp,
 // Verify name exists and belongs to user
 const { data: name_check, error: name_error } = await supabase
   .from('names')
-  .select('id, name_text, name_type')
+  .select('id, name_text')
   .eq('id', validated_data.name_id)
   .eq('user_id', authenticated_user_id)
   .single();
@@ -409,7 +363,6 @@ context_name: context_check.context_name,
 context_description: null, // Not fetched in this endpoint
 name_id: new_assignment.name_id,
 name_text: name_check.name_text,
-name_type: name_check.name_type,
 created_at: new_assignment.created_at,
   },
 };
@@ -449,7 +402,7 @@ const handlePUT: AuthenticatedHandler = async (
   try {
 // Parse and validate request body
 const body = await request.json();
-const validated_data = UpdateAssignmentSchema.parse(body);
+const validated_data = UpdateAssignmentRequestSchema.parse(body);
 
 // Check user exists
 if (!user) {
@@ -496,7 +449,6 @@ let context_check: { id: string; context_name: string } | null = null;
 let name_check: {
   id: string;
   name_text: string;
-  name_type: string;
 } | null = null;
 
 // Validate context if being updated
@@ -560,7 +512,7 @@ timestamp,
 if (validated_data.name_id) {
   const { data: name_data, error: name_error } = await supabase
 .from('names')
-.select('id, name_text, name_type')
+.select('id, name_text')
 .eq('id', validated_data.name_id)
 .eq('user_id', user.id)
 .single();
@@ -630,7 +582,7 @@ context_check = context_data;
 if (!name_check) {
   const { data: name_data, error: name_error } = await supabase
 .from('names')
-.select('id, name_text, name_type')
+.select('id, name_text')
 .eq('id', updatedAssignment.name_id)
 .eq('user_id', user.id)
 .single();
@@ -648,7 +600,6 @@ const assignmentResponse: AssignmentWithDetails = {
   context_description: null, // Not fetched in this endpoint
   name_id: updatedAssignment.name_id,
   name_text: name_check?.name_text || 'Unknown Name',
-  name_type: name_check?.name_type || 'PREFERRED',
   created_at: updatedAssignment.created_at,
 };
 
@@ -692,7 +643,7 @@ const handleDELETE: AuthenticatedHandler = async (
   try {
 // Parse and validate request body
 const body = await request.json();
-const validated_data = DeleteAssignmentSchema.parse(body);
+const validated_data = DeleteAssignmentRequestSchema.parse(body);
 
 // Check user exists
 if (!user) {
@@ -766,7 +717,9 @@ const delete_response: DeleteAssignmentResponseData = {
   message: 'Context-name assignment deleted successfully',
   deleted_assignment_id: validated_data.assignment_id,
   context_id: existing_assignment.context_id,
-  context_name: existing_assignment.user_contexts.context_name,
+  context_name: (
+existing_assignment.user_contexts as { context_name: string }
+  ).context_name,
   deleted_at: new Date().toISOString(),
 };
 
@@ -795,7 +748,9 @@ return createErrorResponse(
 };
 
 // Export the handlers with authentication wrapper
-export const GET = withRequiredAuth(handleGET, { enableLogging: true });
+export const GET = withRequiredAuth(handleGET as AuthenticatedHandler, {
+  enableLogging: true,
+});
 export const POST = withRequiredAuth(handlePOST);
 export const PUT = withRequiredAuth(handlePUT);
 export const DELETE = withRequiredAuth(handleDELETE);

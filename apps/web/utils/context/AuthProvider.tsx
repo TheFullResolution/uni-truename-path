@@ -259,24 +259,32 @@ error: {
 try {
   const supabase = createClient();
 
-  // Create LEGAL name (always required)
+  // Create primary name (always required)
   await supabase.from('names').insert({
 user_id: authResponse.user.id,
 name_text: legalName,
-name_type: 'LEGAL',
+oidc_property_type: 'name',
+oidc_properties: {
+  verified: true,
+  source: 'signup_form',
+  oidc_version: '1.0',
+},
 is_preferred: !preferredName, // legal is preferred if no preferred name provided
-verified: true,
 source: 'signup_form',
   });
 
-  // Create PREFERRED name if provided
+  // Create preferred username if provided
   if (preferredName && preferredName.trim() !== legalName.trim()) {
 await supabase.from('names').insert({
   user_id: authResponse.user.id,
   name_text: preferredName,
-  name_type: 'PREFERRED',
+  oidc_property_type: 'preferred_username',
+  oidc_properties: {
+verified: true,
+source: 'signup_form',
+oidc_version: '1.0',
+  },
   is_preferred: true, // preferred name is the preferred one
-  verified: true,
   source: 'signup_form',
 });
   }

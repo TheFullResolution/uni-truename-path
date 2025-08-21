@@ -1,11 +1,11 @@
 'use client';
 
+import { Alert, Box, Button, Stack, Text } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
+import { IconAlertTriangle, IconRefresh } from '@tabler/icons-react';
 import React from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { mutate } from 'swr';
-import { Button, Text, Box, Alert, Stack } from '@mantine/core';
-import { IconAlertTriangle, IconRefresh } from '@tabler/icons-react';
-import { notifications } from '@mantine/notifications';
 
 interface SWRErrorFallbackProps {
   error: Error;
@@ -95,7 +95,7 @@ export function SWRErrorBoundary({ children }: SWRErrorBoundaryProps) {
 <ErrorBoundary
   FallbackComponent={SWRErrorFallback}
   onReset={() => {
-console.log('SWR Error boundary reset');
+// Reset error boundary
   }}
   onError={(error) => {
 console.error('SWR Error boundary caught error:', error);

@@ -1,155 +1,148 @@
-// TrueNamePath: Name Resolution API Route
-// POST /api/names/resolve - Core name resolution endpoint
-// Date: August 11, 2025
-// Academic project REST API with authentication and validation
-
-// TrueNamePath: Name Resolution API Route - JSend Compliant
-import { NextRequest } from 'next/server';
-import { TrueNameContextEngine } from '@/utils/context-engine/TrueNameContextEngine';
-import type { ResolveNameData } from '../types';
+import { z } from 'zod';
 import {
-  withOptionalAuth,
+  withRequiredAuth,
   createSuccessResponse,
   createErrorResponse,
-  handle_method_not_allowed,
+  ErrorCodes,
   type AuthenticatedHandler,
 } from '@/utils/api';
-import { ErrorCodes } from '@/utils/api';
-import { z } from 'zod';
 
-/**
- * Input validation schema with comprehensive validation rules
- */
-const ResolveNameRequestSchema = z.object({
-  target_user_id: z
-.string()
-.uuid('Target user ID must be a valid UUID')
-.min(1, 'Target user ID is required'),
+// =============================================================================
+// Single Name Resolution Endpoint (Simplified)
+// =============================================================================
+// Implements simple context-aware name resolution
+// Uses the resolve_name() PostgreSQL function
+// Returns the resolved name text for the given context
 
-  requester_user_id: z
-.string()
-.uuid('Requester user ID must be a valid UUID')
-.optional()
-.nullable(),
-
-  context_name: z
-.string()
-.min(1, 'Context name cannot be empty')
-.max(100, 'Context name cannot exceed 100 characters')
-.regex(/^[a-zA-Z0-9\s\-_]+$/, 'Context name contains invalid characters')
-.optional()
-.nullable(),
+// Request validation schema
+const resolveRequestSchema = z.object({
+  target_user_id: z.string().uuid('Invalid target user ID'),
+  requester_user_id: z.string().uuid('Invalid requester user ID').optional(),
+  context_name: z.string().min(1).max(100).optional(),
 });
 
-/**
- * Core handler function implementing the name resolution logic
- * This is wrapped by the authentication HOF
- */
-const handleResolveNameRequest: AuthenticatedHandler<ResolveNameData> = async (
-  request: NextRequest,
+// Simple response interface
+interface SimpleResolveResponseData {
+  target_user_id: string;
+  resolved_name: string;
+  context_name?: string;
+  metadata: {
+request_id: string;
+timestamp: string;
+processing_time_ms: number;
+  };
+}
+
+// Main handler function
+const handlePOST: AuthenticatedHandler<SimpleResolveResponseData> = async (
+  request,
   context,
 ) => {
-  // 1. Request body parsing with error handling
-  let requestBody: unknown;
+  const processing_start = Date.now();
+
   try {
-requestBody = await request.json();
-  } catch {
-return createErrorResponse(
-  ErrorCodes.INVALID_JSON,
-  'Invalid JSON in request body',
-  context.requestId,
-  'Request body must be valid JSON',
-  context.timestamp,
-);
-  }
+// Parse and validate request body
+const body = await request.json();
+const validatedData = resolveRequestSchema.parse(body);
 
-  // 2. Input validation with comprehensive Zod schema
-  const validationResult = ResolveNameRequestSchema.safeParse(requestBody);
+const { target_user_id, requester_user_id, context_name } = validatedData;
 
-  if (!validationResult.success) {
-return createErrorResponse(
-  ErrorCodes.VALIDATION_ERROR,
-  'Invalid request parameters',
-  context.requestId,
-  validationResult.error.issues.map((err) => ({
-field: err.path.join('.'),
-message: err.message,
-code: err.code,
-  })),
-  context.timestamp,
-);
-  }
+// Use authenticated Supabase client from context
+const { supabase } = context;
 
-  const params = validationResult.data;
+// Validate target user exists
+const { data: targetUser, error: targetUserError } = await supabase
+  .from('profiles')
+  .select('id, email')
+  .eq('id', target_user_id)
+  .single();
 
-  // 3. Business logic execution
-  const contextEngine = new TrueNameContextEngine();
-
-  const nameResolution = await contextEngine.resolveName({
-target_user_id: params.target_user_id,
-requester_user_id: params.requester_user_id || undefined,
-context_name: params.context_name || undefined,
-  });
-
-  // 4. Success response with comprehensive metadata
-  const responseData: ResolveNameData = {
-resolved_name: nameResolution.name,
-source: nameResolution.source,
-metadata: {
-  context_id: nameResolution.metadata.context_id,
-  context_name: nameResolution.metadata.context_name,
-  consent_id: nameResolution.metadata.consent_id,
-  processing_time_ms: nameResolution.metadata.response_time_ms,
-},
-  };
-
-  return createSuccessResponse(
-responseData,
+if (targetUserError || !targetUser) {
+  return createErrorResponse(
+ErrorCodes.USER_NOT_FOUND,
+'Target user not found',
 context.requestId,
+{ target_user_id, error: targetUserError?.message },
 context.timestamp,
   );
+}
+
+// Call simplified PostgreSQL function
+const { data: resolvedName, error: resolveError } = await supabase.rpc(
+  'resolve_name',
+  {
+p_target_user_id: target_user_id,
+p_requester_user_id: requester_user_id || context.user?.id,
+p_context_name: context_name,
+  },
+);
+
+if (resolveError) {
+  console.error('Name resolution error:', resolveError);
+  return createErrorResponse(
+ErrorCodes.NAME_RESOLUTION_FAILED,
+'Failed to resolve name',
+context.requestId,
+{ error: resolveError.message },
+context.timestamp,
+  );
+}
+
+if (!resolvedName) {
+  return createErrorResponse(
+ErrorCodes.NOT_FOUND,
+'No name data found for user',
+context.requestId,
+{ target_user_id },
+context.timestamp,
+  );
+}
+
+// Build simple response
+const processing_time_ms = Date.now() - processing_start;
+const responseData: SimpleResolveResponseData = {
+  target_user_id,
+  resolved_name: resolvedName,
+  context_name,
+  metadata: {
+request_id: context.requestId,
+timestamp: new Date().toISOString(),
+processing_time_ms,
+  },
 };
 
-/**
- * POST /api/names/resolve
- *
- * Core name resolution endpoint implementing the 3-layer priority system:
- * 1. Consent-based resolution (highest priority)
- * 2. Context-specific resolution (medium priority)
- * 3. Preferred name fallback (lowest priority)
- *
- * Features:
- * - Optional cookie-based session authentication (demo mode compatible)
- * - Comprehensive input validation with Zod
- * - Detailed error handling with proper HTTP status codes
- * - GDPR-compliant audit logging
- * - Academic-quality response metadata
- * - JSend format compliance
- */
-export const POST = withOptionalAuth(handleResolveNameRequest, {
+return createSuccessResponse(
+  responseData,
+  context.requestId,
+  context.timestamp,
+);
+  } catch (error) {
+console.error('Name resolve error:', error);
+
+if (error instanceof z.ZodError) {
+  return createErrorResponse(
+ErrorCodes.VALIDATION_ERROR,
+'Invalid request data',
+context.requestId,
+{ validationErrors: error.issues },
+context.timestamp,
+  );
+}
+
+return createErrorResponse(
+  ErrorCodes.INTERNAL_SERVER_ERROR,
+  'Internal server error during name resolution',
+  context.requestId,
+  { error: error instanceof Error ? error.message : 'Unknown error' },
+  context.timestamp,
+);
+  }
+};
+
+// Export with authentication wrapper
+export const POST = withRequiredAuth(handlePOST, {
   enableLogging: true,
 });
 
-/**
- * Handle unsupported HTTP methods - shared utility eliminates boilerplate
- */
-export const GET = () => handle_method_not_allowed(['POST']);
-export const PUT = GET;
-export const DELETE = GET;
-export const PATCH = GET;
-
-/**
- * OPTIONS handler for CORS preflight requests
- */
-export async function OPTIONS(): Promise<Response> {
-  return new Response(null, {
-status: 200,
-headers: {
-  'Allow': 'POST, OPTIONS',
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Access-Control-Max-Age': '86400',
-},
-  });
-}
+// Export response type for frontend usage
+export type { SimpleResolveResponseData };

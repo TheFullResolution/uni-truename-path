@@ -1,6 +1,6 @@
 import { Container, Title, Text, Stack, Card, Box } from '@mantine/core';
-import { LogoWithText } from '../components/branding';
-import { AuthButtons } from '../components/home';
+import { LogoWithText } from '@/components/branding/LogoWithText';
+import { AuthButtons } from '@/components/home/AuthButtons';
 
 export default function HomePage() {
   return (

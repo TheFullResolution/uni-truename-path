@@ -13,7 +13,7 @@ import type {
   TablesInsert,
   TablesUpdate,
   Enums,
-} from '../generated/database';
+} from '@/generated/database';
 
 // Table type shortcuts
 export type Profile = Tables<'profiles'>;
@@ -38,6 +38,5 @@ export type AssignmentUpdate = TablesUpdate<'context_name_assignments'>;
 export type ConsentUpdate = TablesUpdate<'consents'>;
 
 // Enum shortcuts
-export type NameCategory = Enums<'name_category'>;
 export type ConsentStatus = Enums<'consent_status'>;
 export type AuditAction = Enums<'audit_action'>;

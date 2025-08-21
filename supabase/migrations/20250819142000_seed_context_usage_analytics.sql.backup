@@ -1,0 +1,408 @@
+-- Migration: Seed Context Usage Analytics Demo Data
+-- Creates realistic external OAuth/OIDC usage patterns for academic personas
+-- Demonstrates commercial value by simulating real application integrations
+-- Part of Step 15: Reimagining Dashboard Statistics for Commercial Value
+
+-- =============================================================================
+-- STEP 1: Insert demo context usage for JJ Persona (Polish Developer)
+-- =============================================================================
+
+DO $$
+DECLARE
+  jj_user_id uuid := '54c00e81-cda9-4251-9456-7778df91b988';
+  jj_work_context_id uuid;
+  jj_gaming_context_id uuid;
+  jj_opensource_context_id uuid;
+  
+  -- Time ranges for realistic patterns
+  today_start timestamp := date_trunc('day', now());
+  yesterday_start timestamp := date_trunc('day', now() - interval '1 day');
+  week_start timestamp := date_trunc('week', now());
+BEGIN
+  -- Get JJ's context IDs
+  SELECT id INTO jj_work_context_id FROM public.user_contexts 
+  WHERE user_id = jj_user_id AND context_name = 'Work Colleagues';
+  
+  SELECT id INTO jj_gaming_context_id FROM public.user_contexts 
+  WHERE user_id = jj_user_id AND context_name = 'Gaming Friends';
+  
+  SELECT id INTO jj_opensource_context_id FROM public.user_contexts 
+  WHERE user_id = jj_user_id AND context_name = 'Open Source';
+
+  -- JJ's Work Context Usage (High frequency - active professional)
+  INSERT INTO public.context_usage_analytics (
+target_user_id, context_id, requesting_application, application_type,
+scopes_requested, properties_disclosed, response_time_ms, success,
+accessed_at, source_ip, user_agent, session_id, details
+  ) VALUES 
+  -- Microsoft Teams integration (frequent work usage)
+  (jj_user_id, jj_work_context_id, 'microsoft-teams', 'oauth_client',
+   '{"profile", "email"}', '{"name": "Jędrzej Lewandowski", "email": "jj@company.com"}', 
+   2, true, today_start + interval '8 hours', '192.168.1.100', 
+   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Teams/1.6.00', 
+   'msteams_session_001', '{"integration_type": "profile_sync", "team_id": "work_team_123"}'),
+   
+  (jj_user_id, jj_work_context_id, 'microsoft-teams', 'oauth_client',
+   '{"profile"}', '{"name": "Jędrzej Lewandowski"}', 
+   1, true, today_start + interval '10 hours', '192.168.1.100',
+   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Teams/1.6.00',
+   'msteams_session_002', '{"integration_type": "meeting_display", "meeting_id": "mtg_456"}'),
+   
+  -- LinkedIn Professional Network
+  (jj_user_id, jj_work_context_id, 'linkedin-api', 'oauth_client',
+   '{"profile", "w_member_social"}', '{"name": "Jędrzej Lewandowski", "headline": "Senior Developer"}',
+   3, true, yesterday_start + interval '9 hours', '10.0.0.50',
+   'LinkedInApp/1.0 (Mobile; iOS 16.0)', 'linkedin_session_789',
+   '{"integration_type": "profile_update", "visibility": "professional"}'),
+
+  -- Slack Workspace Integration
+  (jj_user_id, jj_work_context_id, 'slack-api', 'oauth_client',
+   '{"identity.basic", "identity.email"}', '{"name": "Jędrzej Lewandowski", "display_name": "JJ (Jędrzej)"}',
+   2, true, today_start + interval '9 hours 30 minutes', '192.168.1.100',
+   'Slack/4.33.73 (Windows 10)', 'slack_session_abc123',
+   '{"integration_type": "profile_sync", "workspace_id": "dev_team_workspace"}');
+
+  -- JJ's Gaming Context Usage (Discord, Steam)
+  INSERT INTO public.context_usage_analytics (
+target_user_id, context_id, requesting_application, application_type,
+scopes_requested, properties_disclosed, response_time_ms, success,
+accessed_at, source_ip, user_agent, session_id, details
+  ) VALUES
+  -- Discord Gaming Community
+  (jj_user_id, jj_gaming_context_id, 'discord-api', 'oauth_client',
+   '{"identify"}', '{"username": "JJ", "display_name": "JJ"}',
+   1, true, today_start + interval '20 hours', '10.0.0.75',
+   'Discord/1.0.9012 (Windows 10)', 'discord_session_gam001',
+   '{"integration_type": "server_join", "server_id": "polish_gamers_123"}'),
+   
+  -- Steam Integration  
+  (jj_user_id, jj_gaming_context_id, 'steam-web-api', 'api_integration',
+   '{"profile"}', '{"personaname": "JJ", "profileurl": "steam://profiles/76561198xxx"}',
+   2, true, yesterday_start + interval '19 hours', '10.0.0.75',
+   'Steam Client/1.0', 'steam_session_def456',
+   '{"integration_type": "friend_request", "friend_id": "friend_789"});
+
+  -- JJ's Open Source Context Usage (GitHub, Stack Overflow)
+  INSERT INTO public.context_usage_analytics (
+target_user_id, context_id, requesting_application, application_type,
+scopes_requested, properties_disclosed, response_time_ms, success,
+accessed_at, source_ip, user_agent, session_id, details
+  ) VALUES
+  -- GitHub Professional Development
+  (jj_user_id, jj_opensource_context_id, 'github-api', 'oauth_client',
+   '{"user", "public_repo"}', '{"name": "J. Lewandowski", "login": "jlewandowski-dev"}',
+   3, true, today_start + interval '14 hours', '192.168.1.100',
+   'GitHub Desktop/3.3.0 (Windows NT 10.0)', 'github_session_oss001',
+   '{"integration_type": "repository_access", "repo": "truename-project", "action": "push"}'),
+   
+  -- Stack Overflow Developer Profile
+  (jj_user_id, jj_opensource_context_id, 'stackoverflow-api', 'oauth_client',
+   '{"read_inbox"}', '{"display_name": "J. Lewandowski", "reputation": 1250}',
+   2, true, week_start + interval '2 days 15 hours', '192.168.1.100',
+   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0',
+   'so_session_tech789', '{"integration_type": "answer_notification", "question_id": "q_78901234"}');
+
+  RAISE LOG '✅ JJ Persona: Created % context usage records across % contexts', 8, 3;
+END $$;
+
+-- =============================================================================
+-- STEP 2: Insert demo context usage for Li Wei Persona (Chinese Professional)  
+-- =============================================================================
+
+DO $$
+DECLARE
+  liwei_user_id uuid := '809d0224-81f1-48a0-9405-2258de21ea60';
+  liwei_professional_context_id uuid;
+  liwei_friends_context_id uuid;
+  liwei_cultural_context_id uuid;
+  
+  today_start timestamp := date_trunc('day', now());
+  yesterday_start timestamp := date_trunc('day', now() - interval '1 day');
+  week_start timestamp := date_trunc('week', now());
+BEGIN
+  -- Get Li Wei's context IDs  
+  SELECT id INTO liwei_professional_context_id FROM public.user_contexts 
+  WHERE user_id = liwei_user_id AND context_name = 'Professional Network';
+  
+  SELECT id INTO liwei_friends_context_id FROM public.user_contexts 
+  WHERE user_id = liwei_user_id AND context_name = 'Close Friends';
+  
+  SELECT id INTO liwei_cultural_context_id FROM public.user_contexts 
+  WHERE user_id = liwei_user_id AND context_name = 'Family & Cultural';
+
+  -- Li Wei's Professional Network Usage (International business focus)
+  INSERT INTO public.context_usage_analytics (
+target_user_id, context_id, requesting_application, application_type,
+scopes_requested, properties_disclosed, response_time_ms, success,
+accessed_at, source_ip, user_agent, session_id, details
+  ) VALUES
+  -- LinkedIn International Business
+  (liwei_user_id, liwei_professional_context_id, 'linkedin-api', 'oauth_client',
+   '{"r_liteprofile", "w_member_social"}', '{"name": "Wei Li", "headline": "International Business Analyst"}',
+   2, true, today_start + interval '8 hours 30 minutes', '203.0.113.45',
+   'LinkedInApp/2.0 (Mobile; Android 13)', 'linkedin_session_intl001',
+   '{"integration_type": "profile_sync", "market": "asia_pacific", "language": "en-US"}'),
+   
+  -- Microsoft Office 365 (Global Enterprise)
+  (liwei_user_id, liwei_professional_context_id, 'microsoft-graph', 'oauth_client',
+   '{"profile", "openid"}', '{"displayName": "Wei Li", "mail": "wei.li@company.com"}',
+   1, true, today_start + interval '9 hours', '203.0.113.45',
+   'Microsoft Office/16.0 (Windows NT 10.0)', 'msoffice_session_biz789',
+   '{"integration_type": "email_signature", "tenant_id": "corp_tenant_456"}'),
+   
+  -- Zoom Business Meetings  
+  (liwei_user_id, liwei_professional_context_id, 'zoom-api', 'oauth_client',
+   '{"user:read", "meeting:write"}', '{"first_name": "Wei", "last_name": "Li", "display_name": "Wei Li"}',
+   3, true, yesterday_start + interval '14 hours', '203.0.113.45',
+   'ZoomChat/5.16.0 (Windows)', 'zoom_session_meet123',
+   '{"integration_type": "meeting_host", "meeting_id": "zoom_789456", "participants": 12}');
+
+  -- Li Wei's Close Friends Context (Social apps with nickname)
+  INSERT INTO public.context_usage_analytics (
+target_user_id, context_id, requesting_application, application_type,
+scopes_requested, properties_disclosed, response_time_ms, success,
+accessed_at, source_ip, user_agent, session_id, details
+  ) VALUES
+  -- Instagram Social
+  (liwei_user_id, liwei_friends_context_id, 'instagram-basic-display', 'oauth_client',
+   '{"user_profile"}', '{"username": "wei_adventures", "name": "Wei"}',
+   2, true, today_start + interval '19 hours', '203.0.113.45',
+   'Instagram/300.0.0 (Android 13)', 'instagram_session_social456',
+   '{"integration_type": "story_share", "story_type": "location", "friends_only": true}'),
+   
+  -- WhatsApp Business API (Friend group coordination)
+  (liwei_user_id, liwei_friends_context_id, 'whatsapp-business-api', 'api_integration',
+   '{"messages"}', '{"name": "Wei", "phone": "+1xxx***7890"}',
+   1, true, today_start + interval '18 hours 30 minutes', '203.0.113.45',
+   'WhatsApp/2.23.24.76 (Android 13)', 'whatsapp_session_group789',
+   '{"integration_type": "group_message", "group_id": "college_friends", "message_type": "event_planning"}');
+
+  -- Li Wei's Family & Cultural Context (Chinese characters and cultural apps)  
+  INSERT INTO public.context_usage_analytics (
+target_user_id, context_id, requesting_application, application_type,
+scopes_requested, properties_disclosed, response_time_ms, success,
+accessed_at, source_ip, user_agent, session_id, details
+  ) VALUES
+  -- WeChat Family Communication
+  (liwei_user_id, liwei_cultural_context_id, 'wechat-api', 'oauth_client',
+   '{"snsapi_userinfo"}', '{"nickname": "李伟", "headimgurl": "http://wx.qlogo.cn/..."}',
+   2, true, today_start + interval '20 hours', '203.0.113.45',
+   'MicroMessenger/8.0.42 (Android 13)', 'wechat_session_family123',
+   '{"integration_type": "family_group", "group_name": "李氏家族", "cultural_context": "traditional_chinese"}'),
+   
+  -- Chinese Community App Integration
+  (liwei_user_id, liwei_cultural_context_id, 'xiaohongshu-api', 'oauth_client',
+   '{"user_info"}', '{"display_name": "李伟", "bio": "海外华人 | 商务分析师"}',
+   3, true, week_start + interval '3 days 16 hours', '203.0.113.45',
+   'XiaoHongShu/7.98.0 (Android 13)', 'xhs_session_culture456',
+   '{"integration_type": "cultural_post", "content_type": "overseas_chinese_life", "language": "zh-CN"}');
+
+  RAISE LOG '✅ Li Wei Persona: Created % context usage records across % contexts', 7, 3;
+END $$;
+
+-- =============================================================================
+-- STEP 3: Insert demo context usage for Alex Persona (Privacy-Conscious Developer)
+-- =============================================================================
+
+DO $$
+DECLARE  
+  alex_user_id uuid := '257113c8-7a62-4758-9b1b-7992dd8aca1e';
+  alex_dev_context_id uuid;
+  alex_professional_context_id uuid;
+  alex_casual_context_id uuid;
+  
+  today_start timestamp := date_trunc('day', now());
+  yesterday_start timestamp := date_trunc('day', now() - interval '1 day');
+  week_start timestamp := date_trunc('week', now());
+BEGIN
+  -- Get Alex's context IDs
+  SELECT id INTO alex_dev_context_id FROM public.user_contexts 
+  WHERE user_id = alex_user_id AND context_name = 'Development Community';
+  
+  SELECT id INTO alex_professional_context_id FROM public.user_contexts 
+  WHERE user_id = alex_user_id AND context_name = 'Professional Services';
+  
+  SELECT id INTO alex_casual_context_id FROM public.user_contexts 
+  WHERE user_id = alex_user_id AND context_name = 'Casual Acquaintances';
+
+  -- Alex's Development Community Usage (Using online handles for privacy)
+  INSERT INTO public.context_usage_analytics (
+target_user_id, context_id, requesting_application, application_type,
+scopes_requested, properties_disclosed, response_time_ms, success,
+accessed_at, source_ip, user_agent, session_id, details
+  ) VALUES
+  -- GitHub Development Work  
+  (alex_user_id, alex_dev_context_id, 'github-api', 'oauth_client',
+   '{"user", "repo"}', '{"login": "@CodeAlex", "name": "@CodeAlex", "bio": "Privacy-focused developer"}',
+   2, true, today_start + interval '10 hours', '198.51.100.23',
+   'GitHub CLI/2.40.1 (Linux)', 'github_session_dev001',
+   '{"integration_type": "repository_contribution", "repo": "privacy-tools", "commit_author": "@CodeAlex"}'),
+   
+  -- Stack Overflow Technical Community
+  (alex_user_id, alex_dev_context_id, 'stackoverflow-api', 'oauth_client',
+   '{"read_inbox", "no_expiry"}', '{"display_name": "@CodeAlex", "reputation": 3450, "badge_counts": {"gold": 2, "silver": 15}}',
+   1, true, yesterday_start + interval '13 hours', '198.51.100.23',
+   'Mozilla/5.0 (X11; Linux x86_64) Firefox/120.0', 'so_session_privacy789',
+   '{"integration_type": "answer_post", "topic": "web_privacy", "expertise_tags": ["security", "encryption"]}'),
+   
+  -- Dev.to Community Platform
+  (alex_user_id, alex_dev_context_id, 'dev-to-api', 'api_integration',
+   '{"public"}', '{"username": "codealex", "name": "@CodeAlex", "summary": "Building privacy-first web apps"}',
+   3, true, week_start + interval '2 days 14 hours', '198.51.100.23',
+   'dev.to-mobile/1.0 (iOS 16.0)', 'devto_session_community456',
+   '{"integration_type": "article_publish", "title": "Privacy by Design in Web APIs", "tags": ["privacy", "webdev"]}');
+
+  -- Alex's Professional Services Usage (Legal name for business)
+  INSERT INTO public.context_usage_analytics (
+target_user_id, context_id, requesting_application, application_type,
+scopes_requested, properties_disclosed, response_time_ms, success,
+accessed_at, source_ip, user_agent, session_id, details
+  ) VALUES
+  -- Invoice Management System
+  (alex_user_id, alex_professional_context_id, 'freshbooks-api', 'oauth_client',
+   '{"user:profile", "invoice:create"}', '{"first_name": "Alexander", "last_name": "Chen", "business_name": "Chen Consulting"}',
+   2, true, today_start + interval '11 hours', '198.51.100.23',
+   'FreshBooks/1.0 (Web)', 'freshbooks_session_biz123',
+   '{"integration_type": "client_invoice", "client_id": "client_789", "amount": 2500.00, "currency": "USD"}'),
+   
+  -- DocuSign Contract Signing
+  (alex_user_id, alex_professional_context_id, 'docusign-api', 'oauth_client',
+   '{"signature"}', '{"name": "Alexander Chen", "email": "alex.chen@consulting.com", "title": "Senior Consultant"}',
+   4, true, yesterday_start + interval '16 hours', '198.51.100.23',
+   'DocuSign/1.0 (Web)', 'docusign_session_contract456',
+   '{"integration_type": "contract_signature", "document_type": "consulting_agreement", "client": "TechCorp"}');
+
+  -- Alex's Casual Acquaintances Usage (Friendly but not personal)
+  INSERT INTO public.context_usage_analytics (
+target_user_id, context_id, requesting_application, application_type,
+scopes_requested, properties_disclosed, response_time_ms, success,
+accessed_at, source_ip, user_agent, session_id, details
+  ) VALUES
+  -- Meetup.com Networking Events
+  (alex_user_id, alex_casual_context_id, 'meetup-api', 'oauth_client',
+   '{"basic"}', '{"name": "Alex", "bio": "Software consultant interested in privacy tech"}',
+   3, true, week_start + interval '4 days 18 hours', '198.51.100.23',
+   'Meetup/5.0 (Android 13)', 'meetup_session_network789',
+   '{"integration_type": "event_rsvp", "event": "Privacy Tech Meetup", "location": "San Francisco", "attendee_role": "speaker"}'),
+   
+  -- Twitter/X Professional Networking (Limited disclosure)
+  (alex_user_id, alex_casual_context_id, 'twitter-api', 'oauth_client',
+   '{"tweet.read", "users.read"}', '{"name": "Alex", "username": "alex_privacy_dev", "bio": "Privacy advocate & consultant"}',
+   2, true, today_start + interval '17 hours', '198.51.100.23',
+   'Twitter/9.95.0 (iOS 16.0)', 'twitter_session_social123',
+   '{"integration_type": "tweet_post", "content_type": "privacy_tip", "engagement": "networking", "privacy_level": "public_professional"}');
+
+  RAISE LOG '✅ Alex Persona: Created % context usage records across % contexts', 7, 3;
+END $$;
+
+-- =============================================================================
+-- STEP 4: Add some older usage patterns for trend analysis
+-- =============================================================================
+
+DO $$
+DECLARE
+  jj_user_id uuid := '54c00e81-cda9-4251-9456-7778df91b988';
+  liwei_user_id uuid := '809d0224-81f1-48a0-9405-2258de21ea60';
+  alex_user_id uuid := '257113c8-7a62-4758-9b1b-7992dd8aca1e';
+  
+  older_date timestamp := now() - interval '7 days';
+  last_month timestamp := now() - interval '30 days';
+BEGIN
+  -- Add some historical usage patterns for trend analysis
+  INSERT INTO public.context_usage_analytics (
+target_user_id, context_id, requesting_application, application_type,
+scopes_requested, properties_disclosed, response_time_ms, success,
+accessed_at, source_ip, user_agent, session_id, details
+  ) 
+  SELECT 
+user_id,
+(SELECT id FROM public.user_contexts WHERE user_id = personas.user_id ORDER BY random() LIMIT 1),
+apps.app_name,
+'oauth_client',
+apps.scopes,
+apps.properties,
+(random() * 5 + 1)::integer, -- 1-6ms response times
+true,
+older_date + (random() * interval '7 days'),
+'192.168.1.' || (random() * 255)::integer,
+apps.user_agent,
+'historical_session_' || generate_random_uuid(),
+apps.details
+  FROM 
+(VALUES 
+  (jj_user_id), 
+  (liwei_user_id), 
+  (alex_user_id)
+) AS personas(user_id),
+(VALUES
+  ('github-api', '{"user"}', '{"name": "User"}', 'GitHub CLI/2.40.1', '{"type": "historical"}'),
+  ('slack-api', '{"identity.basic"}', '{"name": "User"}', 'Slack/4.33.73', '{"type": "historical"}'),
+  ('zoom-api', '{"user:read"}', '{"first_name": "User"}', 'ZoomChat/5.16.0', '{"type": "historical"}')
+) AS apps(app_name, scopes, properties, user_agent, details);
+
+  RAISE LOG '✅ Historical Usage: Created additional historical context usage patterns';
+END $$;
+
+-- =============================================================================
+-- STEP 5: Create some failure scenarios for realistic analytics
+-- =============================================================================
+
+DO $$
+DECLARE
+  alex_user_id uuid := '257113c8-7a62-4758-9b1b-7992dd8aca1e';
+  alex_dev_context_id uuid;
+BEGIN
+  SELECT id INTO alex_dev_context_id FROM public.user_contexts 
+  WHERE user_id = alex_user_id AND context_name = 'Development Community';
+
+  -- Alex occasionally denies access to preserve privacy
+  INSERT INTO public.context_usage_analytics (
+target_user_id, context_id, requesting_application, application_type,
+scopes_requested, properties_disclosed, response_time_ms, success,
+error_type, accessed_at, source_ip, user_agent, session_id, details
+  ) VALUES
+  (alex_user_id, alex_dev_context_id, 'facebook-api', 'oauth_client',
+   '{"email", "public_profile"}', '{}', 0, false,
+   'authorization_denied', now() - interval '2 days', '198.51.100.23',
+   'Facebook/400.0 (Android 13)', 'fb_session_denied123',
+   '{"denial_reason": "privacy_policy_concerns", "user_choice": "explicit_denial"}');
+
+  RAISE LOG '✅ Error Scenarios: Created realistic authorization denial patterns';
+END $$;
+
+-- =============================================================================
+-- STEP 6: Validation and completion logging
+-- =============================================================================
+
+DO $$
+DECLARE
+  total_usage_records integer;
+  unique_applications integer;
+  success_rate numeric;
+  avg_response_time numeric;
+BEGIN
+  -- Count total records created
+  SELECT COUNT(*) INTO total_usage_records FROM public.context_usage_analytics;
+  
+  -- Count unique applications
+  SELECT COUNT(DISTINCT requesting_application) INTO unique_applications FROM public.context_usage_analytics;
+  
+  -- Calculate success rate
+  SELECT 
+(COUNT(*) FILTER (WHERE success = true))::numeric / COUNT(*) * 100
+  INTO success_rate
+  FROM public.context_usage_analytics;
+  
+  -- Calculate average response time for successful requests
+  SELECT AVG(response_time_ms) INTO avg_response_time 
+  FROM public.context_usage_analytics 
+  WHERE success = true;
+  
+  RAISE LOG '✅ Context Usage Analytics: Demo data seeding completed successfully';
+  RAISE LOG '📊 Total usage records created: %', total_usage_records;
+  RAISE LOG '🔗 Unique applications integrated: %', unique_applications;
+  RAISE LOG '⚡ Average response time: %.2f ms', avg_response_time;
+  RAISE LOG '📈 Success rate: %.1f%%', success_rate;
+  RAISE LOG '👥 Academic personas: JJ (Polish Developer), Li Wei (Chinese Professional), Alex (Privacy-Conscious)';
+  RAISE LOG '🌍 Demonstrates real-world OAuth/OIDC integration patterns for commercial viability';
+END $$;

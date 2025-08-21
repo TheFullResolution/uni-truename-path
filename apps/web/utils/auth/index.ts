@@ -40,11 +40,7 @@ export {
 // ============================================================================
 
 // Server-side authentication functions (uses next/headers)
-export {
-  getCurrentUser as getCurrentUserServer,
-  createClientWithToken,
-  signOut as signOutServer,
-} from './server';
+export { createClientWithToken } from './server';
 
 // ============================================================================
 // SHARED TYPES (safe for both client and server)

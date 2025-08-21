@@ -25,3 +25,8 @@ export interface ContextFormData {
   context_name: string;
   description: string;
 }
+
+// API response data structures
+export interface ContextsResponseData {
+  contexts: ContextWithStats[];
+}

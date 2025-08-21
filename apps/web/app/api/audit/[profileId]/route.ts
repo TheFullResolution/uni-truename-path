@@ -5,210 +5,198 @@
 
 // TrueNamePath: Audit Log API Route - JSend Compliant
 import { NextRequest } from 'next/server';
-import type {
-  AuditLogEntry,
-  AuditFilters,
-  AuditLogResponseData,
-} from '../types';
+import type { AuditLogResponseData } from '../types';
+import type { AuthenticatedContext, StandardResponse } from '@/utils/api';
 import {
   withRequiredAuth,
   createSuccessResponse,
   createErrorResponse,
-  validate_uuid,
   handle_method_not_allowed,
-  type AuthenticatedHandler,
 } from '@/utils/api';
-import { ErrorCodes } from '@/utils/api';
 import { z } from 'zod';
 
 /**
  * Query parameter validation schema for audit log requests
  */
-const AuditQuerySchema = z
-  .object({
-limit: z
-  .string()
-  .regex(/^\d+$/, 'Limit must be a valid number')
-  .transform(Number)
-  .refine(
-(num) => num >= 1 && num <= 1000,
-'Limit must be between 1 and 1000',
-  )
-  .optional()
-  .default(50),
+const AuditQuerySchema = z.object({
+  limit: z
+.string()
+.regex(/^\d+$/, 'Limit must be a valid number')
+.transform(Number)
+.refine(
+  (num) => num >= 1 && num <= 1000,
+  'Limit must be between 1 and 1000',
+)
+.optional()
+.default(50),
 
-action: z
-  .enum(['NAME_DISCLOSED', 'CONSENT_GRANTED', 'CONSENT_REVOKED'] as const)
-  .optional(),
+  action: z
+.enum(['NAME_DISCLOSED', 'CONSENT_GRANTED', 'CONSENT_REVOKED'] as const)
+.optional(),
 
-// Support both naming conventions for backward compatibility
-startDate: z
-  .string()
-  .datetime('Start date must be a valid ISO date')
-  .optional(),
+  date_from: z
+.string()
+.datetime('Start date must be a valid ISO date')
+.optional(),
 
-date_from: z
-  .string()
-  .datetime('Start date must be a valid ISO date')
-  .optional(),
-
-endDate: z
-  .string()
-  .datetime('End date must be a valid ISO date')
-  .optional(),
-
-date_to: z
-  .string()
-  .datetime('End date must be a valid ISO date')
-  .optional(),
-  })
-  .transform((data) => ({
-...data,
-// Normalize to snake_case internally, prioritizing snake_case over camelCase
-date_from: data.date_from || data.startDate,
-date_to: data.date_to || data.endDate,
-// Remove the camelCase versions from the internal object
-startDate: undefined,
-endDate: undefined,
-  }));
+  date_to: z.string().datetime('End date must be a valid ISO date').optional(),
+});
 
 /**
  * Core handler function implementing the audit log retrieval logic
  * This is wrapped by the required authentication HOF
  */
-const handleGetAuditLogRequest: AuthenticatedHandler<
-  AuditLogResponseData
-> = async (request: NextRequest, context) => {
-  // 1. Extract and validate profileId parameter from URL
-  const url = new URL(request.url);
-  const pathSegments = url.pathname.split('/');
-  const profileId = pathSegments[pathSegments.length - 1];
+async function handleGetAuditLogRequest(
+  request: NextRequest,
+  context: AuthenticatedContext,
+): Promise<StandardResponse<AuditLogResponseData>> {
+  try {
+const { user, supabase, requestId } = context;
 
-  if (!profileId) {
-return createErrorResponse(
-  ErrorCodes.VALIDATION_ERROR,
-  'Profile ID is required',
-  context.requestId,
-  'Profile ID must be provided in the URL path',
-  context.timestamp,
-);
-  }
+// Get profileId from URL parameters
+const url = new URL(request.url);
+const profileId = url.pathname.split('/').pop();
 
-  // Validate UUID format using shared utility
-  if (!validate_uuid(profileId)) {
-return createErrorResponse(
-  ErrorCodes.VALIDATION_ERROR,
-  'Invalid profile ID format',
-  context.requestId,
-  'Profile ID must be a valid UUID',
-  context.timestamp,
-);
-  }
-
-  // 2. Authorization - ensure user can only access their own audit log
-  if (!context.user || context.user.id !== profileId) {
-return createErrorResponse(
-  ErrorCodes.AUTHORIZATION_FAILED,
-  'Access denied',
-  context.requestId,
-  'You can only access your own audit log',
-  context.timestamp,
-);
-  }
-
-  // 3. Query parameter parsing and validation
-  const queryParams = Object.fromEntries(url.searchParams.entries());
-  const queryValidation = AuditQuerySchema.safeParse(queryParams);
-
-  if (!queryValidation.success) {
-return createErrorResponse(
-  ErrorCodes.VALIDATION_ERROR,
-  'Invalid query parameters',
-  context.requestId,
-  queryValidation.error.issues.map((err) => ({
-field: err.path.join('.'),
-message: err.message,
-code: err.code,
-  })),
-  context.timestamp,
-);
-  }
-
-  const filters: AuditFilters = queryValidation.data;
-
-  // 4. Database query - call existing get_user_audit_log() function
-  const supabase = context.supabase;
-
-  const { data, error } = await supabase.rpc('get_user_audit_log', {
-p_user_id: profileId,
-p_limit: filters.limit || 50,
-  });
-
-  if (error) {
-console.error(`Database error for request [${context.requestId}]:`, error);
-
-return createErrorResponse(
-  ErrorCodes.DATABASE_ERROR,
-  'Failed to retrieve audit log',
-  context.requestId,
-  process.env.NODE_ENV === 'development'
-? { message: error.message }
-: undefined,
-  context.timestamp,
-);
-  }
-
-  // 5. Apply client-side filters (since database function has limited filtering)
-  // Note: This could be enhanced to use database-side filtering for better performance
-  let filteredEntries = (data || []) as AuditLogEntry[];
-
-  // Filter by action type
-  if (filters.action) {
-filteredEntries = filteredEntries.filter(
-  (entry: AuditLogEntry) => entry.action === filters.action,
-);
-  }
-
-  // Filter by date range using normalized snake_case fields
-  if (filters.date_from) {
-const date_from = new Date(filters.date_from);
-filteredEntries = filteredEntries.filter(
-  (entry: AuditLogEntry) => new Date(entry.accessed_at) >= date_from,
-);
-  }
-
-  if (filters.date_to) {
-const date_to = new Date(filters.date_to);
-filteredEntries = filteredEntries.filter(
-  (entry: AuditLogEntry) => new Date(entry.accessed_at) <= date_to,
-);
-  }
-
-  // 6. Success response with comprehensive metadata
-  const responseData: AuditLogResponseData = {
-entries: filteredEntries as AuditLogEntry[],
-total: filteredEntries.length,
-profile_id: profileId,
-filters: {
-  limit: filters.limit,
-  action: filters.action,
-  date_from: filters.date_from,
-  date_to: filters.date_to,
-},
-metadata: {
-  retrieved_at: context.timestamp,
-  request_id: context.requestId,
-  total_entries: data?.length || 0,
-  filtered_entries: filteredEntries.length,
-},
-  };
-
-  return createSuccessResponse(
-responseData,
-context.requestId,
-context.timestamp,
+if (!profileId) {
+  return createErrorResponse(
+'INVALID_PROFILE_ID',
+'Profile ID is required',
+requestId,
   );
+}
+
+// 1. Authorization check
+if (!user || user.id !== profileId) {
+  console.log(`[${requestId}] Unauthorized access attempt`, {
+user_id: user?.id,
+requested_profile_id: profileId,
+  });
+  return createErrorResponse(
+'UNAUTHORIZED',
+'Cannot access audit log for different user',
+requestId,
+  );
+}
+
+// 2. Parse and validate filters from query string
+const { searchParams } = new URL(request.url);
+const queryParams = Object.fromEntries(searchParams.entries());
+const filtersResult = AuditQuerySchema.safeParse(queryParams);
+
+if (!filtersResult.success) {
+  console.log(`[${requestId}] Invalid filters`, {
+errors: filtersResult.error.issues,
+  });
+  return createErrorResponse(
+'INVALID_FILTERS',
+'Invalid filters: ' +
+  filtersResult.error.issues
+.map((e: { message: string }) => e.message)
+.join(', '),
+requestId,
+  );
+}
+
+const filters = filtersResult.data;
+
+console.log(`[${requestId}] Processing audit log request`, {
+  profile_id: profileId,
+  filters,
+});
+
+// 3. Fetch audit logs using RPC function
+// Note: The RPC function has limited filtering capabilities
+// We apply additional filters client-side for now
+const { data, error } = await supabase.rpc('get_user_audit_log', {
+  p_user_id: profileId,
+  p_limit: filters.limit || 50,
+});
+
+if (error) {
+  console.error(`[${requestId}] Database error fetching audit log`, {
+error: error.message,
+code: error.code,
+details: error.details,
+  });
+  return createErrorResponse(
+'DATABASE_ERROR',
+'Failed to fetch audit log: ' + error.message,
+requestId,
+  );
+}
+
+console.log(
+  `[${requestId}] Retrieved ${data?.length || 0} audit entries from database`,
+);
+
+// 4. Transform data to ensure type safety with generated types
+// The RPC function returns snake_case fields that match our generated types
+const normalizedData = data || [];
+
+// 5. Apply client-side filters (since database function has limited filtering)
+// Note: This could be enhanced to use database-side filtering for better performance
+let filteredEntries = normalizedData;
+
+// Filter by action type
+if (filters.action) {
+  filteredEntries = filteredEntries.filter((entry) => {
+return entry.action === filters.action;
+  });
+}
+
+// Filter by date range using snake_case fields
+if (filters.date_from) {
+  const dateFrom = new Date(filters.date_from);
+  filteredEntries = filteredEntries.filter((entry) => {
+return new Date(entry.accessed_at) >= dateFrom;
+  });
+}
+
+if (filters.date_to) {
+  const dateTo = new Date(filters.date_to);
+  filteredEntries = filteredEntries.filter((entry) => {
+return new Date(entry.accessed_at) <= dateTo;
+  });
+}
+
+// 6. Success response with comprehensive metadata
+const responseData: AuditLogResponseData = {
+  entries: filteredEntries,
+  total: filteredEntries.length,
+  profile_id: profileId,
+  filters: {
+limit: filters.limit,
+action: filters.action,
+// Always use snake_case in responses
+date_from: filters.date_from,
+date_to: filters.date_to,
+  },
+  metadata: {
+retrieved_at: new Date().toISOString(),
+request_id: requestId,
+total_entries: data?.length || 0,
+filtered_entries: filteredEntries.length,
+  },
 };
+
+console.log(`[${requestId}] Audit log request successful`, {
+  total_entries: responseData.total,
+  filtered_entries: responseData.metadata.filtered_entries,
+});
+
+return createSuccessResponse(responseData, requestId);
+  } catch (error) {
+const { requestId } = context;
+console.error(`[${requestId}] Unexpected error in audit log request`, {
+  error: error instanceof Error ? error.message : String(error),
+});
+return createErrorResponse(
+  'INTERNAL_SERVER_ERROR',
+  'Internal server error',
+  requestId,
+);
+  }
+}
 
 /**
  * GET /api/audit/[profileId]
@@ -231,12 +219,11 @@ export const GET = withRequiredAuth(handleGetAuditLogRequest, {
 
 /**
  * Handle unsupported HTTP methods using shared utility
- * Eliminates 87 lines of boilerplate code
  */
 export const POST = () => handle_method_not_allowed(['GET']);
-export const PUT = POST;
-export const DELETE = POST;
-export const PATCH = POST;
+export const PUT = () => handle_method_not_allowed(['GET']);
+export const DELETE = () => handle_method_not_allowed(['GET']);
+export const PATCH = () => handle_method_not_allowed(['GET']);
 
 /**
  * OPTIONS handler for CORS preflight requests

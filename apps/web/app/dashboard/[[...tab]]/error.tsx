@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { Button, Text, Box, Paper } from '@mantine/core';
-import { Logo } from '@/components/branding';
+import { Logo } from '@/components/branding/Logo';
 
 export default function DashboardError({
   error,

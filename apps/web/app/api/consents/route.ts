@@ -234,15 +234,39 @@ context.timestamp,
   }
 };
 
-export const POST = withRequiredAuth(handle_consent_request);
+const handleGet: AuthenticatedHandler = async (request, context) => {
+  // Get all consents where the current user is either granter or requester
+  // Use simple query first to avoid foreign key reference issues
+  const { data: consents, error } = await context.supabase
+.from('consents')
+.select('*')
+.or(
+  `granter_user_id.eq.${context.user!.id},requester_user_id.eq.${context.user!.id}`,
+)
+.order('created_at', { ascending: false });
 
-/**
- * Handle unsupported HTTP methods using shared utility
- */
-export const GET = () => handle_method_not_allowed(['POST']);
-export const PUT = GET;
-export const DELETE = GET;
-export const PATCH = GET;
+  if (error) {
+return createErrorResponse(
+  'DATABASE_ERROR',
+  'Failed to fetch consents',
+  context.requestId,
+  error.message,
+  context.timestamp,
+);
+  }
+
+  return createSuccessResponse(
+consents || [],
+context.requestId,
+context.timestamp,
+  );
+};
+
+export const POST = withRequiredAuth(handle_consent_request);
+export const GET = withRequiredAuth(handleGet);
+export const PUT = () => handle_method_not_allowed(['POST', 'GET']);
+export const DELETE = PUT;
+export const PATCH = PUT;
 
 /**
  * OPTIONS handler for CORS preflight requests

@@ -45,16 +45,27 @@ return createErrorResponse(
 );
   }
 
-  // Create context
-  const { data: newContext } = await context.supabase
+  // Create context - only use fields that exist in the database schema
+  const { data: newContext, error: insertError } = await context.supabase
 .from('user_contexts')
 .insert({
   user_id: context.user!.id,
   context_name: body.context_name,
   description: body.description,
+  // is_permanent defaults to FALSE (only "Default" context should be permanent)
 })
 .select()
 .single();
+
+  if (insertError) {
+return createErrorResponse(
+  ErrorCodes.DATABASE_ERROR,
+  'Failed to create context',
+  context.requestId,
+  insertError.message,
+  context.timestamp,
+);
+  }
 
   return createSuccessResponse(
 newContext,
