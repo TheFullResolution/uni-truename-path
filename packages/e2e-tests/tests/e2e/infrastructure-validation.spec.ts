@@ -6,15 +6,11 @@
  */
 
 import {
-  type DemoPersona,
   ensureLoggedOut,
-  loginAsDemoUser,
+  createAndLoginTestUser,
   logout,
 } from '@/utils/auth-helpers';
 import { expect, test } from '@playwright/test';
-
-// Use JJ as our test persona
-const TEST_PERSONA: DemoPersona = 'JJ';
 
 test.describe('Test Infrastructure Validation', () => {
   test.beforeEach(async ({ page }) => {
@@ -22,55 +18,35 @@ test.describe('Test Infrastructure Validation', () => {
 await ensureLoggedOut(page);
   });
 
-  test.describe('Simplified Authentication', () => {
-test('should authenticate with demo user', async ({ page }) => {
-  await loginAsDemoUser(page, TEST_PERSONA);
+  test('should handle multiple dynamic users', async ({ page }) => {
+// Test creating and logging in with first user
+const user1 = await createAndLoginTestUser(page);
+await expect(page).toHaveURL('/dashboard');
+console.log(`✅ First user login successful: ${user1.email}`);
 
-  // Verify we're on the dashboard
-  await expect(page).toHaveURL('/dashboard');
+await logout(page);
+await expect(page).toHaveURL('/auth/login');
+console.log('✅ Logout successful');
 
-  // Verify user-specific content loads
-  await expect(page.locator('body')).not.toHaveText(/error|failed/i);
+// Test creating and logging in with second user
+const user2 = await createAndLoginTestUser(page);
+await expect(page).toHaveURL('/dashboard');
+console.log(`✅ Second user login successful: ${user2.email}`);
 
-  console.log(`✅ Demo user authentication successful: ${TEST_PERSONA}`);
-});
-
-test('should handle all demo personas', async ({ page }) => {
-  // Test login with different persona
-  await loginAsDemoUser(page, 'ALEX');
-  await expect(page).toHaveURL('/dashboard');
-  console.log('✅ Alex persona login successful');
-
-  await logout(page);
-  await expect(page).toHaveURL('/auth/login');
-  console.log('✅ Logout successful');
-});
-
-test('should support Li Wei persona', async ({ page }) => {
-  await loginAsDemoUser(page, 'LIWEI');
-  await expect(page).toHaveURL('/dashboard');
-  console.log('✅ Li Wei persona login successful');
-});
+// Verify users are different
+expect(user1.email).not.toBe(user2.email);
+console.log('✅ Dynamic user isolation confirmed');
   });
-
-  test.describe('Database Integration', () => {
-test('should access user data through simple helpers', async ({ page }) => {
-  // Login to get user context
-  await loginAsDemoUser(page, TEST_PERSONA);
-  // For demo purposes, we'll skip actual database calls in this simplified version
-  console.log('✅ Database access pattern validated');
 });
-  });
 
-  test.describe('Basic Application Access', () => {
-test('should access dashboard after authentication', async ({ page }) => {
-  await loginAsDemoUser(page, TEST_PERSONA);
+test.describe('Basic Application Access', () => {
+  test('should access dashboard after authentication', async ({ page }) => {
+const testUser = await createAndLoginTestUser(page);
 
-  // Verify we can reach the dashboard (basic connectivity test)
-  await expect(page).toHaveURL('/dashboard');
-  await expect(page.locator('body')).not.toHaveText(/error|failed/i);
+// Verify we can reach the dashboard (basic connectivity test)
+await expect(page).toHaveURL('/dashboard');
+await expect(page.locator('body')).not.toHaveText(/error|failed/i);
 
-  console.log('✅ Basic dashboard access verified');
-});
+console.log(`✅ Basic dashboard access verified for: ${testUser.email}`);
   });
 });

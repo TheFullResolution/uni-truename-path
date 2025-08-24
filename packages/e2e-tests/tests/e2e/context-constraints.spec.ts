@@ -1,19 +1,17 @@
 import { expect, test } from '@playwright/test';
-import { ensureLoggedOut, loginAsDemoUser } from '@/utils/auth-helpers';
 import {
-  debugTestState,
-  debugContextsAvailability,
-  debugDatabaseFromTest,
-  setupConsoleCapture,
-} from '@/utils/debug-helpers';
+  ensureLoggedOut,
+  createAndLoginTestUser,
+  createTestContext,
+} from '@/utils/auth-helpers';
 
 test.describe('Default Context Constraints', () => {
   test.beforeEach(async ({ page }) => {
-// Setup console capture for debugging
-setupConsoleCapture(page);
-
 await ensureLoggedOut(page);
-await loginAsDemoUser(page, 'JJ'); // Use existing demo user
+await createAndLoginTestUser(page);
+
+// Create a test context for the test to use
+await createTestContext(page, 'Test Work Context');
   });
 
   test('should open assignment modal and show OIDC properties', async ({
@@ -25,54 +23,47 @@ await page.getByTestId('tab-contexts').click();
 // Wait for page to load
 await page.waitForLoadState('networkidle');
 
-// Debug contexts availability before proceeding
-const contextsDebug = await debugContextsAvailability(page);
+// Wait for at least one edit assignments button to appear
+// This ensures contexts have loaded and rendered properly
+await page.waitForSelector('[data-testid="edit-assignments-button"]', {
+  timeout: 10000,
+  state: 'visible',
+});
 
-// If no contexts are found, run comprehensive debug
-if (contextsDebug.contextCount === 0) {
-  console.log('⚠️  No contexts found - running comprehensive debug...');
+// Check if we have any contexts available
+const contextCount = await page
+  .getByTestId('edit-assignments-button')
+  .count();
+expect(contextCount).toBeGreaterThan(0);
 
-  // Debug database state
-  await debugDatabaseFromTest('JJ');
+console.log(`✅ Found ${contextCount} context(s), proceeding with test...`);
 
-  // Debug overall test state
-  await debugTestState(
-page,
-'Context Constraints Test - No Contexts Found',
-{
-  persona: 'JJ',
-  includeNetworkRequests: true,
-  includeDatabaseState: true,
-},
-  );
-
-  // Provide helpful error message
-  throw new Error(
-`No contexts available for testing. Expected at least 1 context with edit-assignments-button, but found ${contextsDebug.contextCount}. ` +
-  `Context tab available: ${contextsDebug.hasContextsTab}. ` +
-  `This suggests demo user setup failed or database triggers didn't execute properly. ` +
-  `Check validation logs above for database state details.`,
-  );
-}
-
-console.log(
-  `✅ Found ${contextsDebug.contextCount} context(s), proceeding with test...`,
-);
-
-// Open assignment modal for any context
+// Open assignment modal for the first context
 await page.getByTestId('edit-assignments-button').first().click();
 
-// Wait for assignment modal to open
+// Wait for assignment modal to open and be fully rendered
 await page.waitForSelector('text=Edit Assignments', { timeout: 10000 });
+
+// Wait for the table to be visible and populated
+await page.waitForSelector('table tbody tr', { timeout: 10000 });
 
 // Verify modal opens with assignment table
 await expect(page.locator('table')).toBeVisible();
 
 // Check that we have all expected OIDC properties visible
-await expect(page.locator('text=Given Name').first()).toBeVisible();
-await expect(page.locator('text=Family Name').first()).toBeVisible();
-await expect(page.locator('text=Name').first()).toBeVisible();
-await expect(page.locator('text=Nickname').first()).toBeVisible();
+// Using more specific selectors to find the property labels in the table
+await expect(
+  page.locator('table').getByText('Given Name', { exact: true }),
+).toBeVisible();
+await expect(
+  page.locator('table').getByText('Family Name', { exact: true }),
+).toBeVisible();
+await expect(
+  page.locator('table').getByText('Name', { exact: true }),
+).toBeVisible();
+await expect(
+  page.locator('table').getByText('Nickname', { exact: true }),
+).toBeVisible();
 
 // Verify assignment summary is shown
 await expect(page.locator('text=Assignment Summary')).toBeVisible();

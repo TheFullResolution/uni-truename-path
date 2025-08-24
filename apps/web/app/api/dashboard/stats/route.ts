@@ -46,7 +46,10 @@ console.log(
 );
 
 // TEMPORARY: Return mock data while refactoring is in progress
-// TODO: Restore RPC call after Step 15 migration is complete
+// TODO: Step 16 - Restore real dashboard stats after OAuth implementation
+// The analytics re-architecture in Step 16.1.4 replaced broken context_usage_analytics
+// with new app_usage_log system. Dashboard stats integration pending OAuth completion.
+// Restore get_dashboard_stats RPC function call after Phase 6 dashboard integration.
 const dashboard_stats = {
   user_profile,
   total_names: 3,

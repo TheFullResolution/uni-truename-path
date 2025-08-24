@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import type { Route } from 'next';
 import {
   Container,
   Grid,
@@ -52,7 +53,7 @@ color: 'blue',
 autoClose: 2000,
   });
 
-  router.replace(returnUrl);
+  router.replace(returnUrl as Route);
 }
   }, [isAuthenticated, loading, user, router, searchParams]);
 
@@ -75,7 +76,8 @@ return;
   setStep2Error(null);
 
   try {
-// First, create the Supabase account with email/password
+// Create the Supabase account with email/password and metadata
+// The enhanced signup trigger will automatically process the metadata
 const { createClient } = await import('@/utils/supabase/client');
 const supabase = createClient();
 
@@ -89,6 +91,12 @@ options: {
 agreeToTerms: step1Data.agreeToTerms,
 consentToProcessing: step1Data.consentToProcessing,
 allowMarketing: step1Data.allowMarketing || false,
+// Store OIDC name properties for database trigger processing
+given_name: step2Data.given_name,
+family_name: step2Data.family_name,
+display_name: step2Data.display_name,
+nickname: step2Data.nickname,
+preferred_username: step2Data.preferred_username,
   },
 },
   },
@@ -104,48 +112,16 @@ if (!authData.user) {
   return;
 }
 
-// Wait for the session to be established before calling the API
-// This ensures the authentication middleware can recognize the user
-await new Promise((resolve) => setTimeout(resolve, 1000));
-
-// Verify session is established
-const {
-  data: { session },
-} = await supabase.auth.getSession();
-if (!session) {
-  setStep2Error(
-'Session not established. Please try logging in manually.',
-  );
-  return;
-}
-
-// Then, complete the signup with OIDC name properties
-const response = await fetch('/api/auth/complete-signup', {
-  method: 'POST',
-  headers: {
-'Content-Type': 'application/json',
-  },
-  credentials: 'include',
-  body: JSON.stringify(step2Data),
-});
-
-const result = await response.json();
-
-if (!response.ok) {
-  setStep2Error(result.message || 'Failed to complete registration');
-  return;
-}
-
-// Success! Show notification and redirect
+// Success! The database trigger handles name creation automatically
 notifications.show({
   title: 'Welcome to TrueNamePath!',
-  message: `Account created successfully with ${result.data.created_names.length} name variants`,
+  message: 'Account created successfully with your name variants',
   color: 'green',
   autoClose: 5000,
 });
 
 const returnUrl = searchParams.get('returnUrl') || '/dashboard';
-router.replace(returnUrl);
+router.replace(returnUrl as Route);
   } catch (error) {
 const errorMessage =
   error instanceof Error
@@ -172,7 +148,7 @@ const loginUrl = returnUrl
   ? `/auth/login?returnUrl=${encodeURIComponent(returnUrl)}`
   : '/auth/login';
 
-router.push(loginUrl);
+router.push(loginUrl as Route);
   }, [router, searchParams]);
 
   // Handle privacy policy (placeholder)

@@ -4,6 +4,7 @@ import { useAuth } from '@/utils/context';
 import { Button, Group, Skeleton } from '@mantine/core';
 import { IconArrowRight, IconDashboard } from '@tabler/icons-react';
 import Link from 'next/link';
+import type { Route } from 'next';
 import { useEffect, useState } from 'react';
 
 export function AuthButtons() {
@@ -29,7 +30,7 @@ return (
 return (
   <Button
 component={Link}
-href='/dashboard'
+href={'/dashboard' as Route}
 size='lg'
 color='brand'
 variant='filled'
@@ -45,7 +46,7 @@ View Dashboard
 <Group gap='lg'>
   <Button
 component={Link}
-href='/auth/signup'
+href={'/auth/signup' as Route}
 size='lg'
 color='brand'
 variant='filled'
@@ -55,7 +56,7 @@ Get Started
   </Button>
   <Button
 component={Link}
-href='/auth/login'
+href={'/auth/login' as Route}
 size='lg'
 variant='outline'
 color='brand'

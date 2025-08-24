@@ -34,6 +34,116 @@ CompositeTypes: {
   }
   public: {
 Tables: {
+  app_context_assignments: {
+Row: {
+  app_id: string
+  context_id: string
+  created_at: string
+  id: string
+  profile_id: string
+  updated_at: string | null
+}
+Insert: {
+  app_id: string
+  context_id: string
+  created_at?: string
+  id?: string
+  profile_id: string
+  updated_at?: string | null
+}
+Update: {
+  app_id?: string
+  context_id?: string
+  created_at?: string
+  id?: string
+  profile_id?: string
+  updated_at?: string | null
+}
+Relationships: [
+  {
+foreignKeyName: "app_context_assignments_app_id_fkey"
+columns: ["app_id"]
+isOneToOne: false
+referencedRelation: "oauth_applications"
+referencedColumns: ["id"]
+  },
+  {
+foreignKeyName: "app_context_assignments_context_id_fkey"
+columns: ["context_id"]
+isOneToOne: false
+referencedRelation: "user_contexts"
+referencedColumns: ["id"]
+  },
+  {
+foreignKeyName: "app_context_assignments_profile_id_fkey"
+columns: ["profile_id"]
+isOneToOne: false
+referencedRelation: "profiles"
+referencedColumns: ["id"]
+  },
+]
+  }
+  app_usage_log: {
+Row: {
+  action: string
+  app_id: string
+  context_id: string | null
+  created_at: string
+  error_type: string | null
+  id: number
+  profile_id: string
+  response_time_ms: number | null
+  session_id: string | null
+  success: boolean
+}
+Insert: {
+  action: string
+  app_id: string
+  context_id?: string | null
+  created_at?: string
+  error_type?: string | null
+  id?: number
+  profile_id: string
+  response_time_ms?: number | null
+  session_id?: string | null
+  success?: boolean
+}
+Update: {
+  action?: string
+  app_id?: string
+  context_id?: string | null
+  created_at?: string
+  error_type?: string | null
+  id?: number
+  profile_id?: string
+  response_time_ms?: number | null
+  session_id?: string | null
+  success?: boolean
+}
+Relationships: [
+  {
+foreignKeyName: "app_usage_log_app_id_fkey"
+columns: ["app_id"]
+isOneToOne: false
+referencedRelation: "oauth_applications"
+referencedColumns: ["id"]
+  },
+  {
+foreignKeyName: "app_usage_log_context_id_fkey"
+columns: ["context_id"]
+isOneToOne: false
+referencedRelation: "user_contexts"
+referencedColumns: ["id"]
+  },
+  {
+foreignKeyName: "app_usage_log_profile_id_fkey"
+columns: ["profile_id"]
+isOneToOne: false
+referencedRelation: "profiles"
+referencedColumns: ["id"]
+  },
+]
+  }
   audit_log_entries: {
 Row: {
   accessed_at: string
@@ -167,6 +277,9 @@ Row: {
   id: string
   is_primary: boolean | null
   name_id: string
+  oidc_property:
+| Database["public"]["Enums"]["oidc_property_enum"]
+| null
   user_id: string
 }
 Insert: {
@@ -175,6 +288,9 @@ Insert: {
   id?: string
   is_primary?: boolean | null
   name_id: string
+  oidc_property?:
+| Database["public"]["Enums"]["oidc_property_enum"]
+| null
   user_id: string
 }
 Update: {
@@ -183,6 +299,9 @@ Update: {
   id?: string
   is_primary?: boolean | null
   name_id?: string
+  oidc_property?:
+| Database["public"]["Enums"]["oidc_property_enum"]
+| null
   user_id?: string
 }
 Relationships: [
@@ -255,75 +374,6 @@ referencedColumns: ["id"]
   {
 foreignKeyName: "context_oidc_assignments_user_id_fkey"
 columns: ["user_id"]
-isOneToOne: false
-referencedRelation: "profiles"
-referencedColumns: ["id"]
-  },
-]
-  }
-  context_usage_analytics: {
-Row: {
-  accessed_at: string
-  application_type: string
-  context_id: string
-  details: Json | null
-  error_type: string | null
-  id: number
-  properties_disclosed: Json
-  requesting_application: string
-  response_time_ms: number
-  scopes_requested: string[]
-  session_id: string | null
-  source_ip: unknown | null
-  success: boolean
-  target_user_id: string
-  user_agent: string | null
-}
-Insert: {
-  accessed_at?: string
-  application_type?: string
-  context_id: string
-  details?: Json | null
-  error_type?: string | null
-  id?: number
-  properties_disclosed?: Json
-  requesting_application: string
-  response_time_ms?: number
-  scopes_requested?: string[]
-  session_id?: string | null
-  source_ip?: unknown | null
-  success?: boolean
-  target_user_id: string
-  user_agent?: string | null
-}
-Update: {
-  accessed_at?: string
-  application_type?: string
-  context_id?: string
-  details?: Json | null
-  error_type?: string | null
-  id?: number
-  properties_disclosed?: Json
-  requesting_application?: string
-  response_time_ms?: number
-  scopes_requested?: string[]
-  session_id?: string | null
-  source_ip?: unknown | null
-  success?: boolean
-  target_user_id?: string
-  user_agent?: string | null
-}
-Relationships: [
-  {
-foreignKeyName: "context_usage_analytics_context_id_fkey"
-columns: ["context_id"]
-isOneToOne: false
-referencedRelation: "user_contexts"
-referencedColumns: ["id"]
-  },
-  {
-foreignKeyName: "context_usage_analytics_target_user_id_fkey"
-columns: ["target_user_id"]
 isOneToOne: false
 referencedRelation: "profiles"
 referencedColumns: ["id"]
@@ -404,6 +454,93 @@ referencedColumns: ["id"]
   },
 ]
   }
+  oauth_applications: {
+Row: {
+  app_name: string
+  app_type: string | null
+  created_at: string
+  description: string | null
+  display_name: string
+  id: string
+  is_active: boolean | null
+  redirect_uri: string
+  updated_at: string | null
+}
+Insert: {
+  app_name: string
+  app_type?: string | null
+  created_at?: string
+  description?: string | null
+  display_name: string
+  id?: string
+  is_active?: boolean | null
+  redirect_uri: string
+  updated_at?: string | null
+}
+Update: {
+  app_name?: string
+  app_type?: string | null
+  created_at?: string
+  description?: string | null
+  display_name?: string
+  id?: string
+  is_active?: boolean | null
+  redirect_uri?: string
+  updated_at?: string | null
+}
+Relationships: []
+  }
+  oauth_sessions: {
+Row: {
+  app_id: string
+  created_at: string
+  expires_at: string
+  id: string
+  profile_id: string
+  return_url: string
+  session_token: string
+  updated_at: string | null
+  used_at: string | null
+}
+Insert: {
+  app_id: string
+  created_at?: string
+  expires_at?: string
+  id?: string
+  profile_id: string
+  return_url: string
+  session_token: string
+  updated_at?: string | null
+  used_at?: string | null
+}
+Update: {
+  app_id?: string
+  created_at?: string
+  expires_at?: string
+  id?: string
+  profile_id?: string
+  return_url?: string
+  session_token?: string
+  updated_at?: string | null
+  used_at?: string | null
+}
+Relationships: [
+  {
+foreignKeyName: "oauth_sessions_app_id_fkey"
+columns: ["app_id"]
+isOneToOne: false
+referencedRelation: "oauth_applications"
+referencedColumns: ["id"]
+  },
+  {
+foreignKeyName: "oauth_sessions_profile_id_fkey"
+columns: ["profile_id"]
+isOneToOne: false
+referencedRelation: "profiles"
+referencedColumns: ["id"]
+  },
+]
+  }
   profiles: {
 Row: {
   created_at: string
@@ -468,25 +605,73 @@ referencedColumns: ["id"]
   }
 }
 Views: {
-  [_ in never]: never
+  oauth_app_daily_stats: {
+Row: {
+  app_id: string | null
+  app_name: string | null
+  authorizations: number | null
+  avg_response_time_ms: number | null
+  resolutions: number | null
+  revocations: number | null
+  successful_operations: number | null
+  total_operations: number | null
+  unique_users: number | null
+  usage_date: string | null
+}
+Relationships: [
+  {
+foreignKeyName: "app_usage_log_app_id_fkey"
+columns: ["app_id"]
+isOneToOne: false
+referencedRelation: "oauth_applications"
+referencedColumns: ["id"]
+  },
+]
+  }
+  oauth_user_activity_summary: {
+Row: {
+  avg_response_time_ms: number | null
+  connected_apps_count: number | null
+  last_activity: string | null
+  operations_last_week: number | null
+  profile_id: string | null
+  successful_operations: number | null
+  total_operations: number | null
+  user_email: string | null
+}
+Relationships: [
+  {
+foreignKeyName: "app_usage_log_profile_id_fkey"
+columns: ["profile_id"]
+isOneToOne: false
+referencedRelation: "profiles"
+referencedColumns: ["id"]
+  },
+]
+  }
 }
 Functions: {
+  assign_default_context_to_app: {
+Args: { p_app_id: string; p_profile_id: string }
+Returns: string
+  }
   can_delete_name: {
 Args: { p_name_id: string; p_user_id: string }
 Returns: Json
   }
-  complete_signup_with_oidc: {
-Args: {
-  p_display_name?: string
-  p_family_name: string
-  p_given_name: string
-  p_nickname?: string
-  p_preferred_username?: string
-  p_user_id: string
-}
-Returns: Json
+  cleanup_expired_oauth_sessions: {
+Args: Record<PropertyKey, never>
+Returns: number
+  }
+  cleanup_old_app_logs: {
+Args: { days_to_keep?: number }
+Returns: number
   }
   current_aud: {
+Args: Record<PropertyKey, never>
+Returns: string
+  }
+  generate_oauth_token: {
 Args: Record<PropertyKey, never>
 Returns: string
   }
@@ -500,11 +685,15 @@ Returns: {
   granted_at: string
 }[]
   }
+  get_cleanup_rollback_info: {
+Args: Record<PropertyKey, never>
+Returns: Json
+  }
   get_context_oidc_claims: {
 Args: { p_context_id: string }
 Returns: Json
   }
-  get_dashboard_stats: {
+  get_oauth_dashboard_stats: {
 Args: { p_profile_id: string }
 Returns: Json
   }
@@ -533,21 +722,16 @@ Returns: {
 Args: { p_granter_user_id: string; p_requester_user_id: string }
 Returns: boolean
   }
-  log_context_usage: {
+  log_app_usage: {
 Args: {
-  p_application_type?: string
-  p_context_id: string
-  p_details?: Json
+  p_action: string
+  p_app_id: string
+  p_context_id?: string
   p_error_type?: string
-  p_properties_disclosed?: Json
-  p_requesting_application: string
+  p_profile_id: string
   p_response_time_ms?: number
-  p_scopes_requested?: string[]
   p_session_id?: string
-  p_source_ip?: unknown
   p_success?: boolean
-  p_target_user_id: string
-  p_user_agent?: string
 }
 Returns: number
   }
@@ -560,17 +744,25 @@ Args: {
 }
 Returns: string
   }
-  resolve_name: {
-Args: {
-  p_context_name?: string
-  p_requester_user_id?: string
-  p_target_user_id: string
-}
-Returns: string
+  resolve_oauth_oidc_claims: {
+Args: { p_session_token: string }
+Returns: Json
   }
   revoke_consent: {
 Args: { p_granter_user_id: string; p_requester_user_id: string }
 Returns: boolean
+  }
+  test_enhanced_signup_functionality: {
+Args: Record<PropertyKey, never>
+Returns: Json
+  }
+  validate_enhanced_signup_setup: {
+Args: Record<PropertyKey, never>
+Returns: Json
+  }
+  verify_database_consistency: {
+Args: Record<PropertyKey, never>
+Returns: Json
   }
 }
 Enums: {

@@ -5,22 +5,15 @@
  * This test ensures all dashboard tabs are accessible and navigation works correctly.
  */
 
-import {
-  type DemoPersona,
-  ensureLoggedOut,
-  loginAsDemoUser,
-} from '@/utils/auth-helpers';
+import { ensureLoggedOut, createAndLoginTestUser } from '@/utils/auth-helpers';
 import { expect, test } from '@playwright/test';
-
-// Use JJ as our test persona
-const TEST_PERSONA: DemoPersona = 'JJ';
 
 test.describe('Dashboard Layout', () => {
   test.beforeEach(async ({ page }) => {
 // Ensure clean state before each test
 await ensureLoggedOut(page);
-// Login for all dashboard tests
-await loginAsDemoUser(page, TEST_PERSONA);
+// Create and login with a dynamic test user
+await createAndLoginTestUser(page);
   });
 
   test.describe('Dashboard Navigation', () => {

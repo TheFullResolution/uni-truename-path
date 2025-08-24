@@ -194,18 +194,8 @@ ALTER TABLE names DROP COLUMN oidc_property_type CASCADE;
   END IF;
 END $$;
 
--- Clean up context_name_assignments table - remove oidc_property if it exists
-DO $$ 
-BEGIN
-  IF EXISTS (
-SELECT 1 FROM information_schema.columns 
-WHERE table_name = 'context_name_assignments' 
-AND column_name = 'oidc_property'
-AND table_schema = 'public'
-  ) THEN
-ALTER TABLE context_name_assignments DROP COLUMN oidc_property CASCADE;
-  END IF;
-END $$;
+-- Keep oidc_property column in context_name_assignments table (needed for get_context_oidc_claims function)
+-- Note: Previously this migration dropped oidc_property, but it's required for OAuth integration
 
 -- =====================================================
 -- SECTION 9: VALIDATION AND VERIFICATION

@@ -28,10 +28,11 @@ export function RecentActivityCard({ loading }: RecentActivityCardProps) {
   const { user } = useAuth();
 
   // Fetch recent activity data - expect JSend response with AuditLogResponseData
+  // SECURITY: Use secure endpoint that gets user ID from auth context
   const { data: auditResponse, isLoading: activitiesLoading } = useSWR<
 JSendSuccess<AuditLogResponseData>
   >(
-user ? `/api/audit/${user.id}?limit=3` : null,
+user ? `/api/audit?limit=3` : null,
 swrFetcher<JSendSuccess<AuditLogResponseData>>,
   );
 

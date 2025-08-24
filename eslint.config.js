@@ -16,6 +16,9 @@ ignores: [
   '**/coverage/**',
   '**/.vercel/**',
   '**/out/**',
+  // Auto-generated files
+  '**/next-env.d.ts',
+  '**/generated/**',
 ],
   },
   js.configs.recommended,
@@ -47,6 +50,8 @@ rules: {
   ...reactHooks.configs.recommended.rules,
   'react/react-in-jsx-scope': 'off',
   'react/prop-types': 'off',
+  // Allow triple-slash references in auto-generated files
+  '@typescript-eslint/triple-slash-reference': 'off',
 },
 settings: {
   react: {

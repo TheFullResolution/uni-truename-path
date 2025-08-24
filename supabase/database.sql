@@ -1,6 +1,34 @@
 -- WARNING: This schema is for context only and is not meant to be run.
 -- Table order and constraints may not be valid for execution.
 
+CREATE TABLE public.app_context_assignments (
+id uuid NOT NULL DEFAULT gen_random_uuid(),
+profile_id uuid NOT NULL,
+app_id uuid NOT NULL,
+context_id uuid NOT NULL,
+created_at timestamp with time zone NOT NULL DEFAULT now(),
+updated_at timestamp with time zone DEFAULT now(),
+CONSTRAINT app_context_assignments_pkey PRIMARY KEY (id),
+CONSTRAINT app_context_assignments_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id),
+CONSTRAINT app_context_assignments_app_id_fkey FOREIGN KEY (app_id) REFERENCES public.oauth_applications(id),
+CONSTRAINT app_context_assignments_context_id_fkey FOREIGN KEY (context_id) REFERENCES public.user_contexts(id)
+);
+CREATE TABLE public.app_usage_log (
+  id bigint NOT NULL DEFAULT nextval('app_usage_log_id_seq'::regclass),
+  profile_id uuid NOT NULL,
+  app_id uuid NOT NULL,
+  session_id uuid,
+  action character varying NOT NULL CHECK (action::text = ANY (ARRAY['authorize'::character varying, 'resolve'::character varying, 'revoke'::character varying, 'assign_context'::character varying]::text[])),
+  context_id uuid,
+  response_time_ms integer DEFAULT 0 CHECK (response_time_ms >= 0),
+  success boolean NOT NULL DEFAULT true,
+  error_type character varying CHECK (error_type::text = ANY (ARRAY['authorization_denied'::character varying, 'invalid_token'::character varying, 'context_missing'::character varying, 'server_error'::character varying, 'rate_limited'::character varying]::text[])),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT app_usage_log_pkey PRIMARY KEY (id),
+  CONSTRAINT app_usage_log_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id),
+  CONSTRAINT app_usage_log_app_id_fkey FOREIGN KEY (app_id) REFERENCES public.oauth_applications(id),
+  CONSTRAINT app_usage_log_context_id_fkey FOREIGN KEY (context_id) REFERENCES public.user_contexts(id)
+);
 CREATE TABLE public.audit_log_entries (
   id bigint NOT NULL DEFAULT nextval('audit_log_entries_id_seq'::regclass),
   target_user_id uuid NOT NULL,
@@ -39,7 +67,7 @@ CREATE TABLE public.context_name_assignments (
  context_id uuid NOT NULL,
  name_id uuid NOT NULL,
  created_at timestamp with time zone NOT NULL DEFAULT now(),
- is_primary boolean DEFAULT false,
+ oidc_property text,
  CONSTRAINT context_name_assignments_pkey PRIMARY KEY (id),
  CONSTRAINT context_name_assignments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
  CONSTRAINT context_name_assignments_context_id_fkey FOREIGN KEY (context_id) REFERENCES public.user_contexts(id),
@@ -57,26 +85,6 @@ CREATE TABLE public.context_oidc_assignments (
  CONSTRAINT context_oidc_assignments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
  CONSTRAINT context_oidc_assignments_context_id_fkey FOREIGN KEY (context_id) REFERENCES public.user_contexts(id),
  CONSTRAINT context_oidc_assignments_name_id_fkey FOREIGN KEY (name_id) REFERENCES public.names(id)
-);
-CREATE TABLE public.context_usage_analytics (
-id bigint NOT NULL DEFAULT nextval('context_usage_analytics_id_seq'::regclass),
-target_user_id uuid NOT NULL,
-context_id uuid NOT NULL,
-requesting_application character varying NOT NULL,
-application_type character varying NOT NULL DEFAULT 'oauth_client'::character varying,
-scopes_requested ARRAY NOT NULL DEFAULT '{}'::text[],
-properties_disclosed jsonb NOT NULL DEFAULT '{}'::jsonb,
-response_time_ms integer NOT NULL DEFAULT 0,
-success boolean NOT NULL DEFAULT true,
-error_type character varying,
-accessed_at timestamp with time zone NOT NULL DEFAULT now(),
-source_ip inet,
-user_agent text,
-session_id character varying,
-details jsonb DEFAULT '{}'::jsonb,
-CONSTRAINT context_usage_analytics_pkey PRIMARY KEY (id),
-CONSTRAINT context_usage_analytics_target_user_id_fkey FOREIGN KEY (target_user_id) REFERENCES public.profiles(id),
-CONSTRAINT context_usage_analytics_context_id_fkey FOREIGN KEY (context_id) REFERENCES public.user_contexts(id)
 );
 CREATE TABLE public.name_disclosure_log (
 id bigint NOT NULL DEFAULT nextval('name_disclosure_log_id_seq'::regclass),
@@ -101,6 +109,32 @@ CREATE TABLE public.names (
   CONSTRAINT names_pkey PRIMARY KEY (id),
   CONSTRAINT names_profile_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
+CREATE TABLE public.oauth_applications (
+   id uuid NOT NULL DEFAULT gen_random_uuid(),
+   app_name character varying NOT NULL UNIQUE,
+   display_name character varying NOT NULL,
+   description text,
+   redirect_uri text NOT NULL,
+   app_type character varying DEFAULT 'oauth_client'::character varying,
+   is_active boolean DEFAULT true,
+   created_at timestamp with time zone NOT NULL DEFAULT now(),
+   updated_at timestamp with time zone DEFAULT now(),
+   CONSTRAINT oauth_applications_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.oauth_sessions (
+   id uuid NOT NULL DEFAULT gen_random_uuid(),
+   profile_id uuid NOT NULL,
+   app_id uuid NOT NULL,
+   session_token character varying NOT NULL UNIQUE CHECK (session_token::text ~ '^tnp_[a-f0-9]{32}$'::text),
+  return_url text NOT NULL,
+  expires_at timestamp with time zone NOT NULL DEFAULT (now() + '02:00:00'::interval),
+  used_at timestamp with time zone,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT oauth_sessions_pkey PRIMARY KEY (id),
+  CONSTRAINT oauth_sessions_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id),
+  CONSTRAINT oauth_sessions_app_id_fkey FOREIGN KEY (app_id) REFERENCES public.oauth_applications(id)
+);
 CREATE TABLE public.profiles (
  id uuid NOT NULL DEFAULT gen_random_uuid(),
  email text NOT NULL UNIQUE,
@@ -115,7 +149,7 @@ CREATE TABLE public.user_contexts (
   description text,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
-  is_permanent boolean DEFAULT false,
+  is_permanent boolean NOT NULL DEFAULT false,
   visibility USER-DEFINED NOT NULL DEFAULT 'restricted'::context_visibility,
   CONSTRAINT user_contexts_pkey PRIMARY KEY (id),
   CONSTRAINT user_contexts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)

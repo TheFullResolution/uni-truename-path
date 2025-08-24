@@ -1,43 +1,51 @@
--- Step 1: Add new columns to context_name_assignments
+-- Step 1: Add new columns to context_name_assignments (separate statements for reliability)
 ALTER TABLE context_name_assignments
-ADD COLUMN IF NOT EXISTS oidc_property TEXT,
+ADD COLUMN IF NOT EXISTS oidc_property TEXT;
+
+ALTER TABLE context_name_assignments  
 ADD COLUMN IF NOT EXISTS is_primary BOOLEAN DEFAULT FALSE;
 
--- Step 2: Add check constraint for valid OIDC properties
-ALTER TABLE context_name_assignments
-ADD CONSTRAINT valid_oidc_property CHECK (
-  oidc_property IS NULL OR
-  oidc_property IN ('given_name', 'family_name', 'nickname', 'display_name', 'preferred_username', 'name')
-);
+-- Step 2: Check constraint will be added after DROP TYPE to avoid CASCADE issues
 
 -- Step 3: Create unique constraint for primary per property per context
 CREATE UNIQUE INDEX IF NOT EXISTS idx_one_primary_per_oidc_property
 ON context_name_assignments(context_id, oidc_property)
 WHERE is_primary = TRUE AND oidc_property IS NOT NULL;
 
--- Step 4: Migrate existing data based on current oidc_property_type
-UPDATE context_name_assignments cna
-SET 
-  oidc_property = CASE
-WHEN n.oidc_property_type = 'given_name' THEN 'given_name'
-WHEN n.oidc_property_type = 'family_name' THEN 'family_name'
-WHEN n.oidc_property_type = 'nickname' THEN 'nickname'
-WHEN n.oidc_property_type = 'middle_name' THEN 'display_name'
-WHEN n.oidc_property_type = 'preferred_username' THEN 'preferred_username'
-WHEN n.oidc_property_type = 'name' THEN 'name'
-ELSE 'name'
-  END,
-  is_primary = TRUE
-FROM names n
-WHERE n.id = cna.name_id
-  AND n.oidc_property_type IS NOT NULL;
+-- Step 4: Data migration removed - oidc_property_type column doesn't exist in names table
+-- The new system will populate oidc_property through API operations and user context assignments
 
 -- Step 5: Remove oidc_property_type column from names table
 ALTER TABLE names
 DROP COLUMN IF EXISTS oidc_property_type;
 
--- Step 6: Drop the enum type
-DROP TYPE IF EXISTS oidc_property_type_enum CASCADE;
+-- Step 6: Drop dependent objects and then the enum type
+-- Drop functions that depend on the enum
+DROP FUNCTION IF EXISTS resolve_oidc_claims(text,text,text,text[]);
+DROP FUNCTION IF EXISTS upsert_oidc_assignment(uuid,oidc_property_type_enum,uuid,text,text[],uuid);
+DROP FUNCTION IF EXISTS get_oidc_assignments_for_context(uuid,uuid);
+
+-- Change oidc_claim_type column to text to remove enum dependency
+ALTER TABLE context_oidc_assignments 
+ALTER COLUMN oidc_claim_type TYPE TEXT;
+
+-- Drop the enum type (should now work without dependencies)
+DROP TYPE IF EXISTS oidc_property_type_enum;
+
+-- Step 6.1: Add check constraint for valid OIDC properties (after DROP TYPE)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+SELECT 1 FROM pg_constraint 
+WHERE conname = 'valid_oidc_property' AND conrelid = 'context_name_assignments'::regclass
+  ) THEN
+ALTER TABLE context_name_assignments
+ADD CONSTRAINT valid_oidc_property CHECK (
+  oidc_property IS NULL OR
+  oidc_property IN ('given_name', 'family_name', 'nickname', 'display_name', 'preferred_username', 'name')
+);
+  END IF;
+END $$;
 
 -- Step 7: Update complete_signup_with_oidc function
 CREATE OR REPLACE FUNCTION complete_signup_with_oidc(

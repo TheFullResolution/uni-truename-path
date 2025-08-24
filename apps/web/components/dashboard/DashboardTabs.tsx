@@ -4,14 +4,13 @@ import type { DashboardStatsResponse } from '@/app/api/dashboard/stats/types';
 import { ConsentsTabSkeleton } from '@/components/skeletons/ConsentsTabSkeleton';
 import { ContextsTabSkeleton } from '@/components/skeletons/ContextsTabSkeleton';
 import { NamesTabSkeleton } from '@/components/skeletons/NamesTabSkeleton';
-import { PreviewTabSkeleton } from '@/components/skeletons/PreviewTabSkeleton';
 import { SettingsTabSkeleton } from '@/components/skeletons/SettingsTabSkeleton';
 
 // Dynamic imports for performance optimization
 // Dashboard tab loads immediately as it's the main view
 import { DashboardTab } from '@/components/tabs/DashboardTab';
 import type { AuthenticatedUser } from '@/utils/context';
-import { Card, Text } from '@mantine/core';
+import { Box, Card, Text } from '@mantine/core';
 import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
 import { SWRErrorBoundary } from './SWRErrorBoundary';
@@ -61,17 +60,6 @@ ssr: false,
   },
 );
 
-const OIDCPreviewTab = dynamic(
-  () =>
-import('@/components/tabs/OIDCPreviewTab').then((mod) => ({
-  default: mod.OIDCPreviewTab,
-})),
-  {
-loading: () => <PreviewTabSkeleton />,
-ssr: false,
-  },
-);
-
 interface DashboardTabsProps {
   user: AuthenticatedUser | null;
   dashboardStats: DashboardStatsResponse | undefined;
@@ -86,42 +74,40 @@ export function DashboardTabs({
   return (
 <SWRErrorBoundary>
   {/* Dashboard Tab - Always loads immediately */}
-  <DashboardTab
-user={user}
-dashboardStats={dashboardStats}
-statsLoading={statsLoading}
-  />
+  <Box pt='md'>
+<DashboardTab
+  user={user}
+  dashboardStats={dashboardStats}
+  statsLoading={statsLoading}
+/>
 
-  {/* Other tabs load on demand with Suspense boundaries */}
-  <Suspense fallback={<ContextsTabSkeleton />}>
-<ContextsTab user={user} />
-  </Suspense>
+{/* Other tabs load on demand with Suspense boundaries */}
+<Suspense fallback={<ContextsTabSkeleton />}>
+  <ContextsTab user={user} />
+</Suspense>
 
-  <Suspense fallback={<NamesTabSkeleton />}>
-<NamesTab user={user} />
-  </Suspense>
+<Suspense fallback={<NamesTabSkeleton />}>
+  <NamesTab user={user} />
+</Suspense>
 
-  <Suspense fallback={<PreviewTabSkeleton />}>
-<OIDCPreviewTab />
-  </Suspense>
+<Suspense fallback={<ConsentsTabSkeleton />}>
+  <ConsentsTab />
+</Suspense>
 
-  <Suspense fallback={<ConsentsTabSkeleton />}>
-<ConsentsTab />
-  </Suspense>
+<Suspense fallback={<SettingsTabSkeleton />}>
+  <SettingsTab />
+</Suspense>
 
-  <Suspense fallback={<SettingsTabSkeleton />}>
-<SettingsTab />
-  </Suspense>
-
-  {/* Footer */}
-  <Card p='lg' shadow='sm' withBorder radius='lg' mt='xl'>
-<Text size='xs' c='dimmed' ta='center'>
-  TrueNamePath v1.0.0 - University Final Project (CM3035 Advanced Web
-  Design)
-  <br />
-  Context-Aware Identity Management API Demo
-</Text>
-  </Card>
+{/* Footer */}
+<Card p='lg' shadow='sm' withBorder radius='lg' mt='xl'>
+  <Text size='xs' c='dimmed' ta='center'>
+TrueNamePath v1.0.0 - University Final Project (CM3035 Advanced Web
+Design)
+<br />
+Context-Aware Identity Management API Demo
+  </Text>
+</Card>
+  </Box>
 </SWRErrorBoundary>
   );
 }

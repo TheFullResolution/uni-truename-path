@@ -3,19 +3,12 @@ import { Suspense } from 'react';
 import { DashboardContent } from '@/components/dashboard/DashboardContent';
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
 
-type ValidTab =
-  | 'dashboard'
-  | 'names'
-  | 'contexts'
-  | 'oidc-preview'
-  | 'consents'
-  | 'settings';
+type ValidTab = 'dashboard' | 'names' | 'contexts' | 'consents' | 'settings';
 
 const VALID_TABS: ValidTab[] = [
   'dashboard',
   'names',
   'contexts',
-  'oidc-preview',
   'consents',
   'settings',
 ];

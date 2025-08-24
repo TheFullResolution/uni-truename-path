@@ -19,6 +19,13 @@ import type {
 export type Profile = Tables<'profiles'>;
 export type Name = Tables<'names'>;
 export type UserContext = Tables<'user_contexts'>;
+export type OAuthApplication = Tables<'oauth_applications'>;
+export type OAuthApplicationInsert = TablesInsert<'oauth_applications'>;
+export type OAuthApplicationUpdate = TablesUpdate<'oauth_applications'>;
+
+export type OAuthSession = Tables<'oauth_sessions'>;
+export type OAuthSessionInsert = TablesInsert<'oauth_sessions'>;
+export type OAuthSessionUpdate = TablesUpdate<'oauth_sessions'>;
 export type Assignment = Tables<'context_name_assignments'>;
 export type OIDCAssignment = Tables<'context_oidc_assignments'>;
 export type Consent = Tables<'consents'>;

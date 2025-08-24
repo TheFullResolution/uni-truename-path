@@ -1,171 +1,154 @@
 /**
- * Context Usage Analytics Utility
+ * OAuth App Usage Analytics Utility
  *
- * This module provides utilities for tracking context usage analytics
- * for the TrueNamePath context-aware identity management system.
+ * This module provides utilities for tracking OAuth application usage analytics
+ * for the TrueNamePath OAuth demo integration system.
  *
  * Academic Project: University Final Project (CM3035 Advanced Web Design)
- * Innovation: Analytics tracking for context-aware name resolution usage patterns
+ * Innovation: Simplified OAuth analytics for context-aware identity demonstration
  *
  * =============================================================================
- * IMPORTANT: OAUTH/OIDC SCOPE HANDLING - FUTURE ENHANCEMENT
+ * OAUTH ANALYTICS SYSTEM - STEP 16 IMPLEMENTATION
  * =============================================================================
  *
- * This file contains legitimate OAuth/OIDC scope handling for analytics purposes.
- * This is DIFFERENT from the deprecated scope selection UI that was removed in Step 15.
+ * This file provides OAuth-focused analytics tracking to replace the
+ * over-engineered context_usage_analytics system with a simplified approach
+ * suitable for academic demonstration purposes.
  *
- * SCOPE TYPES IN THIS FILE:
- * - OAuth/OIDC Standard Scopes: 'openid', 'profile', 'email', 'phone', 'address'
- * - Used for: Analytics tracking of what properties are disclosed to external apps
- * - Compliance: OIDC Core 1.0 specification compliant
- * - Status: PRESERVED for future analytics functionality
- *
- * TODO - Step 15.7.5: Scope System Cleanup
- * - Review analytics scope handling for optimization opportunities
- * - Consider scope validation and sanitization improvements
- * - Evaluate scope-to-property mapping efficiency
- * - Assess if additional standard scopes should be supported
- * - Document scope handling strategy for external integrations
- *
- * DISTINCTION FROM REMOVED UI SCOPES:
- * - The deprecated UI scopes were for user-facing scope selection interfaces
- * - These analytics scopes are for OAuth/OIDC protocol compliance
- * - This code maintains proper OIDC standard compliance
- * - No UI components use these scope definitions
+ * KEY FEATURES:
+ * - Simple OAuth operation tracking (authorize, resolve, revoke, assign_context)
+ * - Performance monitoring for <3ms requirement
+ * - Dashboard integration for real OAuth metrics
+ * - Clean integration with app_usage_log table
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@/types/database';
-import type { OIDCResolveResponse } from '@/types/oidc';
+import type { Database } from '@/generated/database';
 
 // =============================================================================
-// Types for Analytics Functions
+// Types for OAuth Analytics
 // =============================================================================
 
 /**
- * Configuration for context usage tracking
+ * OAuth action types for tracking
  */
-export interface TrackContextUsageConfig {
+export type OAuthAction = 'authorize' | 'resolve' | 'revoke' | 'assign_context';
+
+/**
+ * OAuth error types for tracking
+ */
+export type OAuthErrorType =
+  | 'authorization_denied'
+  | 'invalid_token'
+  | 'context_missing'
+  | 'server_error'
+  | 'rate_limited';
+
+/**
+ * Configuration for OAuth app usage tracking
+ */
+export interface TrackOAuthUsageConfig {
   /** Supabase client for database operations */
   supabase: SupabaseClient<Database>;
 
-  /** Target user whose context was accessed */
-  targetUserId: string;
+  /** Profile ID of user performing the OAuth operation */
+  profileId: string;
 
-  /** Context ID that was used (if available) */
+  /** OAuth application ID */
+  appId: string;
+
+  /** Type of OAuth operation */
+  action: OAuthAction;
+
+  /** Context ID used for operation (optional) */
   contextId?: string;
 
-  /** Requesting application identifier */
-  requestingApplication: string;
-
-  /** Type of application making the request */
-  applicationType?: 'oauth_client' | 'oidc_client' | 'api_integration';
-
-  /** OAuth/OIDC scopes requested */
-  // TODO: Step 15.7.5 - Consider expanding to support additional OIDC standard scopes
-  scopesRequested: Array<'openid' | 'profile' | 'email' | 'phone' | 'address'>;
-
-  /** Actual properties disclosed to the application */
-  propertiesDisclosed: Record<string, unknown>;
+  /** OAuth session ID (optional) */
+  sessionId?: string;
 
   /** API response time in milliseconds */
-  responseTimeMs: number;
+  responseTimeMs?: number;
 
-  /** Whether the request was successful */
+  /** Whether the operation was successful */
   success?: boolean;
 
-  /** Error type if request failed */
-  errorType?: string;
-
-  /** Additional request metadata */
-  metadata?: {
-sourceIp?: string;
-userAgent?: string;
-sessionId?: string;
-requestId?: string;
-  };
+  /** Error type if operation failed */
+  errorType?: OAuthErrorType;
 }
 
 /**
- * Result from tracking context usage
+ * Result from tracking OAuth usage
  */
-export interface TrackContextUsageResult {
+export interface TrackOAuthUsageResult {
   /** Success status */
   success: boolean;
 
-  /** Analytics record ID if successful */
-  analyticsId?: number;
+  /** Usage log ID if successful */
+  logId?: number;
 
   /** Error message if failed */
   error?: string;
 }
 
 // =============================================================================
-// Core Analytics Functions
+// OAuth Analytics Functions
 // =============================================================================
 
 /**
- * Tracks context usage analytics by calling the database log_context_usage function
+ * Tracks OAuth app usage by calling the simplified log_app_usage function
  *
- * This function logs external OAuth/OIDC application usage of user contexts
- * for analytics, performance monitoring, and GDPR compliance tracking.
+ * This function logs OAuth application operations for demo analytics,
+ * performance monitoring, and dashboard integration.
  *
- * @param config Configuration object with all required analytics data
+ * @param config Configuration object with OAuth operation data
  * @returns Promise resolving to tracking result
  */
-export async function trackContextUsage(
-  config: TrackContextUsageConfig,
-): Promise<TrackContextUsageResult> {
+export async function trackOAuthUsage(
+  config: TrackOAuthUsageConfig,
+): Promise<TrackOAuthUsageResult> {
   try {
 const {
   supabase,
-  targetUserId,
+  profileId,
+  appId,
+  action,
   contextId,
-  requestingApplication,
-  applicationType = 'oidc_client',
-  scopesRequested,
-  propertiesDisclosed,
-  responseTimeMs,
+  sessionId,
+  responseTimeMs = 0,
   success = true,
   errorType,
-  metadata = {},
 } = config;
 
 // Validate required parameters
-if (!targetUserId) {
-  throw new Error('Target user ID is required for analytics tracking');
+if (!profileId) {
+  throw new Error('Profile ID is required for OAuth analytics tracking');
 }
 
-if (!requestingApplication) {
-  throw new Error('Requesting application identifier is required');
+if (!appId) {
+  throw new Error('App ID is required for OAuth analytics tracking');
 }
 
-// Call the database function to log context usage
-const { data: analyticsId, error: dbError } = await supabase.rpc(
-  'log_context_usage',
+if (!action) {
+  throw new Error('Action is required for OAuth analytics tracking');
+}
+
+// Call the simplified database function to log OAuth usage
+const { data: logId, error: dbError } = await supabase.rpc(
+  'log_app_usage',
   {
-p_target_user_id: targetUserId,
-p_context_id: contextId || '',
-p_requesting_application: requestingApplication,
-p_application_type: applicationType,
-p_scopes_requested: scopesRequested,
-p_properties_disclosed: Object.keys(propertiesDisclosed),
+p_profile_id: profileId,
+p_app_id: appId,
+p_action: action,
+p_context_id: contextId,
+p_session_id: sessionId,
 p_response_time_ms: responseTimeMs,
 p_success: success,
 p_error_type: errorType,
-p_source_ip: metadata.sourceIp,
-p_user_agent: metadata.userAgent,
-p_session_id: metadata.sessionId,
-p_details: {
-  request_id: metadata.requestId || null,
-  timestamp: new Date().toISOString(),
-  ...metadata,
-},
   },
 );
 
 if (dbError) {
-  console.error('Failed to log context usage analytics:', dbError);
+  console.error('Failed to log OAuth usage analytics:', dbError);
   return {
 success: false,
 error: `Database error: ${dbError.message}`,
@@ -174,10 +157,10 @@ error: `Database error: ${dbError.message}`,
 
 return {
   success: true,
-  analyticsId: analyticsId,
+  logId: logId,
 };
   } catch (error) {
-console.error('Error tracking context usage:', error);
+console.error('Error tracking OAuth usage:', error);
 return {
   success: false,
   error: error instanceof Error ? error.message : 'Unknown error',
@@ -186,232 +169,122 @@ return {
 }
 
 /**
- * Extracts properties disclosed from OIDC response claims
- *
- * This helper function converts an OIDC response into the format
- * expected by the analytics tracking system.
- *
- * TODO: Step 15.7.5 - Enhance scope-to-property mapping
- * - Add validation for scope-claim relationships
- * - Consider caching frequently used property mappings
- * - Add support for custom claim mappings if needed
- *
- * @param claims OIDC response claims
- * @param scopesRequested Original scopes that were requested
- * @returns Properties disclosed object for analytics
+ * Helper function to track OAuth authorization
  */
-export function extractPropertiesDisclosed(
-  claims: OIDCResolveResponse,
-  // TODO: Step 15.7.5 - Same scope array expansion as TrackContextUsageConfig
-  scopesRequested: Array<'openid' | 'profile' | 'email' | 'phone' | 'address'>,
-): Record<string, unknown> {
-  const disclosed: Record<string, unknown> = {};
-
-  // Always include sub (subject identifier)
-  if (claims.sub) {
-disclosed.sub = claims.sub;
-  }
-
-  // Include profile scope properties if requested
-  if (scopesRequested.includes('profile')) {
-// TODO: Step 15.7.5 - Review profile scope property mapping
-// Consider if all OIDC standard profile claims are needed for analytics
-const profileProps = [
-  'name',
-  'given_name',
-  'family_name',
-  'middle_name',
-  'nickname',
-  'preferred_username',
-  'profile',
-  'picture',
-  'website',
-  'gender',
-  'birthdate',
-  'zoneinfo',
-  'locale',
-  'updated_at',
-] as const;
-
-profileProps.forEach((prop) => {
-  if (claims[prop] !== undefined) {
-disclosed[prop] = claims[prop];
-  }
-});
-  }
-
-  // Include email scope properties if requested
-  if (scopesRequested.includes('email')) {
-if (claims.email !== undefined) {
-  disclosed.email = claims.email;
-}
-if (claims.email_verified !== undefined) {
-  disclosed.email_verified = claims.email_verified;
-}
-  }
-
-  // Include address scope properties if requested
-  if (scopesRequested.includes('address') && claims.address !== undefined) {
-disclosed.address = claims.address;
-  }
-
-  // Include phone scope properties if requested
-  if (scopesRequested.includes('phone')) {
-if (claims.phone_number !== undefined) {
-  disclosed.phone_number = claims.phone_number;
-}
-if (claims.phone_number_verified !== undefined) {
-  disclosed.phone_number_verified = claims.phone_number_verified;
-}
-  }
-
-  // Include TrueNamePath-specific metadata (not part of standard OIDC)
-  if (claims.resolution_source) {
-disclosed.resolution_source = claims.resolution_source;
-  }
-  if (claims.context_name) {
-disclosed.context_name = claims.context_name;
-  }
-
-  return disclosed;
-}
-
-/**
- * Helper function to determine context ID from context name
- *
- * This function looks up a user's context ID by name for analytics tracking.
- *
- * @param supabase Supabase client
- * @param userId User ID who owns the context
- * @param contextName Name of the context to look up
- * @returns Promise resolving to context ID or null if not found
- */
-export async function getContextIdByName(
+export async function trackOAuthAuthorization(
   supabase: SupabaseClient<Database>,
-  userId: string,
-  contextName?: string,
-): Promise<string | null> {
-  if (!contextName) {
-return null;
-  }
-
-  try {
-const { data: context, error } = await supabase
-  .from('user_contexts')
-  .select('id')
-  .eq('user_id', userId)
-  .eq('name', contextName)
-  .single();
-
-if (error || !context) {
-  console.warn(`Context not found: ${contextName} for user ${userId}`);
-  return null;
-}
-
-return context.id;
-  } catch (error) {
-console.error('Error looking up context ID:', error);
-return null;
-  }
-}
-
-// =============================================================================
-// Convenience Functions
-// =============================================================================
-
-/**
- * Simplified function to track successful OIDC resolution
- *
- * TODO: Step 15.7.5 - Review convenience function scope handling
- * - Consider if scope parameter validation is needed
- * - Evaluate if scope defaults should be provided
- * - Assess scope parameter consistency across functions
- *
- * @param config Tracking configuration
- * @param claims OIDC response claims
- * @param responseTimeMs Response time in milliseconds
- * @returns Promise resolving to tracking result
- */
-export async function trackOIDCResolution(
-  supabase: SupabaseClient<Database>,
-  targetUserId: string,
-  contextName: string | undefined,
-  requestingApplication: string,
-  // TODO: Step 15.7.5 - Consistent scope type across all functions
-  scopesRequested: Array<'openid' | 'profile' | 'email' | 'phone' | 'address'>,
-  claims: OIDCResolveResponse,
-  responseTimeMs: number,
-  metadata?: TrackContextUsageConfig['metadata'],
-): Promise<TrackContextUsageResult> {
-  // Get context ID if context name is provided
-  const contextId = await getContextIdByName(
+  profileId: string,
+  appId: string,
+  contextId: string,
+  sessionId: string,
+  responseTimeMs: number = 0,
+): Promise<TrackOAuthUsageResult> {
+  return trackOAuthUsage({
 supabase,
-targetUserId,
-contextName,
-  );
-
-  // Extract properties that were actually disclosed
-  const propertiesDisclosed = extractPropertiesDisclosed(
-claims,
-scopesRequested,
-  );
-
-  return trackContextUsage({
-supabase,
-targetUserId,
-contextId: contextId || undefined,
-requestingApplication,
-applicationType: 'oidc_client',
-scopesRequested,
-propertiesDisclosed,
+profileId,
+appId,
+action: 'authorize',
+contextId,
+sessionId,
 responseTimeMs,
 success: true,
-metadata,
   });
 }
 
 /**
- * Track failed OIDC resolution attempt
- *
- * TODO: Step 15.7.5 - Consider failure tracking enhancements
- * - Add error categorization for better analytics
- * - Consider scope-specific error tracking
- * - Evaluate if partial scope fulfillment should be tracked
- *
- * @param config Basic tracking configuration
- * @param errorType Type of error that occurred
- * @param responseTimeMs Response time in milliseconds
- * @returns Promise resolving to tracking result
+ * Helper function to track OIDC claims resolution
  */
-export async function trackOIDCResolutionFailure(
+export async function trackOAuthResolve(
   supabase: SupabaseClient<Database>,
-  targetUserId: string,
-  contextName: string | undefined,
-  requestingApplication: string,
-  // TODO: Step 15.7.5 - Same scope expansion as other functions
-  scopesRequested: Array<'openid' | 'profile' | 'email' | 'phone' | 'address'>,
-  errorType: string,
-  responseTimeMs: number,
-  metadata?: TrackContextUsageConfig['metadata'],
-): Promise<TrackContextUsageResult> {
-  // Get context ID if context name is provided
-  const contextId = await getContextIdByName(
+  profileId: string,
+  appId: string,
+  contextId: string,
+  sessionId: string,
+  responseTimeMs: number = 0,
+): Promise<TrackOAuthUsageResult> {
+  return trackOAuthUsage({
 supabase,
-targetUserId,
-contextName,
-  );
-
-  return trackContextUsage({
-supabase,
-targetUserId,
-contextId: contextId || undefined,
-requestingApplication,
-applicationType: 'oidc_client',
-scopesRequested,
-propertiesDisclosed: {}, // No properties disclosed on failure
+profileId,
+appId,
+action: 'resolve',
+contextId,
+sessionId,
 responseTimeMs,
-success: false,
-errorType,
-metadata,
+success: true,
   });
 }
+
+/**
+ * Helper function to track app revocation
+ */
+export async function trackOAuthRevocation(
+  supabase: SupabaseClient<Database>,
+  profileId: string,
+  appId: string,
+): Promise<TrackOAuthUsageResult> {
+  return trackOAuthUsage({
+supabase,
+profileId,
+appId,
+action: 'revoke',
+success: true,
+  });
+}
+
+/**
+ * Helper function to track context assignment changes
+ */
+export async function trackContextAssignment(
+  supabase: SupabaseClient<Database>,
+  profileId: string,
+  appId: string,
+  contextId: string,
+): Promise<TrackOAuthUsageResult> {
+  return trackOAuthUsage({
+supabase,
+profileId,
+appId,
+action: 'assign_context',
+contextId,
+success: true,
+  });
+}
+
+// =============================================================================
+// Analytics Constants
+// =============================================================================
+
+/**
+ * Performance targets for OAuth operations
+ */
+export const OAUTH_PERFORMANCE_TARGETS = {
+  /** Maximum response time for OAuth operations (3ms) */
+  MAX_RESPONSE_TIME_MS: 3,
+
+  /** Target success rate for OAuth operations (99%) */
+  TARGET_SUCCESS_RATE: 99,
+
+  /** Maximum acceptable error rate (1%) */
+  MAX_ERROR_RATE: 1,
+} as const;
+
+/**
+ * OAuth action display names for UI
+ */
+export const OAUTH_ACTION_LABELS: Record<OAuthAction, string> = {
+  authorize: 'Authorization',
+  resolve: 'Name Resolution',
+  revoke: 'Access Revocation',
+  assign_context: 'Context Assignment',
+} as const;
+
+/**
+ * OAuth error type display names for UI
+ */
+export const OAUTH_ERROR_LABELS: Record<OAuthErrorType, string> = {
+  authorization_denied: 'Authorization Denied',
+  invalid_token: 'Invalid Token',
+  context_missing: 'Context Missing',
+  server_error: 'Server Error',
+  rate_limited: 'Rate Limited',
+} as const;

@@ -22,6 +22,7 @@ export type AuthMode = 'required' | 'optional';
 
 /**
  * Context object passed to authenticated API route handlers
+ * Extended to support OAuth Bearer token authentication
  */
 export interface AuthenticatedContext {
   user: AuthenticatedUser | null;
@@ -29,6 +30,14 @@ export interface AuthenticatedContext {
   timestamp: string;
   isAuthenticated: boolean;
   supabase: SupabaseClient<Database>;
+  // OAuth-specific fields
+  isOAuth: boolean;
+  oauthSession?: {
+id: string;
+appId: string;
+sessionId: string;
+appName: string;
+  };
 }
 
 /**
@@ -136,50 +145,79 @@ export function withAuth<T = unknown>(
 const requestId = generateRequestId();
 const timestamp = new Date().toISOString();
 
-// Enable logging if configured
-const shouldLog =
-  options.enableLogging ?? process.env.NODE_ENV === 'development';
+// Minimal logging for academic demonstration
 
 try {
-  if (shouldLog) {
-console.log(`API Request [${requestId}]:`, {
-  method: request.method,
-  url: request.url,
-  authMode: options.authMode,
-  userAgent:
-request.headers.get('user-agent')?.substring(0, 50) + '...',
-});
-  }
-
-  // 1. Read authentication status from middleware headers
+  // 1. Read core authentication status from middleware headers
   const authVerified =
 request.headers.get('x-authentication-verified') === 'true';
   const userId = request.headers.get('x-authenticated-user-id') || '';
+
+  // 1.1. Read OAuth-specific headers from middleware
+  const isOAuthAuth =
+request.headers.get('x-oauth-authenticated') === 'true';
+  const oauthSessionId = request.headers.get('x-oauth-session-id') || '';
+  const oauthAppId = request.headers.get('x-oauth-app-id') || '';
+
+  // 1.2. Read personal data headers (only available for internal routes)
   const userEmail = request.headers.get('x-authenticated-user-email') || '';
   const userProfileHeader = request.headers.get(
 'x-authenticated-user-profile',
   );
 
   let user: AuthenticatedUser | null = null;
-  if (authVerified && userId && userEmail) {
-// Reconstruct user object from headers
-let profile = undefined;
-if (userProfileHeader) {
-  try {
-profile = JSON.parse(userProfileHeader);
-  } catch (error) {
-console.warn(
-  'Failed to parse user profile from middleware header:',
-  error,
-);
-  }
-}
+  let oauthSession = undefined;
 
-user = {
-  id: userId,
-  email: userEmail,
-  profile,
-};
+  // 2. Build authentication context based on available headers
+  if (authVerified && userId) {
+if (isOAuthAuth && oauthSessionId && oauthAppId) {
+  // OAuth authentication: Handle both minimal and full contexts
+  let appName = oauthAppId; // Default fallback
+
+  if (userEmail) {
+// Internal OAuth route: Full context with profile data from headers
+user = buildInternalAuthContext(
+  userId,
+  userEmail,
+  userProfileHeader,
+);
+// Extract app name from profile header if available
+if (
+  user?.profile &&
+  typeof user.profile === 'object' &&
+  'app_name' in user.profile
+) {
+  appName =
+(user.profile as { app_name?: string }).app_name || oauthAppId;
+}
+  } else {
+// External OAuth route: Minimal context from database
+const oauthContext = await buildOAuthAuthContext(
+  userId,
+  oauthSessionId,
+  oauthAppId,
+);
+user = oauthContext.user;
+appName = oauthContext.appName;
+  }
+
+  oauthSession = {
+id: oauthSessionId,
+appId: oauthAppId,
+sessionId: oauthSessionId,
+appName,
+  };
+} else if (userEmail) {
+  // Regular internal route: Build full context with profile data
+  user = buildInternalAuthContext(userId, userEmail, userProfileHeader);
+} else {
+  // Fallback: Basic user context with minimal data
+  user = {
+id: userId,
+email: '', // No email available for minimal routes
+profile: undefined,
+  };
+}
   }
 
   // 2. Handle authentication based on mode
@@ -204,14 +242,10 @@ requestId,
   )
 : errorResponse;
 
-  if (shouldLog) {
-console.warn(`API Auth Failure [${requestId}]:`, {
-  code: finalError.error.code,
-  message: finalError.error.message,
-  authVerified,
-  hasUser: !!user,
-});
-  }
+  // Log authentication failure for debugging
+  console.error(
+`Authentication failed [${requestId}]: ${finalError.error.code}`,
+  );
 
   return NextResponse.json(finalError, {
 status: 401,
@@ -237,20 +271,15 @@ requestId,
 timestamp,
 isAuthenticated: authVerified && !!user,
 supabase: authenticatedClient,
+// OAuth context fields
+isOAuth: isOAuthAuth,
+oauthSession,
   };
 
   // 4. Call the wrapped handler
   const result = await handler(request, context);
 
-  // 5. Log successful requests
-  if (shouldLog) {
-console.log(`API Success [${requestId}]:`, {
-  authenticated: context.isAuthenticated,
-  userId: context.user?.id?.substring(0, 8) + '...' || 'anonymous',
-  responseType: result.success ? 'success' : 'error',
-  readFromMiddleware: true, // Indicates this used middleware headers
-});
-  }
+  // Handler executed successfully
 
   // 6. Determine appropriate HTTP status code
   let statusCode = 200;
@@ -272,11 +301,10 @@ headers: {
   });
 } catch (error) {
   // Handle unexpected errors in the authentication wrapper
-  console.error(`API Wrapper Error [${requestId}]:`, {
-error: error instanceof Error ? error.message : 'Unknown error',
-stack: error instanceof Error ? error.stack : undefined,
-url: request.url,
-  });
+  console.error(
+`API Error [${requestId}]:`,
+error instanceof Error ? error.message : 'Unknown error',
+  );
 
   const errorResponse = createErrorResponse(
 'INTERNAL_SERVER_ERROR',
@@ -402,4 +430,87 @@ export function validate_uuid(id: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
 id,
   );
+}
+
+/**
+ * Build OAuth-specific authentication context with minimal data exposure
+ * Fetches only essential OAuth session and app data from database
+ */
+async function buildOAuthAuthContext(
+  userId: string,
+  sessionId: string,
+  appId: string,
+): Promise<{ user: AuthenticatedUser; appName: string }> {
+  try {
+// Create server client for database access
+const supabase = await import('../supabase/server').then((m) =>
+  m.createClient(),
+);
+
+// Fetch minimal OAuth session data
+const { data: sessionData } = await supabase
+  .from('oauth_sessions')
+  .select(
+`
+id,
+oauth_applications!inner(
+  id,
+  app_name,
+  display_name
+)
+  `,
+  )
+  .eq('id', sessionId)
+  .eq('profile_id', userId)
+  .single();
+
+const user: AuthenticatedUser = {
+  id: userId,
+  email: '', // No email exposure for OAuth context
+  profile: undefined, // No profile data for OAuth-only routes
+};
+
+const appName = sessionData?.oauth_applications?.display_name || appId;
+
+return { user, appName };
+  } catch (error) {
+// Fallback to minimal context on error
+console.warn('Failed to build OAuth context:', error);
+return {
+  user: {
+id: userId,
+email: '',
+profile: undefined,
+  },
+  appName: appId,
+};
+  }
+}
+
+/**
+ * Build internal route authentication context with full profile data
+ * Uses headers provided by middleware for performance optimization
+ */
+function buildInternalAuthContext(
+  userId: string,
+  userEmail: string,
+  profileHeader: string | null,
+): AuthenticatedUser {
+  let profile = undefined;
+  if (profileHeader) {
+try {
+  profile = JSON.parse(profileHeader);
+} catch (error) {
+  console.warn(
+'Failed to parse user profile from middleware header:',
+error,
+  );
+}
+  }
+
+  return {
+id: userId,
+email: userEmail,
+profile,
+  };
 }

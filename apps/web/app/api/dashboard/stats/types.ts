@@ -1,9 +1,9 @@
 import type { QueryData } from '@supabase/supabase-js';
 import { createClient } from '@/utils/supabase/client';
 
-// Query for dashboard statistics
+// Query for OAuth dashboard statistics
 export const getDashboardStatsQuery = (profileId: string) =>
-  createClient().rpc('get_dashboard_stats', {
+  createClient().rpc('get_oauth_dashboard_stats', {
 p_profile_id: profileId,
   });
 

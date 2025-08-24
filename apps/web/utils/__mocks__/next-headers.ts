@@ -54,27 +54,50 @@ export const mockUnauthenticatedHeaders = createMockHeaders({
 
 export const mockMissingAuthHeaders = createMockHeaders({});
 
+// OAuth-specific mock headers for security testing
+export const mockOAuthHeaders = createMockHeaders({
+  'x-authentication-verified': 'true',
+  'x-authenticated-user-id': 'user-oauth-456',
+  'x-oauth-authenticated': 'true',
+  'x-oauth-session-id': 'oauth-session-789',
+  'x-oauth-app-id': 'demo-hr-app',
+  // Note: Intentionally missing email and profile for OAuth security
+});
+
+export const mockOAuthWithSensitiveHeaders = createMockHeaders({
+  'x-authentication-verified': 'true',
+  'x-authenticated-user-id': 'user-oauth-456',
+  'x-authenticated-user-email': 'oauth-user@example.com', // Should be filtered
+  'x-oauth-authenticated': 'true',
+  'x-oauth-session-id': 'oauth-session-789',
+  'x-oauth-app-id': 'demo-hr-app',
+  'x-authenticated-user-profile': JSON.stringify({
+// Should be filtered
+id: 'user-oauth-456',
+email: 'oauth-user@example.com',
+full_name: 'OAuth Test User',
+  }),
+});
+
 // Default mock for Next.js headers() function
 export const mockHeaders = vi.fn(() => mockMissingAuthHeaders);
 
 // Reset function for test cleanup
 export function resetHeadersMocks() {
   mockHeaders.mockClear();
-  mockAuthenticatedHeaders.get.mockClear();
-  mockAuthenticatedHeaders.has.mockClear();
-  mockAuthenticatedHeaders.set.mockClear();
-  mockAuthenticatedHeaders.delete.mockClear();
-  mockAuthenticatedHeaders.forEach.mockClear();
 
-  mockUnauthenticatedHeaders.get.mockClear();
-  mockUnauthenticatedHeaders.has.mockClear();
-  mockUnauthenticatedHeaders.set.mockClear();
-  mockUnauthenticatedHeaders.delete.mockClear();
-  mockUnauthenticatedHeaders.forEach.mockClear();
-
-  mockMissingAuthHeaders.get.mockClear();
-  mockMissingAuthHeaders.has.mockClear();
-  mockMissingAuthHeaders.set.mockClear();
-  mockMissingAuthHeaders.delete.mockClear();
-  mockMissingAuthHeaders.forEach.mockClear();
+  // Reset all standard headers
+  [
+mockAuthenticatedHeaders,
+mockUnauthenticatedHeaders,
+mockMissingAuthHeaders,
+mockOAuthHeaders,
+mockOAuthWithSensitiveHeaders,
+  ].forEach((mockHeader) => {
+mockHeader.get.mockClear();
+mockHeader.has.mockClear();
+mockHeader.set.mockClear();
+mockHeader.delete.mockClear();
+mockHeader.forEach.mockClear();
+  });
 }

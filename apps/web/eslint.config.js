@@ -1,29 +1,33 @@
-import nextPlugin from '@next/eslint-plugin-next';
+import { FlatCompat } from '@eslint/eslintrc';
+import js from '@eslint/js';
 import baseConfig from '../../eslint.config.js';
 
-export default [
-  ...baseConfig,
+const compat = new FlatCompat({
+  baseDirectory: import.meta.dirname,
+  recommendedConfig: js.configs.recommended,
+});
+
+const nextLintConfig = [
   {
 ignores: [
-  // Test and build artifacts
-  'coverage/**',
-  'vitest-ui/**',
-  'html/**',
-  // Generated files
-  '**/*.generated.*',
-  // Dependencies
   'node_modules/**',
+  '.next/**',
+  'out/**',
+  'build/**',
+  'next-env.d.ts',
+  'vitest-ui/**',
 ],
   },
-  {
-files: ['**/*.{ts,tsx}'],
-plugins: {
-  '@next/next': nextPlugin,
-},
-rules: {
-  ...nextPlugin.configs.recommended.rules,
-},
+  ...baseConfig,
+  {}, // Use FlatCompat to integrate Next.js ESLint config
+  ...compat.config({
+extends: ['next/core-web-vitals'],
+settings: {
+  next: {
+rootDir: '.',
   },
+},
+  }),
   {
 // Client component import protection
 files: [
@@ -69,3 +73,5 @@ rules: {
 },
   },
 ];
+
+export default nextLintConfig;

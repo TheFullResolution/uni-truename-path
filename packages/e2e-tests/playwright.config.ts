@@ -73,5 +73,6 @@ command: process.env.CI
 url: 'http://localhost:3000',
 reuseExistingServer: true,
 timeout: process.env.CI ? 60 * 1000 : 30 * 1000,
+cwd: '../../', // Run commands from project root
   },
 });

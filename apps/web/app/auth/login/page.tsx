@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import type { Route } from 'next';
 import {
   Container,
   Grid,
@@ -37,7 +38,7 @@ color: 'blue',
 autoClose: 2000,
   });
 
-  router.replace(returnUrl);
+  router.replace(returnUrl as Route);
 }
   }, [isAuthenticated, loading, user, router, searchParams]);
 
@@ -45,7 +46,7 @@ autoClose: 2000,
   const handleLoginSuccess = useCallback(() => {
 const returnUrl = searchParams.get('returnUrl') || '/dashboard';
 
-router.replace(returnUrl);
+router.replace(returnUrl as Route);
   }, [router, searchParams]);
 
   // Handle forgot password
@@ -65,7 +66,7 @@ const signupUrl = returnUrl
   ? `/auth/signup?returnUrl=${encodeURIComponent(returnUrl)}`
   : '/auth/signup';
 
-router.push(signupUrl);
+router.push(signupUrl as Route);
   }, [router, searchParams]);
 
   // Show loading state while checking authentication

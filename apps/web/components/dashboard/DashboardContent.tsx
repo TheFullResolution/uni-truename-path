@@ -7,6 +7,7 @@ import { useAuth } from '@/utils/context';
 import { formatSWRError, swrFetcher } from '@/utils/swr-fetcher';
 import { CACHE_KEYS } from '@/utils/swr-keys';
 import { createLogoutHandler } from '@/utils/utils';
+import type { Route } from 'next';
 import {
   Box,
   Button,
@@ -25,20 +26,13 @@ import {
   IconShieldCheck,
   IconTags,
   IconUser,
-  IconCode,
 } from '@tabler/icons-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import useSWR from 'swr';
 import { DashboardTabs } from './DashboardTabs';
 
-type ValidTab =
-  | 'dashboard'
-  | 'names'
-  | 'contexts'
-  | 'oidc-preview'
-  | 'consents'
-  | 'settings';
+type ValidTab = 'dashboard' | 'names' | 'contexts' | 'consents' | 'settings';
 
 interface DashboardContentProps {
   initialTab: ValidTab;
@@ -111,7 +105,7 @@ const newUrl =
 ? `/dashboard${queryString ? `?${queryString}` : ''}`
 : `/dashboard/${newTab}${queryString ? `?${queryString}` : ''}`;
 
-router.push(newUrl, { scroll: false });
+router.push(newUrl as Route, { scroll: false });
   }
 },
 [router, urlSearchParams],
@@ -179,13 +173,6 @@ Sign Out
   data-testid='tab-names'
 >
   Names
-</Tabs.Tab>
-<Tabs.Tab
-  value='oidc-preview'
-  leftSection={<IconCode size={16} />}
-  data-testid='tab-oidc-preview'
->
-  OIDC Preview
 </Tabs.Tab>
 <Tabs.Tab
   value='consents'

@@ -140,7 +140,7 @@ This is a monorepo using Turborepo and Yarn workspaces:
 
 ### Context-Aware Name Resolution
 
-- ✅ `resolve_name()` function with 2.4ms performance
+- ✅ OAuth/OIDC resolution with <3ms performance
 - ✅ User-defined contexts (not hardcoded)
 - ✅ GDPR-compliant audit logging
 - ✅ Multi-persona demo interface

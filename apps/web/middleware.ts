@@ -38,8 +38,10 @@ return NextResponse.next();
 /**
  * Middleware configuration
  * Apply to ALL routes except static assets (API routes are now included)
+ * Using Node.js runtime for better performance and full Node.js API access
  */
 export const config = {
+  runtime: 'nodejs', // Enable Node.js runtime for better performance and stability
   matcher: [
 /*
  * Match all request paths except for the ones starting with:

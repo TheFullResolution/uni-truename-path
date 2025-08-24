@@ -1,5 +1,6 @@
 import { useRouter } from 'next/navigation';
 import { notifications } from '@mantine/notifications';
+import type { Route } from 'next';
 
 /**
  * Utility function for creating a logout handler with a specific logout function
@@ -24,7 +25,7 @@ notifications.show({
   autoClose: 3000,
 });
 
-router.replace('/auth/login');
+router.replace('/auth/login' as Route);
   } else {
 notifications.show({
   title: 'Logout failed',
