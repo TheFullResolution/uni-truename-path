@@ -23,7 +23,11 @@ export async function createAndLoginTestUser(page: Page): Promise<TestUser> {
 
   // Navigate to signup
   await page.goto('/auth/signup');
-  await page.waitForLoadState('networkidle');
+  // Wait for the signup form to be ready
+  await page.waitForSelector('[data-testid="signup-email-input"]', {
+state: 'visible',
+timeout: 30000,
+  });
 
   // Fill Step 1 form
   await page.getByTestId('signup-email-input').fill(email);
@@ -58,7 +62,10 @@ export async function createTestContext(
   console.log(`📁 Creating test context: ${name}`);
 
   await page.goto('/dashboard/contexts');
-  await page.waitForLoadState('networkidle');
+  // Wait for contexts page to load
+  await page.waitForSelector('[data-testid="tab-contexts"]', {
+timeout: 30000,
+  });
 
   // Check if we're already on the contexts page or need to navigate
   const currentUrl = page.url();
@@ -119,7 +126,10 @@ await page.goto('/dashboard/settings');
 
 // Wait for page to load completely
 await page.waitForLoadState('domcontentloaded');
-await page.waitForLoadState('networkidle');
+// Wait for settings page to be ready
+await page.waitForSelector('[data-testid="tab-settings"]', {
+  timeout: 30000,
+});
 
 const logoutButton = page.getByRole('button', {
   name: /sign out|logout/i,

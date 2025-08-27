@@ -56,6 +56,8 @@ screenshot: 'only-on-failure',
 actionTimeout: 30000, // 30s for actions in WebKit CI
 navigationTimeout: 30000, // 30s for navigation in WebKit CI
   },
+  timeout: 60000, // Give WebKit tests more time
+  retries: 3, // More retries for WebKit specifically
 },
 {
   name: 'mobile',

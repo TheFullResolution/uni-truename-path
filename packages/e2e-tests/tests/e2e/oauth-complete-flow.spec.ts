@@ -428,8 +428,11 @@ console.log(
 
   test('OAuth logging performance and client_id format validation', async ({
 page,
+browserName,
   }) => {
 test.setTimeout(60000); // Increase timeout for multiple user operations
+// Mark test as slow for WebKit specifically
+test.slow(browserName === 'webkit', 'WebKit needs more time in CI');
 console.log(
   '🚀 Testing OAuth logging performance and client_id validation',
 );

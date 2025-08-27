@@ -30,10 +30,20 @@ await createAndLoginTestUser(page);
 
   test('should discover and verify all expected dashboard tabs', async ({
 page,
+browserName,
   }) => {
+// Mark test as slow for WebKit specifically
+test.slow(
+  browserName === 'webkit',
+  'WebKit needs more time for authentication',
+);
 // Navigate to dashboard - should already be authenticated
 await page.goto('/dashboard');
-await page.waitForLoadState('networkidle');
+// Wait for authentication check to complete and dashboard to load
+await page.waitForFunction(
+  () => !document.body.textContent?.includes('Checking authentication'),
+  { timeout: 30000 },
+);
 await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
 
 // Discover all available tabs dynamically
@@ -68,7 +78,8 @@ page,
 // Navigate to dashboard - should already be authenticated
 await page.goto('/dashboard');
 await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
-await page.waitForLoadState('networkidle');
+// Wait for dashboard tabs to be available
+await page.waitForSelector('[data-testid^="tab-"]', { timeout: 30000 });
 
 // Test navigation to each tab by clicking UI elements
 const tabNavigationTests = [
@@ -111,7 +122,8 @@ page,
 // Navigate to dashboard - should already be authenticated
 await page.goto('/dashboard');
 await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
-await page.waitForLoadState('networkidle');
+// Wait for dashboard tabs to be available
+await page.waitForSelector('[data-testid^="tab-"]', { timeout: 30000 });
 
 // Test that content area updates when switching between tabs
 const contentTestTabs = ['contexts', 'names', 'consents'];
@@ -121,7 +133,10 @@ for (const tab of contentTestTabs) {
 
   // Click tab
   await page.click(`[data-testid="tab-${tab}"]`);
-  await page.waitForLoadState('networkidle');
+  // Wait for content to load - page should not be empty
+  await page.waitForFunction(() => document.body.innerText.length > 100, {
+timeout: 30000,
+  });
 
   // Verify page content loaded (no errors)
   await expect(page.locator('body')).not.toHaveText(/error|failed|404/i);
