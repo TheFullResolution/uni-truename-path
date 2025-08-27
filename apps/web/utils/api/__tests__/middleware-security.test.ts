@@ -73,7 +73,7 @@ expect(isHeaderAllowedForRoute('x-authenticated-user-id', route)).toBe(
 
 // OAuth session tracking
 expect(isHeaderAllowedForRoute('x-oauth-session-id', route)).toBe(true);
-expect(isHeaderAllowedForRoute('x-oauth-app-id', route)).toBe(true);
+expect(isHeaderAllowedForRoute('x-oauth-client-id', route)).toBe(true);
   });
 });
 
@@ -223,7 +223,7 @@ it('should filter headers based on route classification', () => {
 'x-authenticated-user-email',
 'x-authenticated-user-profile',
 'x-oauth-session-id',
-'x-oauth-app-id',
+'x-oauth-client-id',
 'x-authentication-verified',
   ];
 
@@ -261,7 +261,7 @@ it('should handle OAuth routes with minimal data exposure', () => {
 'x-authenticated-user-id',
 'x-oauth-authenticated',
 'x-oauth-session-id',
-'x-oauth-app-id',
+'x-oauth-client-id',
   ]);
 });
 
@@ -275,7 +275,7 @@ it('should maintain consistent OAuth security boundaries', () => {
 'x-authenticated-user-id',
 'x-oauth-authenticated',
 'x-oauth-session-id',
-'x-oauth-app-id',
+'x-oauth-client-id',
   ]);
 
   // Should never contain sensitive data

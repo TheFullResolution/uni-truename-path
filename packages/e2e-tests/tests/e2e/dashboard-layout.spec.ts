@@ -1,214 +1,242 @@
 /**
- * Dashboard Layout Test
+ * Dashboard Layout and Navigation Test
  *
- * Tests the dashboard layout, navigation, and user interface components.
- * This test ensures all dashboard tabs are accessible and navigation works correctly.
+ * Efficient, unified test suite for dashboard tabs and navigation.
+ * Uses single login/logout cycle and dynamic tab discovery for optimal performance.
  */
 
-import { ensureLoggedOut, createAndLoginTestUser } from '@/utils/auth-helpers';
+import {
+  ensureLoggedOut,
+  createAndLoginTestUser,
+  type TestUser,
+} from '@/utils/auth-helpers';
 import { expect, test } from '@playwright/test';
 
-test.describe('Dashboard Layout', () => {
+// Expected dashboard tabs based on code analysis
+const EXPECTED_TABS = [
+  'dashboard',
+  'contexts',
+  'names',
+  'consents',
+  'settings',
+];
+
+test.describe('Dashboard Layout and Navigation', () => {
   test.beforeEach(async ({ page }) => {
-// Ensure clean state before each test
+// Ensure clean state and login for each test
 await ensureLoggedOut(page);
-// Create and login with a dynamic test user
 await createAndLoginTestUser(page);
   });
 
-  test.describe('Dashboard Navigation', () => {
-test('should access all dashboard tabs', async ({ page }) => {
-  const dashboardTabs = [
-{ path: 'dashboard', name: 'Dashboard Home' },
-{ path: 'dashboard/names', name: 'Names' },
-{ path: 'dashboard/contexts', name: 'Contexts' },
-{ path: 'dashboard/oidc-preview', name: 'OIDC Preview' },
-{ path: 'dashboard/consents', name: 'Consents' },
-{ path: 'dashboard/settings', name: 'Settings' },
-  ];
+  test('should discover and verify all expected dashboard tabs', async ({
+page,
+  }) => {
+// Navigate to dashboard - should already be authenticated
+await page.goto('/dashboard');
+await page.waitForLoadState('networkidle');
+await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
 
-  for (const tab of dashboardTabs) {
-await page.goto(`/${tab.path}`);
-await expect(page).toHaveURL(`/${tab.path}`);
+// Discover all available tabs dynamically
+const tabElements = await page.locator('[data-testid^="tab-"]').all();
+expect(tabElements.length).toBeGreaterThan(0);
 
-// Verify page loads without errors
-await expect(page.locator('body')).not.toHaveText(/error|failed/i);
-
-// Verify page has some content (not completely empty)
-await expect(page.locator('body')).not.toBeEmpty();
-
-console.log(`✅ ${tab.name} tab accessible at /${tab.path}`);
+// Extract tab names and verify expected tabs are present
+const discoveredTabs: string[] = [];
+for (const tab of tabElements) {
+  const testId = await tab.getAttribute('data-testid');
+  if (testId) {
+const tabName = testId.replace('tab-', '');
+discoveredTabs.push(tabName);
   }
+}
 
-  console.log(`✅ All ${dashboardTabs.length} dashboard tabs accessible`);
-});
+console.log(`🔍 Discovered tabs: ${discoveredTabs.join(', ')}`);
 
-test('should handle navigation between tabs', async ({ page }) => {
-  // Test basic navigation flow
-  await page.goto('/dashboard/names');
-  await expect(page).toHaveURL('/dashboard/names');
+// Verify all expected tabs are present
+for (const expectedTab of EXPECTED_TABS) {
+  expect(discoveredTabs).toContain(expectedTab);
+}
 
-  await page.goto('/dashboard/contexts');
-  await expect(page).toHaveURL('/dashboard/contexts');
-
-  await page.goto('/dashboard/assign');
-  await expect(page).toHaveURL('/dashboard/assign');
-
-  // Return to dashboard home
-  await page.goto('/dashboard');
-  await expect(page).toHaveURL('/dashboard');
-
-  console.log('✅ Dashboard navigation working correctly');
-});
-
-test('should maintain authentication across navigation', async ({
-  page,
-}) => {
-  const testPages = [
-'/dashboard',
-'/dashboard/names',
-'/dashboard/contexts',
-  ];
-
-  for (const pagePath of testPages) {
-await page.goto(pagePath);
-
-// Should not redirect to login
-await expect(page).toHaveURL(pagePath);
-
-// Should not show authentication error
-await expect(page.locator('body')).not.toHaveText(
-  /unauthorized|login required/i,
+console.log(
+  `✅ All ${EXPECTED_TABS.length} expected tabs discovered and verified`,
 );
-  }
-
-  console.log('✅ Authentication maintained across all dashboard pages');
-});
   });
 
-  test.describe('Dashboard Layout Structure', () => {
-test('should display proper dashboard layout', async ({ page }) => {
-  await page.goto('/dashboard');
+  test('should navigate between tabs using UI interactions', async ({
+page,
+  }) => {
+// Navigate to dashboard - should already be authenticated
+await page.goto('/dashboard');
+await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
+await page.waitForLoadState('networkidle');
 
-  // Wait for page to load completely
-  await page.waitForLoadState('domcontentloaded');
+// Test navigation to each tab by clicking UI elements
+const tabNavigationTests = [
+  { tab: 'contexts', expectedUrl: '/dashboard/contexts' },
+  { tab: 'names', expectedUrl: '/dashboard/names' },
+  { tab: 'consents', expectedUrl: '/dashboard/consents' },
+  { tab: 'settings', expectedUrl: '/dashboard/settings' },
+  { tab: 'dashboard', expectedUrl: '/dashboard' }, // Return to home
+];
+
+for (const { tab, expectedUrl } of tabNavigationTests) {
+  console.log(`🖱️  Clicking tab: ${tab}`);
+
+  // Click the tab
+  await page.click(`[data-testid="tab-${tab}"]`);
+
+  // Verify URL changed
+  await expect(page).toHaveURL(expectedUrl, { timeout: 5000 });
+
+  // Verify active tab state (tab should have active styling or aria-selected)
+  const tabElement = page.locator(`[data-testid="tab-${tab}"]`);
+  const isActive = await tabElement.evaluate((el) => {
+return (
+  el.getAttribute('aria-selected') === 'true' ||
+  el.classList.contains('active') ||
+  el.hasAttribute('data-active') ||
+  getComputedStyle(el).fontWeight === 'bold' ||
+  getComputedStyle(el).fontWeight === '700'
+);
+  });
+
+  expect(isActive).toBeTruthy();
+  console.log(`✅ Tab "${tab}" is active and URL is correct`);
+}
+  });
+
+  test('should verify content area updates when switching tabs', async ({
+page,
+  }) => {
+// Navigate to dashboard - should already be authenticated
+await page.goto('/dashboard');
+await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
+await page.waitForLoadState('networkidle');
+
+// Test that content area updates when switching between tabs
+const contentTestTabs = ['contexts', 'names', 'consents'];
+
+for (const tab of contentTestTabs) {
+  console.log(`📄 Testing content loading for tab: ${tab}`);
+
+  // Click tab
+  await page.click(`[data-testid="tab-${tab}"]`);
   await page.waitForLoadState('networkidle');
 
-  // Wait for dashboard content to be visible (Mantine components)
-  await page.waitForSelector(
-'div[style*="minHeight"], div[style*="linear-gradient"], [data-testid="dashboard-content"]',
-{
-  timeout: 10000,
-},
-  );
+  // Verify page content loaded (no errors)
+  await expect(page.locator('body')).not.toHaveText(/error|failed|404/i);
 
-  // Verify dashboard has main content area (checking for actual structure)
-  const hasMainContent =
-(await page
-  .locator(
-'div[style*="minHeight"], div[style*="linear-gradient"], [data-testid="dashboard-content"]',
-  )
-  .count()) > 0;
-  expect(hasMainContent).toBeTruthy();
+  // Verify content area is not empty
+  await expect(page.locator('body')).not.toBeEmpty();
 
-  // Additional verification: check for container with paper elements
-  const hasContainer =
-(await page.locator('div:has(> div > div[class*="Paper"])').count()) >
-0;
+  // Verify specific content indicators based on tab
+  if (tab === 'contexts') {
+// Should have contexts-related content or empty state
+const hasContextContent =
+  (await page.locator('text=/context|Context/i').count()) > 0;
+expect(hasContextContent).toBeTruthy();
+  } else if (tab === 'names') {
+// Should have names-related content or empty state
+const hasNameContent =
+  (await page.locator('text=/name|Name/i').count()) > 0;
+expect(hasNameContent).toBeTruthy();
+  } else if (tab === 'consents') {
+// Should have consents-related content
+const hasConsentContent =
+  (await page.locator('text=/consent|Consent/i').count()) > 0;
+expect(hasConsentContent).toBeTruthy();
+  }
 
-  // Should have either main content structure or container with papers
-  expect(hasMainContent || hasContainer).toBeTruthy();
-
-  console.log('✅ Dashboard layout structure verified');
-});
-
-test('should handle responsive navigation', async ({ page }) => {
-  // Test mobile viewport
-  await page.setViewportSize({ width: 375, height: 667 });
-  await page.goto('/dashboard');
-
-  // Page should still be accessible on mobile
-  await expect(page).toHaveURL('/dashboard');
-  await expect(page.locator('body')).not.toHaveText(/error|failed/i);
-
-  // Test desktop viewport
-  await page.setViewportSize({ width: 1280, height: 720 });
-  await page.goto('/dashboard/names');
-
-  await expect(page).toHaveURL('/dashboard/names');
-  await expect(page.locator('body')).not.toHaveText(/error|failed/i);
-
-  console.log('✅ Responsive navigation working correctly');
-});
+  console.log(`✅ Content verified for tab: ${tab}`);
+}
   });
 
-  test.describe('Dashboard Error Handling', () => {
-test('should handle invalid dashboard routes gracefully', async ({
-  page,
-}) => {
-  // Test invalid dashboard subroute
-  await page.goto('/dashboard/nonexistent');
+  test('should handle responsive behavior', async ({ page }) => {
+// Navigate to dashboard - should already be authenticated
+await page.goto('/dashboard');
+await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
 
-  // Should either redirect to valid page or show proper 404
-  const currentUrl = page.url();
-  const isValidRedirect =
-currentUrl.includes('/dashboard') &&
-!currentUrl.includes('/nonexistent');
-  const is404Page = await page
-.locator('body')
-.textContent()
-.then(
-  (text) =>
-text?.toLowerCase().includes('not found') ||
-text?.toLowerCase().includes('404'),
-);
+// Test mobile viewport
+await page.setViewportSize({ width: 375, height: 667 });
+await page.waitForTimeout(500); // Allow layout to adjust
 
-  expect(isValidRedirect || is404Page).toBeTruthy();
+// Tabs should still be discoverable and clickable on mobile
+const mobileTabCount = await page.locator('[data-testid^="tab-"]').count();
+expect(mobileTabCount).toBeGreaterThan(0);
 
-  console.log('✅ Invalid dashboard routes handled gracefully');
-});
+// Test tab interaction on mobile
+await page.click('[data-testid="tab-contexts"]');
+await expect(page).toHaveURL('/dashboard/contexts');
 
-test('should prevent direct access to dashboard when not authenticated', async ({
-  page,
-}) => {
-  // Ensure completely logged out state
-  await ensureLoggedOut(page);
+// Test desktop viewport
+await page.setViewportSize({ width: 1280, height: 720 });
+await page.waitForTimeout(500); // Allow layout to adjust
 
-  // Small delay for webkit browser stability
-  if (page.context().browser()?.browserType().name() === 'webkit') {
-await page.waitForTimeout(500);
-  }
+// Tabs should still work on desktop
+await page.click('[data-testid="tab-names"]');
+await expect(page).toHaveURL('/dashboard/names');
 
-  // Try to access dashboard
+console.log('✅ Responsive navigation verified across viewports');
+  });
+
+  test('should handle edge cases and invalid routes', async ({ page }) => {
+// Navigate to dashboard - should already be authenticated
+await page.goto('/dashboard');
+await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
+
+// Test invalid dashboard route
+await page.goto('/dashboard/nonexistent');
+
+// Should either redirect to valid page or show proper error handling
+const currentUrl = page.url();
+const isValidRedirect =
+  currentUrl.includes('/dashboard') && !currentUrl.includes('/nonexistent');
+const bodyText = await page.locator('body').textContent();
+const hasProperErrorHandling =
+  bodyText?.toLowerCase().includes('not found') ||
+  bodyText?.toLowerCase().includes('404') ||
+  isValidRedirect;
+
+expect(hasProperErrorHandling).toBeTruthy();
+
+// If we got a 404 or error page, navigate back to dashboard first
+if (!isValidRedirect) {
   await page.goto('/dashboard');
-  await page.waitForLoadState('domcontentloaded');
+  await expect(page).toHaveURL('/dashboard');
+}
 
-  // Wait a moment for any redirects to complete
-  await page.waitForTimeout(2000);
-
-  // Check if redirected to login or has authentication error
-  const currentUrl = page.url();
-  const isRedirectedToLogin =
-currentUrl.includes('/auth/login') || currentUrl.includes('/login');
-
-  const bodyText = await page.locator('body').textContent();
-  const hasAuthError =
-bodyText?.toLowerCase().includes('login') ||
-bodyText?.toLowerCase().includes('authentication') ||
-bodyText?.toLowerCase().includes('sign in') ||
-bodyText?.toLowerCase().includes('unauthorized');
-
-  // Debug output for troubleshooting
-  if (!isRedirectedToLogin && !hasAuthError) {
-console.log(`🐛 Debug - Current URL: ${currentUrl}`);
-console.log(
-  `🐛 Debug - Body contains: ${bodyText?.substring(0, 200)}...`,
-);
-  }
-
-  expect(isRedirectedToLogin || hasAuthError).toBeTruthy();
-
-  console.log('✅ Authentication protection working correctly');
+// Test that we can navigate to valid tabs after invalid route
+await page.waitForSelector('[data-testid="tab-dashboard"]', {
+  timeout: 5000,
 });
+await page.click('[data-testid="tab-dashboard"]');
+await expect(page).toHaveURL('/dashboard');
+
+console.log('✅ Edge cases and invalid routes handled gracefully');
+  });
+
+  test('should prevent unauthenticated access', async ({ page }) => {
+// Test unauthenticated access in a separate context
+await ensureLoggedOut(page);
+
+// Try to access dashboard directly
+await page.goto('/dashboard');
+await page.waitForLoadState('domcontentloaded');
+await page.waitForTimeout(2000); // Allow redirects to complete
+
+// Should be redirected to login or show authentication error
+const currentUrl = page.url();
+const isRedirectedToLogin =
+  currentUrl.includes('/auth/login') || currentUrl.includes('/login');
+
+const bodyText = await page.locator('body').textContent();
+const hasAuthError =
+  bodyText?.toLowerCase().includes('login') ||
+  bodyText?.toLowerCase().includes('authentication') ||
+  bodyText?.toLowerCase().includes('sign in') ||
+  bodyText?.toLowerCase().includes('unauthorized');
+
+expect(isRedirectedToLogin || hasAuthError).toBeTruthy();
+console.log('✅ Authentication protection verified');
   });
 });

@@ -12,6 +12,7 @@ import {
   get_user_profile_data,
 } from '@/utils/api';
 import { ErrorCodes } from '@/utils/api';
+import type { DashboardStatsResponse } from './types';
 
 /**
  * Authenticated handler for dashboard statistics retrieval
@@ -19,7 +20,7 @@ import { ErrorCodes } from '@/utils/api';
  */
 const getDashboardStats: AuthenticatedHandler = async (
   request: NextRequest,
-  { user, requestId, timestamp },
+  { user, supabase, requestId, timestamp },
 ) => {
   try {
 // Validate user authentication and get profile data
@@ -42,112 +43,87 @@ timestamp,
 
 const { user_profile } = user_validation;
 console.log(
-  `[${requestId}] Returning mock dashboard stats due to ongoing refactoring`,
+  `[${requestId}] Retrieving OAuth dashboard stats for profile ${user!.id}`,
 );
 
-// TEMPORARY: Return mock data while refactoring is in progress
-// TODO: Step 16 - Restore real dashboard stats after OAuth implementation
-// The analytics re-architecture in Step 16.1.4 replaced broken context_usage_analytics
-// with new app_usage_log system. Dashboard stats integration pending OAuth completion.
-// Restore get_dashboard_stats RPC function call after Phase 6 dashboard integration.
-const dashboard_stats = {
-  user_profile,
-  total_names: 3,
-  names_by_type_json: {
-given_name: 1,
-family_name: 1,
-display_name: 1,
-  },
-  has_preferred_name: true,
-  custom_contexts: 2,
-  unique_applications_total: 0,
-  applications_today: 0,
-  applications_this_week: 0,
-  active_contexts_today: 0,
-  active_contexts_week: 0,
-  total_context_usages: 0,
-  context_usages_today: 0,
-  context_usages_week: 0,
-  avg_response_time_week: null,
-  avg_response_time_today: null,
-  success_rate_today: null,
-  top_application_today: null,
-  top_context_today: null,
-  unique_properties_disclosed_week: 0,
-  active_consents: 1,
-  pending_requests: 0,
-  privacy_score: 85,
-  gdpr_compliant: true,
-  recent_activity: [],
-  api_usage: {
-today: 0,
-this_week: 0,
-this_month: 0,
-total: 0,
-  },
-};
-
-/* COMMENTED OUT - Broken due to refactoring
-// Call the RPC function to get all dashboard statistics in a single query
-const { data: dashboard_data, error } = await supabase.rpc(
-  'get_dashboard_stats',
-  { p_profile_id: profile_id },
+// Call the OAuth dashboard stats RPC function
+const { data: oauth_stats, error } = await supabase.rpc(
+  'get_oauth_dashboard_stats',
+  { p_profile_id: user!.id },
 );
+
+// Type assertion for the JSON response from the RPC function
+const stats = oauth_stats as {
+  connected_apps: number;
+  recent_authorizations: number;
+  total_usage: number;
+  avg_response_time_ms: number | null;
+  success_rate_percent: number | null;
+  top_app_name: string | null;
+  recent_activity: Array<{
+app_name: string;
+action: string;
+created_at: string;
+success: boolean;
+  }>;
+} | null;
 
 if (error) {
-  console.error(`[${requestId}] Dashboard stats RPC error:`, {
+  console.error(`[${requestId}] OAuth dashboard stats RPC error:`, {
 message: error.message,
 details: error.details,
 hint: error.hint,
 code: error.code,
-full_error: error,
   });
   return createErrorResponse(
 ErrorCodes.DATABASE_ERROR,
-`Failed to retrieve dashboard statistics: ${error.message}`,
+`Failed to retrieve OAuth dashboard statistics: ${error.message}`,
 requestId,
 undefined,
 timestamp,
   );
 }
 
-if (!dashboard_data) {
-  console.error(`[${requestId}] No data returned from dashboard stats RPC`);
+if (!stats) {
+  console.error(
+`[${requestId}] No data returned from OAuth dashboard stats RPC`,
+  );
   return createErrorResponse(
 ErrorCodes.DATABASE_ERROR,
-'No dashboard data available',
+'No OAuth dashboard data available',
 requestId,
 undefined,
 timestamp,
   );
 }
 
-console.log(
-  `[${requestId}] Successfully retrieved dashboard data, processing response`,
-);
-
-// Construct response with user profile data and RPC results
-// The RPC function returns typed JSON structure from database
-const rpc_data = dashboard_data as DashboardStatsRPCResult;
-const dashboard_stats = {
+// Construct OAuth-focused dashboard response
+const dashboard_stats: DashboardStatsResponse = {
   user_profile,
-  ...(rpc_data as Record<string, unknown>),
+  oauth_metrics: {
+connected_apps: stats.connected_apps || 0,
+recent_authorizations: stats.recent_authorizations || 0,
+total_usage: stats.total_usage || 0,
+avg_response_time_ms: stats.avg_response_time_ms || null,
+success_rate_percent: stats.success_rate_percent || null,
+top_app_name: stats.top_app_name || null,
+recent_activity: stats.recent_activity || [],
+  },
 };
-*/
 
 console.log(
-  `[${requestId}] Dashboard stats response prepared successfully (mock data)`,
+  `[${requestId}] OAuth dashboard stats response prepared successfully`,
 );
 return createSuccessResponse(dashboard_stats, requestId, timestamp);
   } catch (error) {
-console.error(`[${requestId}] Dashboard stats error:`, {
+console.error(`[${requestId}] OAuth dashboard stats error:`, {
   error_message: error instanceof Error ? error.message : 'Unknown error',
   error_stack: error instanceof Error ? error.stack : undefined,
   error_full: error,
 });
 return createErrorResponse(
   ErrorCodes.INTERNAL_SERVER_ERROR,
-  `Failed to retrieve dashboard statistics: ${error instanceof Error ? error.message : 'Unknown error'}`,
+  `Failed to retrieve OAuth dashboard statistics: ${error instanceof Error ? error.message : 'Unknown error'}`,
   requestId,
   undefined,
   timestamp,

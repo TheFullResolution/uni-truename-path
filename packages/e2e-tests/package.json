@@ -15,7 +15,7 @@
   },
   "devDependencies": {
 "@playwright/test": "^1.55.0",
-"@supabase/supabase-js": "^2.55.0",
+"@supabase/supabase-js": "^2.56.0",
 "@types/node": "24.3.0",
 "@typescript-eslint/eslint-plugin": "^8.40.0",
 "@typescript-eslint/parser": "^8.40.0",

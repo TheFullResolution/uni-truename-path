@@ -81,7 +81,7 @@ getElapsed: vi.fn(() => 2), // Mock 2ms response time
   })),
   extractSessionDataFromClaims: vi.fn(() => ({
 profile_id: 'test-profile-id',
-app_id: 'test-app-id',
+client_id: 'test-app-id',
 session_id: 'tnp_test_session_token',
 context_id: 'test-context-id',
   })),
@@ -102,6 +102,15 @@ return 'server_error';
   }),
 }));
 
+// Setup detailed Supabase mock chain that properly simulates the real implementation
+const mockSupabaseClient = {
+  rpc: vi.fn(),
+};
+
+const mockSupabaseQuery = {
+  single: vi.fn(),
+};
+
 // Mock extractBearerToken from oauth-helpers
 vi.mock('@/utils/api/oauth-helpers', () => ({
   extractBearerToken: vi.fn((authHeader: string | null) => {
@@ -114,6 +123,11 @@ if (!token.startsWith('tnp_') || token.length !== 36) {
 }
 return token;
   }),
+}));
+
+// Mock the createClient function from @/utils/supabase/server
+vi.mock('@/utils/supabase/server', () => ({
+  createClient: vi.fn(() => Promise.resolve(mockSupabaseClient)),
 }));
 
 // Mock next/server with proper hoisting-safe structure
@@ -160,6 +174,7 @@ public readonly redirected: boolean;
 public readonly statusText: string;
 public readonly url: string;
 public readonly type: ResponseType;
+private _jsonData: any;
 
 constructor(body?: BodyInit | null, init?: ResponseInit) {
   this.headers = new Headers(init?.headers);
@@ -170,6 +185,7 @@ constructor(body?: BodyInit | null, init?: ResponseInit) {
   this.statusText = init?.statusText ?? '';
   this.url = '';
   this.type = 'default' as ResponseType;
+  this._jsonData = null;
 }
 
 static json(object: any, init?: ResponseInit): Response {
@@ -180,11 +196,12 @@ headers: {
   ...init?.headers,
 },
   });
+  response._jsonData = object;
   return response as any;
 }
 
 async json(): Promise<any> {
-  return {};
+  return this._jsonData || {};
 }
 
 clone(): Response {
@@ -306,15 +323,6 @@ NextRequest: MockNextRequest,
 NextResponse: MockResponse,
   };
 });
-
-// Setup detailed Supabase mock chain that properly simulates the real implementation
-const mockSupabaseClient = {
-  rpc: vi.fn(),
-};
-
-const mockSupabaseQuery = {
-  single: vi.fn(),
-};
 
 // Authentication control flag for tests
 let shouldAuthFail = false;
@@ -550,7 +558,9 @@ error: null,
 
   expect(responseData.success).toBe(true);
   expect(responseData.data.claims).toEqual(VALID_OIDC_CLAIMS);
-  expect(responseData.data.resolved_at).toBe('2025-08-23T10:30:00.000Z');
+  expect(responseData.data.resolved_at).toMatch(
+/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+  );
   expect(responseData.data.performance.response_time_ms).toBe(2);
 
   // Verify database function was called
@@ -979,8 +989,10 @@ error: null,
   const responseData = await parseJsonResponse(response);
 
   expect(responseData.success).toBe(true);
-  expect(responseData.requestId).toBe('req_123456_test');
-  expect(responseData.timestamp).toBe('2025-08-23T10:30:00.000Z');
+  expect(responseData.requestId).toMatch(/^req_\d+_[a-z0-9]+$/);
+  expect(responseData.timestamp).toMatch(
+/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+  );
 });
 
 it('should maintain proper request tracing', async () => {

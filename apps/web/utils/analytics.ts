@@ -54,8 +54,8 @@ export interface TrackOAuthUsageConfig {
   /** Profile ID of user performing the OAuth operation */
   profileId: string;
 
-  /** OAuth application ID */
-  appId: string;
+  /** OAuth client ID */
+  clientId: string;
 
   /** Type of OAuth operation */
   action: OAuthAction;
@@ -110,7 +110,7 @@ export async function trackOAuthUsage(
 const {
   supabase,
   profileId,
-  appId,
+  clientId,
   action,
   contextId,
   sessionId,
@@ -124,8 +124,8 @@ if (!profileId) {
   throw new Error('Profile ID is required for OAuth analytics tracking');
 }
 
-if (!appId) {
-  throw new Error('App ID is required for OAuth analytics tracking');
+if (!clientId) {
+  throw new Error('Client ID is required for OAuth analytics tracking');
 }
 
 if (!action) {
@@ -137,7 +137,7 @@ const { data: logId, error: dbError } = await supabase.rpc(
   'log_app_usage',
   {
 p_profile_id: profileId,
-p_app_id: appId,
+p_app_id: clientId,
 p_action: action,
 p_context_id: contextId,
 p_session_id: sessionId,
@@ -174,7 +174,7 @@ return {
 export async function trackOAuthAuthorization(
   supabase: SupabaseClient<Database>,
   profileId: string,
-  appId: string,
+  clientId: string,
   contextId: string,
   sessionId: string,
   responseTimeMs: number = 0,
@@ -182,7 +182,7 @@ export async function trackOAuthAuthorization(
   return trackOAuthUsage({
 supabase,
 profileId,
-appId,
+clientId,
 action: 'authorize',
 contextId,
 sessionId,
@@ -197,7 +197,7 @@ success: true,
 export async function trackOAuthResolve(
   supabase: SupabaseClient<Database>,
   profileId: string,
-  appId: string,
+  clientId: string,
   contextId: string,
   sessionId: string,
   responseTimeMs: number = 0,
@@ -205,7 +205,7 @@ export async function trackOAuthResolve(
   return trackOAuthUsage({
 supabase,
 profileId,
-appId,
+clientId,
 action: 'resolve',
 contextId,
 sessionId,
@@ -220,12 +220,12 @@ success: true,
 export async function trackOAuthRevocation(
   supabase: SupabaseClient<Database>,
   profileId: string,
-  appId: string,
+  clientId: string,
 ): Promise<TrackOAuthUsageResult> {
   return trackOAuthUsage({
 supabase,
 profileId,
-appId,
+clientId,
 action: 'revoke',
 success: true,
   });
@@ -237,13 +237,13 @@ success: true,
 export async function trackContextAssignment(
   supabase: SupabaseClient<Database>,
   profileId: string,
-  appId: string,
+  clientId: string,
   contextId: string,
 ): Promise<TrackOAuthUsageResult> {
   return trackOAuthUsage({
 supabase,
 profileId,
-appId,
+clientId,
 action: 'assign_context',
 contextId,
 success: true,

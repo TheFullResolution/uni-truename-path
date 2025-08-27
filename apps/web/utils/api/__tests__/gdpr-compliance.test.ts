@@ -141,7 +141,7 @@ const allowedHeaders = getAllowedHeadersForRoute(route);
 // Should contain only headers needed for identity resolution
 expect(allowedHeaders).toContain('x-authenticated-user-id'); // Required for resolution
 expect(allowedHeaders).toContain('x-oauth-session-id'); // Required for session tracking
-expect(allowedHeaders).toContain('x-oauth-app-id'); // Required for app context
+expect(allowedHeaders).toContain('x-oauth-client-id'); // Required for app context
 
 // Should NOT contain marketing/profiling data
 expect(allowedHeaders).not.toContain('x-authenticated-user-email');
@@ -255,7 +255,7 @@ it('should support withdrawal of consent through technical controls', () => {
 'x-authenticated-user-id',
 'x-oauth-authenticated',
 'x-oauth-session-id',
-'x-oauth-app-id',
+'x-oauth-client-id',
   ]);
 
   // Should not contain sensitive personal data
@@ -314,7 +314,7 @@ it('should support technical deletion through access control', () => {
 'x-authenticated-user-id',
 'x-oauth-authenticated',
 'x-oauth-session-id',
-'x-oauth-app-id',
+'x-oauth-client-id',
   ]);
 
   // Technical deletion means no sensitive personal data ever exposed

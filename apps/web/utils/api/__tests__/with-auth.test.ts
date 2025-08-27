@@ -546,7 +546,7 @@ test('should handle OAuth Bearer token authentication', async () => {
 ['x-authenticated-user-email', 'oauth@example.com'],
 ['x-oauth-authenticated', 'true'],
 ['x-oauth-session-id', 'session-456'],
-['x-oauth-app-id', 'app-789'],
+['x-oauth-client-id', 'app-789'],
 [
   'x-authenticated-user-profile',
   JSON.stringify({
@@ -576,7 +576,7 @@ headers: oauthHeaders as any,
   expect(context.isOAuth).toBe(true);
   expect(context.oauthSession).toEqual({
 id: 'session-456',
-appId: 'app-789',
+clientId: 'app-789',
 sessionId: 'session-456',
 appName: 'Demo HR App',
   });
@@ -641,7 +641,7 @@ test('should handle OAuth authentication with missing session data gracefully', 
 ['x-authenticated-user-id', 'user-123'],
 ['x-authenticated-user-email', 'user@example.com'],
 ['x-oauth-authenticated', 'true'],
-// Missing x-oauth-session-id and x-oauth-app-id
+// Missing x-oauth-session-id and x-oauth-client-id
   ]);
 
   const incompleteRequest = {
@@ -671,7 +671,7 @@ test('should handle OAuth authentication without verbose logging', async () => {
 ['x-authenticated-user-email', 'oauth@example.com'],
 ['x-oauth-authenticated', 'true'],
 ['x-oauth-session-id', 'session-456'],
-['x-oauth-app-id', 'app-789'],
+['x-oauth-client-id', 'app-789'],
 [
   'x-authenticated-user-profile',
   JSON.stringify({
@@ -735,7 +735,7 @@ test('should work with optional auth for OAuth requests', async () => {
 ['x-authenticated-user-email', 'oauth@example.com'],
 ['x-oauth-authenticated', 'true'],
 ['x-oauth-session-id', 'session-456'],
-['x-oauth-app-id', 'app-789'],
+['x-oauth-client-id', 'app-789'],
   ]);
 
   const oauthRequest = {
@@ -754,7 +754,7 @@ headers: oauthHeaders as any,
   expect(context.isOAuth).toBe(true);
   expect(context.oauthSession).toEqual({
 id: 'session-456',
-appId: 'app-789',
+clientId: 'app-789',
 sessionId: 'session-456',
 appName: 'app-789', // Fallback when no profile app_name
   });
@@ -788,7 +788,7 @@ headers: mockOAuthHeaders as any,
   expect(context.isOAuth).toBe(true);
   expect(context.oauthSession).toEqual({
 id: 'oauth-session-789',
-appId: 'demo-hr-app',
+clientId: 'demo-hr-app',
 sessionId: 'oauth-session-789',
 appName: 'demo-hr-app', // Fallback when no app_name in profile
   });
@@ -884,7 +884,7 @@ headers: mockOAuthHeaders as any, // Only has safe OAuth headers
   expect(context.isOAuth).toBe(true);
   expect(context.oauthSession).toEqual({
 id: 'oauth-session-789',
-appId: 'demo-hr-app',
+clientId: 'demo-hr-app',
 sessionId: 'oauth-session-789',
 appName: 'demo-hr-app',
   });

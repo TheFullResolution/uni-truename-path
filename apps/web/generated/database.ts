@@ -36,7 +36,7 @@ CompositeTypes: {
 Tables: {
   app_context_assignments: {
 Row: {
-  app_id: string
+  client_id: string
   context_id: string
   created_at: string
   id: string
@@ -44,7 +44,7 @@ Row: {
   updated_at: string | null
 }
 Insert: {
-  app_id: string
+  client_id: string
   context_id: string
   created_at?: string
   id?: string
@@ -52,7 +52,7 @@ Insert: {
   updated_at?: string | null
 }
 Update: {
-  app_id?: string
+  client_id?: string
   context_id?: string
   created_at?: string
   id?: string
@@ -60,13 +60,6 @@ Update: {
   updated_at?: string | null
 }
 Relationships: [
-  {
-foreignKeyName: "app_context_assignments_app_id_fkey"
-columns: ["app_id"]
-isOneToOne: false
-referencedRelation: "oauth_applications"
-referencedColumns: ["id"]
-  },
   {
 foreignKeyName: "app_context_assignments_context_id_fkey"
 columns: ["context_id"]
@@ -83,10 +76,37 @@ referencedColumns: ["id"]
   },
 ]
   }
+  app_context_assignments_backup_037: {
+Row: {
+  app_id: string | null
+  context_id: string | null
+  created_at: string | null
+  id: string | null
+  profile_id: string | null
+  updated_at: string | null
+}
+Insert: {
+  app_id?: string | null
+  context_id?: string | null
+  created_at?: string | null
+  id?: string | null
+  profile_id?: string | null
+  updated_at?: string | null
+}
+Update: {
+  app_id?: string | null
+  context_id?: string | null
+  created_at?: string | null
+  id?: string | null
+  profile_id?: string | null
+  updated_at?: string | null
+}
+Relationships: []
+  }
   app_usage_log: {
 Row: {
   action: string
-  app_id: string
+  client_id: string
   context_id: string | null
   created_at: string
   error_type: string | null
@@ -98,7 +118,7 @@ Row: {
 }
 Insert: {
   action: string
-  app_id: string
+  client_id: string
   context_id?: string | null
   created_at?: string
   error_type?: string | null
@@ -110,7 +130,7 @@ Insert: {
 }
 Update: {
   action?: string
-  app_id?: string
+  client_id?: string
   context_id?: string | null
   created_at?: string
   error_type?: string | null
@@ -121,13 +141,6 @@ Update: {
   success?: boolean
 }
 Relationships: [
-  {
-foreignKeyName: "app_usage_log_app_id_fkey"
-columns: ["app_id"]
-isOneToOne: false
-referencedRelation: "oauth_applications"
-referencedColumns: ["id"]
-  },
   {
 foreignKeyName: "app_usage_log_context_id_fkey"
 columns: ["context_id"]
@@ -143,6 +156,45 @@ referencedRelation: "profiles"
 referencedColumns: ["id"]
   },
 ]
+  }
+  app_usage_log_backup_040: {
+Row: {
+  action: string | null
+  app_id: string | null
+  context_id: string | null
+  created_at: string | null
+  error_type: string | null
+  id: number | null
+  profile_id: string | null
+  response_time_ms: number | null
+  session_id: string | null
+  success: boolean | null
+}
+Insert: {
+  action?: string | null
+  app_id?: string | null
+  context_id?: string | null
+  created_at?: string | null
+  error_type?: string | null
+  id?: number | null
+  profile_id?: string | null
+  response_time_ms?: number | null
+  session_id?: string | null
+  success?: boolean | null
+}
+Update: {
+  action?: string | null
+  app_id?: string | null
+  context_id?: string | null
+  created_at?: string | null
+  error_type?: string | null
+  id?: number | null
+  profile_id?: string | null
+  response_time_ms?: number | null
+  session_id?: string | null
+  success?: boolean | null
+}
+Relationships: []
   }
   audit_log_entries: {
 Row: {
@@ -490,48 +542,71 @@ Update: {
 }
 Relationships: []
   }
+  oauth_client_registry: {
+Row: {
+  app_name: string
+  client_id: string
+  created_at: string
+  display_name: string
+  last_used_at: string | null
+  publisher_domain: string
+}
+Insert: {
+  app_name: string
+  client_id: string
+  created_at?: string
+  display_name: string
+  last_used_at?: string | null
+  publisher_domain: string
+}
+Update: {
+  app_name?: string
+  client_id?: string
+  created_at?: string
+  display_name?: string
+  last_used_at?: string | null
+  publisher_domain?: string
+}
+Relationships: []
+  }
   oauth_sessions: {
 Row: {
-  app_id: string
+  client_id: string
   created_at: string
   expires_at: string
   id: string
   profile_id: string
   return_url: string
   session_token: string
+  state: string | null
   updated_at: string | null
   used_at: string | null
 }
 Insert: {
-  app_id: string
+  client_id: string
   created_at?: string
   expires_at?: string
   id?: string
   profile_id: string
   return_url: string
   session_token: string
+  state?: string | null
   updated_at?: string | null
   used_at?: string | null
 }
 Update: {
-  app_id?: string
+  client_id?: string
   created_at?: string
   expires_at?: string
   id?: string
   profile_id?: string
   return_url?: string
   session_token?: string
+  state?: string | null
   updated_at?: string | null
   used_at?: string | null
 }
 Relationships: [
-  {
-foreignKeyName: "oauth_sessions_app_id_fkey"
-columns: ["app_id"]
-isOneToOne: false
-referencedRelation: "oauth_applications"
-referencedColumns: ["id"]
-  },
   {
 foreignKeyName: "oauth_sessions_profile_id_fkey"
 columns: ["profile_id"]
@@ -607,10 +682,10 @@ referencedColumns: ["id"]
 Views: {
   oauth_app_daily_stats: {
 Row: {
-  app_id: string | null
   app_name: string | null
   authorizations: number | null
   avg_response_time_ms: number | null
+  client_id: string | null
   resolutions: number | null
   revocations: number | null
   successful_operations: number | null
@@ -618,15 +693,7 @@ Row: {
   unique_users: number | null
   usage_date: string | null
 }
-Relationships: [
-  {
-foreignKeyName: "app_usage_log_app_id_fkey"
-columns: ["app_id"]
-isOneToOne: false
-referencedRelation: "oauth_applications"
-referencedColumns: ["id"]
-  },
-]
+Relationships: []
   }
   oauth_user_activity_summary: {
 Row: {
@@ -652,7 +719,7 @@ referencedColumns: ["id"]
 }
 Functions: {
   assign_default_context_to_app: {
-Args: { p_app_id: string; p_profile_id: string }
+Args: { p_client_id: string; p_profile_id: string }
 Returns: string
   }
   can_delete_name: {
@@ -723,9 +790,20 @@ Args: { p_granter_user_id: string; p_requester_user_id: string }
 Returns: boolean
   }
   log_app_usage: {
-Args: {
+Args:
+  | {
   p_action: string
   p_app_id: string
+  p_context_id?: string
+  p_error_type?: string
+  p_profile_id: string
+  p_response_time_ms?: number
+  p_session_id?: string
+  p_success?: boolean
+}
+  | {
+  p_action: string
+  p_client_id: string
   p_context_id?: string
   p_error_type?: string
   p_profile_id: string

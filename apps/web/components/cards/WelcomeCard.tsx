@@ -7,7 +7,7 @@ import {
   SimpleGrid,
   Skeleton,
 } from '@mantine/core';
-import { IconUser } from '@tabler/icons-react';
+import { IconPlug } from '@tabler/icons-react';
 
 import { DashboardUser } from '@/types/ui';
 import { DashboardStatsResponse } from '@/app/api/dashboard/stats/types';
@@ -41,11 +41,11 @@ alignItems: 'center',
 justifyContent: 'center',
   }}
 >
-  <IconUser size={24} color='#4A7FE7' />
+  <IconPlug size={24} color='#4A7FE7' />
 </Box>
 <Box>
   <Title order={2} c='gray.8' mb='xs'>
-Welcome back!
+OAuth Integration Dashboard
   </Title>
   <Text size='sm' c='gray.6'>
 {user?.email || 'Unknown user'}
@@ -59,11 +59,11 @@ Welcome back!
 <Skeleton height={28} width={40} />
   ) : (
 <Text size='xl' fw={600} c='brand.7'>
-  {stats?.name_statistics?.total_names || 0}
+  {stats?.oauth_metrics?.connected_apps || 0}
 </Text>
   )}
   <Text size='xs' c='gray.6'>
-Name Variants
+Connected Apps
   </Text>
 </Box>
 <Box>
@@ -71,11 +71,11 @@ Name Variants
 <Skeleton height={28} width={40} />
   ) : (
 <Text size='xl' fw={600} c='blue.7'>
-  {stats?.context_statistics?.custom_contexts || 0}
+  {stats?.oauth_metrics?.recent_authorizations || 0}
 </Text>
   )}
   <Text size='xs' c='gray.6'>
-Custom Contexts
+Recent Authorizations
   </Text>
 </Box>
 <Box>
@@ -83,11 +83,11 @@ Custom Contexts
 <Skeleton height={28} width={40} />
   ) : (
 <Text size='xl' fw={600} c='green.7'>
-  {stats?.usage_analytics?.total_context_usages || 0}
+  {stats?.oauth_metrics?.total_usage || 0}
 </Text>
   )}
   <Text size='xs' c='gray.6'>
-API Calls
+Total API Usage
   </Text>
 </Box>
   </SimpleGrid>

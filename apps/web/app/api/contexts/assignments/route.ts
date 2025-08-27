@@ -15,7 +15,7 @@ import { ErrorCodes, StandardResponse } from '@/utils/api/types';
 interface ContextAssignment {
   id: string;
   profile_id: string;
-  app_id: string;
+  client_id: string;
   context_id: string;
   created_at: string;
   updated_at: string | null;

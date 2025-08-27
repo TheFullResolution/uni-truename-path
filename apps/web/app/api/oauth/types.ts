@@ -10,11 +10,6 @@ import type { Tables } from '@/generated/database';
 // =============================================================================
 
 /**
- * OAuth application database entity
- */
-export type OAuthApplication = Tables<'oauth_applications'>;
-
-/**
  * OAuth session database entity
  */
 export type OAuthSession = Tables<'oauth_sessions'>;
@@ -38,24 +33,39 @@ export type AppUsageLog = Tables<'app_usage_log'>;
  * Returns basic application information for external consumption
  */
 export interface OAuthAppInfoResponse {
-  /** Application unique identifier */
-  id: string;
+  /** Client ID in format tnp_[16 hex chars] */
+  client_id: string;
   /** Machine-readable app name */
   app_name: string;
   /** Human-readable display name */
   display_name: string;
   /** Optional app description */
   description: string | null;
-  /** OAuth redirect URI */
-  redirect_uri: string;
-  /** Optional app type classification */
-  app_type: string | null;
-  /** Whether the app is currently active */
-  is_active: boolean | null;
+  /** Publisher domain for app verification */
+  publisher_domain: string;
   /** App creation timestamp */
   created_at: string;
-  /** Last update timestamp */
-  updated_at: string | null;
+  /** Last time this client was used */
+  last_used_at: string | null;
+}
+
+/**
+ * OAuth client registry information for client ID-based responses
+ * Used for lightweight client identification and validation
+ */
+export interface OAuthClientRegistryInfo {
+  /** Client ID in format tnp_[16 hex chars] */
+  client_id: string;
+  /** Human-readable display name */
+  display_name: string;
+  /** Machine-readable app name */
+  app_name: string;
+  /** Publisher domain for app verification */
+  publisher_domain: string;
+  /** Client registration timestamp */
+  created_at: string;
+  /** Last time this client was used (null if never used) */
+  last_used_at: string | null;
 }
 
 /**
@@ -72,8 +82,8 @@ export interface CreateOAuthAppResponseData {
  * Response data for GET /api/oauth/apps/[appName] (app details)
  */
 export interface GetOAuthAppResponseData {
-  /** Application details */
-  application: OAuthAppInfoResponse;
+  /** Client registry information */
+  client: OAuthClientRegistryInfo;
   /** Optional metadata */
   metadata?: {
 /** Request timestamp */
@@ -101,8 +111,8 @@ export interface UpdateOAuthAppResponseData {
 export interface DeleteOAuthAppResponseData {
   /** Success message */
   message: string;
-  /** ID of the deleted application */
-  deleted_app_id: string;
+  /** Client ID of the deleted application */
+  deleted_client_id: string;
   /** Name of the deleted application */
   app_name: string;
   /** Deletion timestamp */
@@ -152,27 +162,12 @@ export interface OAuthRevokeResponseData {
 // =============================================================================
 
 /**
- * OAuth application with computed fields for internal use
- * Extends the base database type with additional metadata
- */
-export interface EnrichedOAuthApplication extends OAuthApplication {
-  /** Computed status based on is_active and timestamps */
-  status: 'active' | 'inactive' | 'pending';
-  /** Days since creation */
-  days_since_creation: number;
-  /** Whether the app has been recently updated */
-  recently_updated: boolean;
-}
-
-/**
  * OAuth app creation parameters for internal service calls
  */
 export interface CreateOAuthAppParams {
   app_name: string;
   display_name: string;
-  description?: string | null;
-  redirect_uri: string;
-  app_type?: string | null;
+  publisher_domain: string;
 }
 
 /**
@@ -180,10 +175,7 @@ export interface CreateOAuthAppParams {
  */
 export interface UpdateOAuthAppParams {
   display_name?: string;
-  description?: string | null;
-  redirect_uri?: string;
-  app_type?: string | null;
-  is_active?: boolean;
+  last_used_at?: string | null;
 }
 
 // =============================================================================
@@ -217,6 +209,11 @@ export const OAuthErrorCodes = {
   REGISTRATION_FAILED: 'OAUTH_REGISTRATION_FAILED',
   UPDATE_FAILED: 'OAUTH_UPDATE_FAILED',
   DELETION_FAILED: 'OAUTH_DELETION_FAILED',
+
+  // Domain validation errors
+  MISSING_ORIGIN_HEADER: 'OAUTH_MISSING_ORIGIN_HEADER',
+  INVALID_DOMAIN_FORMAT: 'OAUTH_INVALID_DOMAIN_FORMAT',
+  CLIENT_ID_GENERATION_FAILED: 'OAUTH_CLIENT_ID_GENERATION_FAILED',
 
   // Resolve endpoint errors
   INVALID_TOKEN: 'OAUTH_INVALID_TOKEN',

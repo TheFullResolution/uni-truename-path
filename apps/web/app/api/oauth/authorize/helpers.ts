@@ -5,7 +5,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/generated/database';
-import { AuthorizeAppInfo, AuthorizeContextInfo } from './types';
+import { AuthorizeContextInfo, AuthorizeClientInfo } from './types';
 
 // =============================================================================
 // Type Definitions
@@ -35,40 +35,39 @@ type DatabaseClient = SupabaseClient<Database>;
 // =============================================================================
 
 /**
- * Validates OAuth application access and activity status
+ * Validates OAuth client access via client registry
  *
- * @param appId - OAuth application UUID to validate
+ * @param clientId - OAuth client ID in format tnp_[16 hex chars]
  * @param supabase - Authenticated Supabase client
- * @returns Promise<AuthorizeAppInfo | null> - App data or null if invalid
+ * @returns Promise<AuthorizeClientInfo | null> - Client data or null if invalid
  */
 export async function validateAppAccess(
-  appId: string,
+  clientId: string,
   supabase: DatabaseClient,
-): Promise<AuthorizeAppInfo | null> {
+): Promise<AuthorizeClientInfo | null> {
   try {
-// Query oauth_applications table with required fields
-const { data: app, error: appError } = await supabase
-  .from('oauth_applications')
-  .select('id, app_name, display_name, is_active')
-  .eq('id', appId)
-  .eq('is_active', true)
+// Query oauth_client_registry table with required fields
+const { data: client, error: clientError } = await supabase
+  .from('oauth_client_registry')
+  .select('client_id, app_name, display_name, publisher_domain')
+  .eq('client_id', clientId)
   .single();
 
-// Handle database errors or missing app
-if (appError || !app) {
+// Handle database errors or missing client
+if (clientError || !client) {
   return null;
 }
 
-// Return typed app information
+// Return typed client information
 return {
-  id: app.id,
-  display_name: app.display_name,
-  app_name: app.app_name,
-  is_active: app.is_active ?? false,
+  client_id: client.client_id,
+  display_name: client.display_name,
+  app_name: client.app_name,
+  publisher_domain: client.publisher_domain,
 };
   } catch (error) {
 // Log validation error for debugging
-console.error('App validation failed:', error);
+console.error('Client validation failed:', error);
 return null;
   }
 }
@@ -125,14 +124,14 @@ return null;
  * Creates OAuth session with token generation and database insertion
  *
  * @param profileId - User profile ID for session ownership
- * @param appId - OAuth application ID for session binding
+ * @param clientId - OAuth client ID for session binding
  * @param returnUrl - Callback URL for session redirect
  * @param supabase - Authenticated Supabase client
  * @returns Promise<SessionCreationResult> - Session creation result with token
  */
 export async function createOAuthSession(
   profileId: string,
-  appId: string,
+  clientId: string,
   returnUrl: string,
   supabase: DatabaseClient,
 ): Promise<SessionCreationResult> {
@@ -156,7 +155,7 @@ const { error: sessionError } = await supabase
   .from('oauth_sessions')
   .insert({
 profile_id: profileId,
-app_id: appId,
+client_id: clientId,
 session_token: tokenData,
 expires_at: expiresAt,
 return_url: returnUrl,
@@ -221,16 +220,16 @@ return `${returnUrl}${separator}token=${encodeURIComponent(token)}`;
 // =============================================================================
 
 /**
- * Assigns default context to OAuth application using database function
+ * Assigns default context to OAuth client using database function
  *
  * @param profileId - User profile ID for context assignment
- * @param appId - OAuth application ID for assignment
+ * @param clientId - OAuth client ID for assignment
  * @param supabase - Authenticated Supabase client
  * @returns Promise<boolean> - Assignment success status
  */
 export async function assignDefaultContextToApp(
   profileId: string,
-  appId: string,
+  clientId: string,
   supabase: DatabaseClient,
 ): Promise<boolean> {
   try {
@@ -239,7 +238,7 @@ const { error: assignError } = await supabase.rpc(
   'assign_default_context_to_app',
   {
 p_profile_id: profileId,
-p_app_id: appId,
+p_client_id: clientId,
   },
 );
 

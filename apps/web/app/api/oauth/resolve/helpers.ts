@@ -34,8 +34,8 @@ export interface PerformanceMeasurement {
 export interface ResolveSessionData {
   /** User profile ID */
   profile_id: string;
-  /** OAuth application ID */
-  app_id: string;
+  /** OAuth client ID */
+  client_id: string;
   /** OAuth session ID (session token) */
   session_id: string;
   /** Context ID used for resolution */
@@ -95,11 +95,11 @@ if (!profileId || !contextName || !appName) {
   return null;
 }
 
-// Note: We need to make additional queries to get app_id and context_id
+// Note: We need to make additional queries to get client_id and context_id
 // For now, we'll return the available data and handle missing IDs in the logging function
 return {
   profile_id: profileId,
-  app_id: '', // Will be resolved in logOAuthUsage
+  client_id: '', // Will be resolved in logOAuthUsage
   session_id: sessionToken,
   context_id: '', // Will be resolved in logOAuthUsage
 };
@@ -135,11 +135,11 @@ export async function logOAuthUsage(
 ): Promise<boolean> {
   try {
 if (success && sessionData) {
-  // For successful resolutions, we need to resolve app_id and context_id
+  // For successful resolutions, we need to resolve client_id and context_id
   // First get session info
   const { data: sessionInfo, error: sessionError } = await supabase
 .from('oauth_sessions')
-.select('profile_id, app_id')
+.select('id, profile_id, client_id')
 .eq('session_token', sessionToken)
 .single();
 
@@ -156,18 +156,17 @@ return false;
 .from('app_context_assignments')
 .select('context_id')
 .eq('profile_id', sessionInfo.profile_id)
-.eq('app_id', sessionInfo.app_id)
+.eq('client_id', sessionInfo.client_id)
 .single();
 
   const contextId = contextAssignment?.context_id;
 
-  // Log successful resolution
   const { error: logError } = await supabase.rpc('log_app_usage', {
 p_profile_id: sessionInfo.profile_id,
-p_app_id: sessionInfo.app_id,
+p_client_id: sessionInfo.client_id,
 p_action: 'resolve',
 p_context_id: contextId,
-p_session_id: sessionToken,
+p_session_id: sessionInfo.id,
 p_response_time_ms: responseTimeMs,
 p_success: true,
   });
@@ -181,7 +180,7 @@ return false;
   // Try to get what we can from the token
   const { data: sessionInfo } = await supabase
 .from('oauth_sessions')
-.select('profile_id, app_id')
+.select('id, profile_id, client_id')
 .eq('session_token', sessionToken)
 .single();
 
@@ -189,9 +188,9 @@ return false;
 // Log failed resolution with available data
 const { error: logError } = await supabase.rpc('log_app_usage', {
   p_profile_id: sessionInfo.profile_id,
-  p_app_id: sessionInfo.app_id,
+  p_client_id: sessionInfo.client_id,
   p_action: 'resolve',
-  p_session_id: sessionToken,
+  p_session_id: sessionInfo.id,
   p_response_time_ms: responseTimeMs,
   p_success: false,
   p_error_type: errorType || 'resolution_failed',

@@ -3,6 +3,8 @@
 // Date: August 12, 2025
 // Academic project infrastructure implementing JSend specification
 
+import { OAuthErrorCodes } from '@/app/api/oauth/types';
+
 /**
  * JSend Specification Implementation for TrueNamePath API
  *
@@ -182,10 +184,18 @@ export const ErrorCodes = {
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
 
 /**
+ * Combined error code type that includes both standard and OAuth error codes
+ */
+export type AllErrorCodes =
+  | ErrorCode
+  | import('@/app/api/oauth/types').OAuthErrorCode;
+
+/**
  * HTTP status code mappings for different error types
  * This ensures consistent HTTP status codes across the API
  */
-export const StatusCodeMap: Record<ErrorCode, number> = {
+export const StatusCodeMap: Record<ErrorCode, number> &
+  Record<import('@/app/api/oauth/types').OAuthErrorCode, number> = {
   // Authentication & Authorization (401-403)
   [ErrorCodes.AUTHENTICATION_REQUIRED]: 401,
   [ErrorCodes.AUTHENTICATION_FAILED]: 401,
@@ -257,6 +267,24 @@ export const StatusCodeMap: Record<ErrorCode, number> = {
   [ErrorCodes.CONTEXT_NOT_ASSIGNED]: 404,
   [ErrorCodes.INVALID_CALLBACK_URL]: 400,
   [ErrorCodes.RATE_LIMITED]: 429,
+
+  // OAuth-specific Error Codes (proper HTTP status codes)
+  [OAuthErrorCodes.MISSING_ORIGIN_HEADER]: 400, // Client missing required header
+  [OAuthErrorCodes.INVALID_DOMAIN_FORMAT]: 400, // Client provided invalid domain
+  [OAuthErrorCodes.APP_NAME_TAKEN]: 409, // Conflict - app name already exists
+  [OAuthErrorCodes.APP_NOT_FOUND]: 404, // OAuth app not found
+  [OAuthErrorCodes.INVALID_REDIRECT_URI]: 400, // Invalid redirect URI format
+  [OAuthErrorCodes.APP_INACTIVE]: 403, // OAuth app is inactive/disabled
+  [OAuthErrorCodes.REGISTRATION_FAILED]: 500, // Server failed to register app
+  [OAuthErrorCodes.UPDATE_FAILED]: 500, // Server failed to update app
+  [OAuthErrorCodes.DELETION_FAILED]: 500, // Server failed to delete app
+  [OAuthErrorCodes.CLIENT_ID_GENERATION_FAILED]: 500, // Server failed to generate client ID
+  [OAuthErrorCodes.INVALID_TOKEN]: 401, // Invalid/malformed OAuth token
+  [OAuthErrorCodes.TOKEN_EXPIRED]: 401, // OAuth token has expired
+  [OAuthErrorCodes.NO_CONTEXT_ASSIGNED]: 404, // No context assigned to app
+  [OAuthErrorCodes.RESOLUTION_FAILED]: 500, // Server failed to resolve OIDC claims
+  [OAuthErrorCodes.TOKEN_REVOKED]: 410, // Token has been revoked (Gone)
+  [OAuthErrorCodes.REVOCATION_FAILED]: 500, // Server failed to revoke token
 };
 
 /**

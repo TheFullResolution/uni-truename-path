@@ -30,7 +30,7 @@ blue: [
   '#9cbde4',
   '#74a1d7',
   '#4d85ca',
-  '#3498db', // Keep legacy blue for backward compatibility
+  '#3498db', // Standard blue color
   '#2980b9',
   '#206694',
   '#1a5490',

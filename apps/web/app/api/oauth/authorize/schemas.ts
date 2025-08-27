@@ -4,11 +4,13 @@
 // Academic project - OAuth session token generation with context assignment
 
 import { z } from 'zod';
-import { UuidSchema } from '@/app/api/oauth/schemas';
+import { UuidSchema, ClientIdSchema, StateSchema } from '../schemas';
 
 // =============================================================================
 // Common Field Schemas
 // =============================================================================
+
+// Client ID and State schemas are imported from shared OAuth schemas
 
 /**
  * Return URL validation schema
@@ -23,11 +25,13 @@ export const ReturnUrlSchema = z.string().url('Return URL must be a valid URL');
 /**
  * Schema for OAuth authorization request
  * Generates session token with context assignment for external applications
+ * Updated to use client_id instead of app_id and added state parameter
  */
 export const OAuthAuthorizeRequestSchema = z.object({
-  app_id: UuidSchema,
+  client_id: ClientIdSchema,
   context_id: UuidSchema,
   return_url: ReturnUrlSchema,
+  state: StateSchema,
 });
 
 // =============================================================================
@@ -36,13 +40,21 @@ export const OAuthAuthorizeRequestSchema = z.object({
 
 /**
  * Schema for successful authorization response
- * Contains session token and expiry information
+ * Contains session token, expiry information, redirect URL, and client/context details
  */
 export const OAuthAuthorizeResponseSchema = z.object({
   session_token: z.string(),
   expires_at: z.string(),
-  context_name: z.string(),
-  app_name: z.string(),
+  redirect_url: z.string(),
+  client: z.object({
+client_id: z.string(),
+display_name: z.string(),
+publisher_domain: z.string(),
+  }),
+  context: z.object({
+id: z.string(),
+context_name: z.string(),
+  }),
 });
 
 // =============================================================================

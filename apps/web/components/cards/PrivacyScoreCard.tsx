@@ -1,92 +1,105 @@
 import { DashboardStatsResponse } from '@/app/api/dashboard/stats/types';
 import {
   Badge,
-  Box,
-  Center,
   Group,
   Paper,
   Skeleton,
   Text,
   Title,
+  Stack,
+  ScrollArea,
 } from '@mantine/core';
-import { IconLock } from '@tabler/icons-react';
+import { IconActivity, IconCheck, IconX } from '@tabler/icons-react';
 
-interface PrivacyScoreCardProps {
+interface OAuthActivityCardProps {
   stats: DashboardStatsResponse | null;
   loading: boolean;
 }
 
 /**
- * Privacy Score Card Component
+ * OAuth Activity Card Component
  *
- * Displays the user's privacy score with color-coded scoring and GDPR compliance status.
- * Shows a large privacy score (0-100) with appropriate color coding:
- * - Green (>=70): Good privacy score
- * - Yellow (>=50): Fair privacy score
- * - Red (<50): Poor privacy score
- *
- * Also displays GDPR compliance badge with appropriate status.
+ * Displays recent OAuth operations and activity timeline.
+ * Shows recent API calls, authorizations, and their success/failure status.
+ * Provides a real-time view of OAuth integration activity.
  */
-export function PrivacyScoreCard({ stats, loading }: PrivacyScoreCardProps) {
-  // Use privacy score from stats or calculate fallback
-  const privacyScore = loading
-? 0
-: stats?.privacy_metrics?.privacy_score ||
-  Math.min(
-100,
-Math.max(
-  0,
-  (stats?.context_statistics?.active_consents || 0) * 10 +
-(stats?.context_statistics?.custom_contexts || 0) * 5 +
-50,
-),
-  );
+export function OAuthActivityCard({ stats, loading }: OAuthActivityCardProps) {
+  const recentActivity = stats?.oauth_metrics?.recent_activity || [];
+  const hasActivity = recentActivity.length > 0;
 
-  const isCompliant = privacyScore >= 70;
+  const formatTimeAgo = (timestamp: string) => {
+const date = new Date(timestamp);
+const now = new Date();
+const diffMs = now.getTime() - date.getTime();
+const diffMins = Math.floor(diffMs / 60000);
+
+if (diffMins < 1) return 'Just now';
+if (diffMins < 60) return `${diffMins}m ago`;
+const diffHours = Math.floor(diffMins / 60);
+if (diffHours < 24) return `${diffHours}h ago`;
+const diffDays = Math.floor(diffHours / 24);
+return `${diffDays}d ago`;
+  };
 
   return (
-<Paper withBorder radius='md' p='xl'>
+<Paper withBorder radius='md' p='xl' data-testid='oauth-activity-card'>
   <Group gap='sm' mb='md'>
-<IconLock size={20} color='#4A7FE7' />
+<IconActivity size={20} color='#4A7FE7' />
 <Title order={3} c='gray.8'>
-  Privacy Score
+  OAuth Activity
 </Title>
   </Group>
-  <Center mb='xl'>
-{loading ? (
-  <Skeleton circle height={80} />
-) : (
-  <Box ta='center'>
-<Text
-  size='40'
-  fw={700}
-  c={
-privacyScore >= 70
-  ? 'green.6'
-  : privacyScore >= 50
-? 'yellow.6'
-: 'red.6'
-  }
->
-  {privacyScore}
+
+  {loading ? (
+<Stack gap='sm'>
+  <Skeleton height={20} />
+  <Skeleton height={20} width='80%' />
+  <Skeleton height={20} width='60%' />
+</Stack>
+  ) : hasActivity ? (
+<ScrollArea h={150}>
+  <Stack gap='xs'>
+{recentActivity.slice(0, 5).map((activity, index) => (
+  <Group key={index} justify='space-between' align='center'>
+<Group gap='xs'>
+  {activity.success ? (
+<IconCheck size={14} color='green' />
+  ) : (
+<IconX size={14} color='red' />
+  )}
+  <Text fz='sm' truncate style={{ maxWidth: '120px' }}>
+{activity.app_name}
+  </Text>
+  <Badge size='xs' variant='light' color='blue'>
+{activity.action}
+  </Badge>
+</Group>
+<Text fz='xs' c='dimmed'>
+  {formatTimeAgo(activity.created_at)}
 </Text>
-<Text size='xs' c='gray.6'>
-  out of 100
+  </Group>
+))}
+  </Stack>
+</ScrollArea>
+  ) : (
+<Text fz='sm' c='dimmed' ta='center' py='md'>
+  No OAuth activity yet
 </Text>
-  </Box>
-)}
-  </Center>
+  )}
+
   <Badge
 variant='light'
-color={loading ? 'gray' : isCompliant ? 'green' : 'yellow'}
+color={hasActivity ? 'green' : 'gray'}
 fullWidth
 size='lg'
+mt='md'
+data-testid='active-sessions-count'
   >
 {loading
-  ? 'Loading...'
-  : isCompliant
-? 'GDPR Compliant'
-: 'Needs Attention'}
+  ? 'Loading activity...'
+  : hasActivity
+? `${recentActivity.length} recent operations`
+: 'Waiting for first OAuth integration'}
   </Badge>
 </Paper>
   );

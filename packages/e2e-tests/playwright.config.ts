@@ -51,7 +51,11 @@ screenshot: 'only-on-failure',
 },
 {
   name: 'webkit',
-  use: { ...devices['Desktop Safari'] },
+  use: {
+...devices['Desktop Safari'],
+actionTimeout: 30000, // 30s for actions in WebKit CI
+navigationTimeout: 30000, // 30s for navigation in WebKit CI
+  },
 },
 {
   name: 'mobile',

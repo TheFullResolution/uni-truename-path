@@ -193,6 +193,7 @@ border: '1px solid rgba(231, 76, 60, 0.3)',
   required
   disabled={loading}
   data-autofocus
+  data-testid='login-email-input'
   autoComplete='email'
   {...form.getInputProps('email')}
   styles={(theme) => ({
@@ -217,6 +218,7 @@ boxShadow: `0 0 0 2px rgba(52, 152, 219, 0.2)`,
   placeholder='••••••••••••••••'
   required
   disabled={loading}
+  data-testid='login-password-input'
   autoComplete='current-password'
   {...form.getInputProps('password')}
   styles={(theme) => ({
@@ -241,6 +243,7 @@ boxShadow: `0 0 0 2px rgba(52, 152, 219, 0.2)`,
 type='submit'
 loading={loading}
 disabled={loading}
+data-testid='login-submit-button'
 color='blue'
 variant='filled'
 size='md'

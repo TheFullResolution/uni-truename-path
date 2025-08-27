@@ -21,12 +21,14 @@ export interface OAuthAuthorizeResponseData {
   expires_at: string;
   /** Complete redirect URL with token parameter appended */
   redirect_url: string;
-  /** Application information for the authorized app */
-  app: {
-/** Application unique identifier */
-id: string;
-/** Human-readable application display name */
+  /** Client information from the client registry */
+  client: {
+/** OAuth client identifier */
+client_id: string;
+/** Human-readable client display name */
 display_name: string;
+/** Publisher domain for the client */
+publisher_domain: string;
   };
   /** Context information for the authorization */
   context: {
@@ -65,18 +67,18 @@ export interface OAuthSessionCreationData {
 }
 
 /**
- * Enriched OAuth application for response building
- * Application data with minimal required fields for external consumption
+ * Client registry information for authorization response
+ * Client data from oauth_client_registry with required fields for external consumption
  */
-export interface AuthorizeAppInfo {
-  /** Application unique identifier */
-  id: string;
+export interface AuthorizeClientInfo {
+  /** OAuth client identifier */
+  client_id: string;
   /** Human-readable display name */
   display_name: string;
+  /** Publisher domain for the client */
+  publisher_domain: string;
   /** Machine-readable app name for logging */
   app_name: string;
-  /** Whether the application is active */
-  is_active: boolean;
 }
 
 /**
@@ -120,8 +122,8 @@ export interface AuthorizationParams {
 export interface AuthorizationResult {
   /** Generated session data */
   session: OAuthSessionCreationData;
-  /** Application information */
-  application: AuthorizeAppInfo;
+  /** Client information from registry */
+  client: AuthorizeClientInfo;
   /** Context information */
   context: AuthorizeContextInfo;
   /** Complete redirect URL with token */
@@ -141,6 +143,8 @@ export const AuthorizeErrorCodes = {
   APP_NOT_FOUND: 'OAUTH_APP_NOT_FOUND',
   /** Application is not active */
   APP_INACTIVE: 'OAUTH_APP_INACTIVE',
+  /** Client not found in registry */
+  CLIENT_NOT_FOUND: 'OAUTH_CLIENT_NOT_FOUND',
   /** Context not found or not accessible */
   CONTEXT_NOT_FOUND: 'CONTEXT_NOT_FOUND',
   /** Context does not belong to the user */

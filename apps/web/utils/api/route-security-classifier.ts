@@ -36,8 +36,16 @@ export enum RouteSecurityLevel {
 /**
  * Route patterns for OAuth public endpoints
  * These routes serve external applications and must minimize data exposure
+ * All OAuth routes are treated as OAUTH_PUBLIC for GDPR compliance
  */
 const OAUTH_ROUTE_PATTERNS = ['/api/oauth/'] as const;
+
+/**
+ * OAuth routes that are actually internal app routes
+ * These are part of TrueNamePath's authorization flow, not external APIs
+ * NOTE: Currently empty - all OAuth routes are treated as OAUTH_PUBLIC for GDPR compliance
+ */
+const OAUTH_INTERNAL_ROUTES = [] as const;
 
 /**
  * Route patterns for internal application endpoints
@@ -67,7 +75,7 @@ export const OAUTH_SAFE_HEADERS = [
   'x-authenticated-user-id',
   'x-oauth-authenticated',
   'x-oauth-session-id',
-  'x-oauth-app-id',
+  'x-oauth-client-id',
 ] as const;
 
 /**
@@ -95,7 +103,12 @@ export const INTERNAL_APP_HEADERS = [
  * @returns The security classification for the route
  */
 export function classifyRoute(pathname: string): RouteSecurityLevel {
-  // Check OAuth routes (highest priority for security)
+  // Check OAuth internal routes first (these are part of TrueNamePath's app)
+  if (OAUTH_INTERNAL_ROUTES.some((route) => pathname === route)) {
+return RouteSecurityLevel.INTERNAL_APP;
+  }
+
+  // Check OAuth routes (external API endpoints)
   if (OAUTH_ROUTE_PATTERNS.some((pattern) => pathname.startsWith(pattern))) {
 return RouteSecurityLevel.OAUTH_PUBLIC;
   }

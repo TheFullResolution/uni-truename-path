@@ -23,6 +23,7 @@ export async function createAndLoginTestUser(page: Page): Promise<TestUser> {
 
   // Navigate to signup
   await page.goto('/auth/signup');
+  await page.waitForLoadState('networkidle');
 
   // Fill Step 1 form
   await page.getByTestId('signup-email-input').fill(email);
@@ -106,43 +107,6 @@ page.waitForSelector('text=Context created successfully', {
 console.log(
   `⚠️  Could not find create context button, context may already exist`,
 );
-  }
-}
-
-/**
- * Create a test name for tests that need one
- */
-export async function createTestName(
-  page: Page,
-  nameText: string,
-): Promise<void> {
-  console.log(`📝 Creating test name: ${nameText}`);
-
-  await page.goto('/dashboard/names');
-  await page.waitForLoadState('networkidle');
-
-  // Look for add name button
-  const addButton = page
-.locator('button')
-.filter({ hasText: /add|create/i })
-.first();
-  if (await addButton.isVisible({ timeout: 5000 })) {
-await addButton.click();
-
-// Fill in name
-const nameInput = page.getByLabel(/name/i);
-await nameInput.fill(nameText);
-
-// Submit
-const submitButton = page
-  .locator('button')
-  .filter({ hasText: /save|create|submit/i })
-  .first();
-await submitButton.click();
-
-console.log(`✅ Created test name: ${nameText}`);
-  } else {
-console.log(`⚠️  Could not find add name button, name may already exist`);
   }
 }
 

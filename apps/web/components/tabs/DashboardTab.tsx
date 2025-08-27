@@ -2,8 +2,8 @@
 
 import type { DashboardStatsResponse } from '@/app/api/dashboard/stats/types';
 import { APIUsageCard } from '@/components/cards/APIUsageCard';
-import { NameVariantsCard } from '@/components/cards/NameVariantsCard';
-import { PrivacyScoreCard } from '@/components/cards/PrivacyScoreCard';
+import { ConnectedAppsCard } from '@/components/cards/NameVariantsCard';
+import { OAuthActivityCard } from '@/components/cards/PrivacyScoreCard';
 import { RecentActivityCard } from '@/components/cards/RecentActivityCard';
 import { WelcomeCard } from '@/components/cards/WelcomeCard';
 import type { AuthenticatedUser } from '@/utils/context';
@@ -32,9 +32,9 @@ loading={statsLoading}
   />
 </Grid.Col>
 
-{/* Privacy Score Card */}
+{/* OAuth Activity Card */}
 <Grid.Col span={{ base: 12, md: 4 }}>
-  <PrivacyScoreCard
+  <OAuthActivityCard
 stats={dashboardStats || null}
 loading={statsLoading}
   />
@@ -45,9 +45,9 @@ loading={statsLoading}
   <APIUsageCard stats={dashboardStats || null} loading={statsLoading} />
 </Grid.Col>
 
-{/* Name Variants Overview */}
+{/* Connected Apps Overview */}
 <Grid.Col span={{ base: 12, md: 6 }}>
-  <NameVariantsCard
+  <ConnectedAppsCard
 stats={dashboardStats || null}
 loading={statsLoading}
   />

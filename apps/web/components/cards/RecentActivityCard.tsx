@@ -1,14 +1,8 @@
 'use client';
 
-import { AuditLogResponseData } from '@/app/api/audit/types';
 import { DashboardStatsResponse } from '@/app/api/dashboard/stats/types';
-import { JSendSuccess } from '@/types/api';
-import { useAuth } from '@/utils/context';
-import { swrFetcher } from '@/utils/swr-fetcher';
-import { formatActivityAction, getActivityIcon } from '@/utils/utils';
 import {
-  Box,
-  Button,
+  Badge,
   Group,
   Paper,
   Skeleton,
@@ -16,41 +10,76 @@ import {
   Text,
   Title,
 } from '@mantine/core';
-import { IconActivity } from '@tabler/icons-react';
-import useSWR from 'swr';
+import {
+  IconActivity,
+  IconCheck,
+  IconKey,
+  IconTrash,
+} from '@tabler/icons-react';
 
 interface RecentActivityCardProps {
   stats: DashboardStatsResponse | null;
   loading: boolean;
 }
 
-export function RecentActivityCard({ loading }: RecentActivityCardProps) {
-  const { user } = useAuth();
+export function RecentActivityCard({
+  stats,
+  loading,
+}: RecentActivityCardProps) {
+  const recentActivities = stats?.oauth_metrics?.recent_activity || [];
 
-  // Fetch recent activity data - expect JSend response with AuditLogResponseData
-  // SECURITY: Use secure endpoint that gets user ID from auth context
-  const { data: auditResponse, isLoading: activitiesLoading } = useSWR<
-JSendSuccess<AuditLogResponseData>
-  >(
-user ? `/api/audit?limit=3` : null,
-swrFetcher<JSendSuccess<AuditLogResponseData>>,
-  );
+  const getActionIcon = (action: string) => {
+switch (action.toLowerCase()) {
+  case 'authorize':
+return <IconKey size={16} color='blue' />;
+  case 'resolve':
+return <IconCheck size={16} color='green' />;
+  case 'revoke':
+return <IconTrash size={16} color='red' />;
+  default:
+return <IconActivity size={16} color='gray' />;
+}
+  };
 
-  const isLoadingData = loading || activitiesLoading;
+  const formatTimeAgo = (timestamp: string) => {
+const date = new Date(timestamp);
+const now = new Date();
+const diffMs = now.getTime() - date.getTime();
+const diffMins = Math.floor(diffMs / 60000);
 
-  // Extract entries from the JSend response structure
-  const recentActivities = auditResponse?.data?.entries || [];
+if (diffMins < 1) return 'Just now';
+if (diffMins < 60) return `${diffMins}m ago`;
+const diffHours = Math.floor(diffMins / 60);
+if (diffHours < 24) return `${diffHours}h ago`;
+const diffDays = Math.floor(diffHours / 24);
+return `${diffDays}d ago`;
+  };
+
+  const formatActionText = (action: string) => {
+switch (action.toLowerCase()) {
+  case 'authorize':
+return 'OAuth Authorization';
+  case 'resolve':
+return 'Identity Resolution';
+  case 'revoke':
+return 'Access Revocation';
+  case 'assign_context':
+return 'Context Assignment';
+  default:
+return action;
+}
+  };
 
   return (
 <Paper withBorder radius='md' p='xl'>
   <Group gap='sm' mb='md'>
 <IconActivity size={20} color='#4A7FE7' />
 <Title order={3} c='gray.8'>
-  Recent Activity
+  Recent OAuth Operations
 </Title>
   </Group>
 
-  {isLoadingData ? (
+  {loading ? (
 <Stack gap='sm'>
   <Skeleton height={20} />
   <Skeleton height={20} />
@@ -58,32 +87,37 @@ swrFetcher<JSendSuccess<AuditLogResponseData>>,
 </Stack>
   ) : recentActivities.length === 0 ? (
 <Text size='sm' c='gray.6' ta='center' py='xl'>
-  No recent activity found
+  No OAuth activity yet. Start by connecting your first application.
 </Text>
   ) : (
 <Stack gap='sm'>
-  {recentActivities.map((activity) => (
-<Group
-  key={activity.requester_user_id}
-  justify='apart'
-  wrap='nowrap'
->
-  <div style={{ flex: 1 }}>
-<Text fz='sm' lineClamp={1}>
-  {formatActivityAction
-? formatActivityAction(activity.action)
-: activity.action}
-</Text>
+  {recentActivities.slice(0, 4).map((activity, index) => (
+<Group key={index} justify='space-between' align='center'>
+  <Group gap='sm'>
+{getActionIcon(activity.action)}
+<div>
+  <Text fz='sm' fw={500}>
+{formatActionText(activity.action)}
+  </Text>
+  <Group gap='xs'>
 <Text fz='xs' c='dimmed'>
-  {new Date(activity.accessed_at).toLocaleDateString()}
+  {activity.app_name}
 </Text>
-  </div>
-  {getActivityIcon && <Box>{getActivityIcon(activity.action)}</Box>}
+<Badge
+  size='xs'
+  variant='light'
+  color={activity.success ? 'green' : 'red'}
+>
+  {activity.success ? 'Success' : 'Failed'}
+</Badge>
+  </Group>
+</div>
+  </Group>
+  <Text fz='xs' c='dimmed'>
+{formatTimeAgo(activity.created_at)}
+  </Text>
 </Group>
   ))}
-  <Button variant='light' size='sm' fullWidth mt='sm'>
-View Full Activity Log
-  </Button>
 </Stack>
   )}
 </Paper>

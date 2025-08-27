@@ -20,8 +20,8 @@ import { ErrorCodes } from '@/utils/api';
 import { AuthorizeErrorCodes } from '../types';
 import type {
   OAuthAuthorizeResponseData,
-  AuthorizeAppInfo,
   AuthorizeContextInfo,
+  AuthorizeClientInfo,
 } from '../types';
 import type {
   validateAppAccess,
@@ -198,10 +198,19 @@ const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
 // Test data constants
 const VALID_UUID = '123e4567-e89b-12d3-a456-426614174000';
-const VALID_APP_ID = '550e8400-e29b-41d4-a716-446655440001';
+const VALID_CLIENT_ID = 'tnp_a1b2c3d4e5f67890';
+const VALID_APP_ID = VALID_CLIENT_ID; // For backward compatibility in tests
 const VALID_CONTEXT_ID = '550e8400-e29b-41d4-a716-446655440002';
 const VALID_RETURN_URL = 'https://demo-hr-truename.vercel.app/callback';
 const VALID_TOKEN = 'tnp_a1b2c3d4e5f6789012345678901234567890abcdef';
+
+const INVALID_CLIENT_IDS = [
+  'invalid-client-id',
+  'tnp_short',
+  'tnp_toolongclientid123456',
+  'not_tnp_prefix123456', // wrong prefix
+  'tnp_123456789abcdefg', // invalid hex character
+];
 
 const INVALID_UUIDS = [
   'invalid-uuid',
@@ -221,11 +230,11 @@ const INVALID_RETURN_URLS = [
 ];
 
 // Mock app data
-const createMockApp = (isActive = true): AuthorizeAppInfo => ({
-  id: VALID_APP_ID,
+const createMockApp = (): AuthorizeClientInfo => ({
+  client_id: VALID_CLIENT_ID,
   display_name: 'Demo HR System',
   app_name: 'demo-hr',
-  is_active: isActive,
+  publisher_domain: 'truenametest.com',
 });
 
 // Mock context data
@@ -313,7 +322,7 @@ mockSupabaseQuery.insert.mockReturnValue(mockSupabaseQuery);
   describe('Success Cases', () => {
 it('should successfully authorize valid request with all parameters', async () => {
   const requestBody = {
-app_id: VALID_APP_ID,
+client_id: VALID_CLIENT_ID,
 context_id: VALID_CONTEXT_ID,
 return_url: VALID_RETURN_URL,
   };
@@ -367,8 +376,8 @@ data: {
 /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
   ),
   redirect_url: expect.stringContaining(VALID_RETURN_URL),
-  app: {
-id: VALID_APP_ID,
+  client: {
+client_id: VALID_CLIENT_ID,
 display_name: 'Demo HR System',
   },
   context: {
@@ -387,7 +396,7 @@ timestamp: '2025-08-23T10:30:00.000Z',
 it('should handle return URL with existing query parameters correctly', async () => {
   const returnUrlWithParams = `${VALID_RETURN_URL}?existing=param`;
   const requestBody = {
-app_id: VALID_APP_ID,
+client_id: VALID_CLIENT_ID,
 context_id: VALID_CONTEXT_ID,
 return_url: returnUrlWithParams,
   };
@@ -421,7 +430,7 @@ return_url: returnUrlWithParams,
 
 it('should complete authorization within performance requirements', async () => {
   const requestBody = {
-app_id: VALID_APP_ID,
+client_id: VALID_CLIENT_ID,
 context_id: VALID_CONTEXT_ID,
 return_url: VALID_RETURN_URL,
   };
@@ -471,7 +480,7 @@ timestamp: '2025-08-23T10:30:00.000Z',
   };
 
   const requestBody = {
-app_id: VALID_APP_ID,
+client_id: VALID_CLIENT_ID,
 context_id: VALID_CONTEXT_ID,
 return_url: VALID_RETURN_URL,
   };
@@ -505,7 +514,7 @@ timestamp: '2025-08-23T10:30:00.000Z',
   };
 
   const requestBody = {
-app_id: VALID_APP_ID,
+client_id: VALID_CLIENT_ID,
 context_id: VALID_CONTEXT_ID,
 return_url: VALID_RETURN_URL,
   };
@@ -539,7 +548,7 @@ error: {
 
 it('should return 400 for missing required fields', async () => {
   const requestBody = {
-// Missing app_id, context_id, return_url
+// Missing client_id, context_id, return_url
   };
 
   const request = createMockRequest(requestBody);
@@ -554,7 +563,7 @@ error: {
   message: 'Invalid authorization request parameters',
   details: expect.arrayContaining([
 expect.objectContaining({
-  field: expect.stringContaining('app_id'),
+  field: expect.stringContaining('client_id'),
   message: expect.any(String),
   code: expect.any(String),
 }),
@@ -563,11 +572,11 @@ expect.objectContaining({
   });
 });
 
-it.each(INVALID_UUIDS)(
-  'should return 400 for invalid app_id UUID: "%s"',
-  async (invalidUuid) => {
+it.each(INVALID_CLIENT_IDS)(
+  'should return 400 for invalid client_id format: "%s"',
+  async (invalidClientId) => {
 const requestBody = {
-  app_id: invalidUuid,
+  client_id: invalidClientId,
   context_id: VALID_CONTEXT_ID,
   return_url: VALID_RETURN_URL,
 };
@@ -584,8 +593,8 @@ code: ErrorCodes.VALIDATION_ERROR,
 message: 'Invalid authorization request parameters',
 details: expect.arrayContaining([
   expect.objectContaining({
-field: 'app_id',
-message: expect.stringContaining('Invalid'),
+field: 'client_id',
+message: expect.stringContaining('Client ID must be in format'),
   }),
 ]),
   },
@@ -597,7 +606,7 @@ it.each(INVALID_UUIDS)(
   'should return 400 for invalid context_id UUID: "%s"',
   async (invalidUuid) => {
 const requestBody = {
-  app_id: VALID_APP_ID,
+  client_id: VALID_CLIENT_ID,
   context_id: invalidUuid,
   return_url: VALID_RETURN_URL,
 };
@@ -622,7 +631,7 @@ it.each(INVALID_RETURN_URLS)(
   'should return 400 for invalid return_url: "%s"',
   async (invalidUrl) => {
 const requestBody = {
-  app_id: VALID_APP_ID,
+  client_id: VALID_CLIENT_ID,
   context_id: VALID_CONTEXT_ID,
   return_url: invalidUrl,
 };
@@ -649,7 +658,7 @@ expect.objectContaining({
   describe('App Validation Tests', () => {
 it('should return 404 for non-existent app', async () => {
   const requestBody = {
-app_id: VALID_APP_ID,
+client_id: VALID_CLIENT_ID,
 context_id: VALID_CONTEXT_ID,
 return_url: VALID_RETURN_URL,
   };
@@ -674,15 +683,15 @@ error: { message: 'No rows returned', code: 'PGRST116' },
   expect(data).toMatchObject({
 success: false,
 error: {
-  code: AuthorizeErrorCodes.APP_NOT_FOUND,
-  message: 'OAuth application not found or inactive',
+  code: AuthorizeErrorCodes.CLIENT_NOT_FOUND,
+  message: 'OAuth client not found in registry',
 },
   });
 });
 
 it('should return 404 for inactive app', async () => {
   const requestBody = {
-app_id: VALID_APP_ID,
+client_id: VALID_CLIENT_ID,
 context_id: VALID_CONTEXT_ID,
 return_url: VALID_RETURN_URL,
   };
@@ -703,12 +712,12 @@ error: null,
   const response = await POST(request);
   const data = await parseJsonResponse(response);
 
-  expect(data.error.code).toBe(AuthorizeErrorCodes.APP_NOT_FOUND);
+  expect(data.error.code).toBe(AuthorizeErrorCodes.CLIENT_NOT_FOUND);
 });
 
 it('should verify correct database query for app validation', async () => {
   const requestBody = {
-app_id: VALID_APP_ID,
+client_id: VALID_CLIENT_ID,
 context_id: VALID_CONTEXT_ID,
 return_url: VALID_RETURN_URL,
   };
@@ -728,20 +737,22 @@ error: null,
   await POST(request);
 
   expect(mockSupabaseClient.from).toHaveBeenCalledWith(
-'oauth_applications',
+'oauth_client_registry',
   );
   expect(mockSupabaseQuery.select).toHaveBeenCalledWith(
-'id, app_name, display_name, is_active',
+'client_id, app_name, display_name, publisher_domain',
   );
-  expect(mockSupabaseQuery.eq).toHaveBeenCalledWith('id', VALID_APP_ID);
-  expect(mockSupabaseQuery.eq).toHaveBeenCalledWith('is_active', true);
+  expect(mockSupabaseQuery.eq).toHaveBeenCalledWith(
+'client_id',
+VALID_CLIENT_ID,
+  );
 });
   });
 
   describe('Context Ownership Tests', () => {
 it('should return 403 for context not owned by user', async () => {
   const requestBody = {
-app_id: VALID_APP_ID,
+client_id: VALID_CLIENT_ID,
 context_id: VALID_CONTEXT_ID,
 return_url: VALID_RETURN_URL,
   };
@@ -780,7 +791,7 @@ error: {
 
 it('should return 403 for context owned by different user', async () => {
   const requestBody = {
-app_id: VALID_APP_ID,
+client_id: VALID_CLIENT_ID,
 context_id: VALID_CONTEXT_ID,
 return_url: VALID_RETURN_URL,
   };
@@ -813,7 +824,7 @@ error: null,
 
 it('should verify correct database query for context ownership', async () => {
   const requestBody = {
-app_id: VALID_APP_ID,
+client_id: VALID_CLIENT_ID,
 context_id: VALID_CONTEXT_ID,
 return_url: VALID_RETURN_URL,
   };
@@ -846,7 +857,7 @@ return_url: VALID_RETURN_URL,
   describe('Database Error Tests', () => {
 it('should return 500 for app lookup database errors', async () => {
   const requestBody = {
-app_id: VALID_APP_ID,
+client_id: VALID_CLIENT_ID,
 context_id: VALID_CONTEXT_ID,
 return_url: VALID_RETURN_URL,
   };
@@ -868,12 +879,12 @@ error: { message: 'Connection failed', code: 'CONNECTION_ERROR' },
   const data = await parseJsonResponse(response);
 
   // Status code validation removed - JSend objects don't include status // Database error treated as not found for security
-  expect(data.error.code).toBe(AuthorizeErrorCodes.APP_NOT_FOUND);
+  expect(data.error.code).toBe(AuthorizeErrorCodes.CLIENT_NOT_FOUND);
 });
 
 it('should return 500 for context assignment failures', async () => {
   const requestBody = {
-app_id: VALID_APP_ID,
+client_id: VALID_CLIENT_ID,
 context_id: VALID_CONTEXT_ID,
 return_url: VALID_RETURN_URL,
   };
@@ -904,14 +915,14 @@ error: { message: 'Assignment failed', code: 'FUNCTION_ERROR' },
 success: false,
 error: {
   code: ErrorCodes.INTERNAL_ERROR,
-  message: 'Failed to assign context to application',
+  message: 'Failed to assign context to client',
 },
   });
 });
 
 it('should return 500 for token generation failures', async () => {
   const requestBody = {
-app_id: VALID_APP_ID,
+client_id: VALID_CLIENT_ID,
 context_id: VALID_CONTEXT_ID,
 return_url: VALID_RETURN_URL,
   };
@@ -950,7 +961,7 @@ error: {
 
 it('should return 500 for session creation failures', async () => {
   const requestBody = {
-app_id: VALID_APP_ID,
+client_id: VALID_CLIENT_ID,
 context_id: VALID_CONTEXT_ID,
 return_url: VALID_RETURN_URL,
   };
@@ -992,7 +1003,7 @@ error: {
 
 it('should return 500 for unexpected server errors', async () => {
   const requestBody = {
-app_id: VALID_APP_ID,
+client_id: VALID_CLIENT_ID,
 context_id: VALID_CONTEXT_ID,
 return_url: VALID_RETURN_URL,
   };
@@ -1029,7 +1040,7 @@ error: {
   describe('Response Format Validation', () => {
 it('should return consistent JSend format for success responses', async () => {
   const requestBody = {
-app_id: VALID_APP_ID,
+client_id: VALID_CLIENT_ID,
 context_id: VALID_CONTEXT_ID,
 return_url: VALID_RETURN_URL,
   };
@@ -1067,13 +1078,13 @@ return_url: VALID_RETURN_URL,
   expect(data.data).toHaveProperty('session_token');
   expect(data.data).toHaveProperty('expires_at');
   expect(data.data).toHaveProperty('redirect_url');
-  expect(data.data).toHaveProperty('app');
+  expect(data.data).toHaveProperty('client');
   expect(data.data).toHaveProperty('context');
 });
 
 it('should return consistent JSend format for error responses', async () => {
   const requestBody = {
-app_id: 'invalid-uuid',
+client_id: 'invalid-client-id',
 context_id: VALID_CONTEXT_ID,
 return_url: VALID_RETURN_URL,
   };
@@ -1096,7 +1107,7 @@ return_url: VALID_RETURN_URL,
 
 it('should return valid timestamp format in all responses', async () => {
   const requestBody = {
-app_id: VALID_APP_ID,
+client_id: VALID_CLIENT_ID,
 context_id: VALID_CONTEXT_ID,
 return_url: VALID_RETURN_URL,
   };
@@ -1137,7 +1148,7 @@ return_url: VALID_RETURN_URL,
 
 it('should include proper request ID format', async () => {
   const requestBody = {
-app_id: VALID_APP_ID,
+client_id: VALID_CLIENT_ID,
 context_id: VALID_CONTEXT_ID,
 return_url: VALID_RETURN_URL,
   };
@@ -1153,7 +1164,7 @@ return_url: VALID_RETURN_URL,
   describe('Token Expiration Logic', () => {
 it('should set token expiration to 2 hours from creation', async () => {
   const requestBody = {
-app_id: VALID_APP_ID,
+client_id: VALID_CLIENT_ID,
 context_id: VALID_CONTEXT_ID,
 return_url: VALID_RETURN_URL,
   };
@@ -1194,7 +1205,7 @@ return_url: VALID_RETURN_URL,
 
 it('should verify session data is inserted with correct expiration', async () => {
   const requestBody = {
-app_id: VALID_APP_ID,
+client_id: VALID_CLIENT_ID,
 context_id: VALID_CONTEXT_ID,
 return_url: VALID_RETURN_URL,
   };
@@ -1223,7 +1234,7 @@ return_url: VALID_RETURN_URL,
   // Verify insert was called with correct session data
   expect(mockSupabaseQuery.insert).toHaveBeenCalledWith({
 profile_id: 'test-user-id',
-app_id: VALID_APP_ID,
+client_id: VALID_CLIENT_ID,
 session_token: VALID_TOKEN,
 expires_at: expect.stringMatching(
   /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
@@ -1269,7 +1280,7 @@ it('should handle null request body', async () => {
 
 it('should handle concurrent authorization requests', async () => {
   const requestBody = {
-app_id: VALID_APP_ID,
+client_id: VALID_CLIENT_ID,
 context_id: VALID_CONTEXT_ID,
 return_url: VALID_RETURN_URL,
   };

@@ -16,7 +16,7 @@ import {
   validateTokenFormat,
   validateReturnUrl,
 } from '../helpers';
-import type { AuthorizeAppInfo, AuthorizeContextInfo } from '../types';
+import type { AuthorizeContextInfo, AuthorizeClientInfo } from '../types';
 
 // Mock Supabase client for controlled testing
 const mockSupabaseClient = {
@@ -36,17 +36,17 @@ let consoleSpy: ReturnType<typeof vi.spyOn>;
 let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
 
 // Test data constants
-const VALID_APP_ID = '550e8400-e29b-41d4-a716-446655440001';
+const VALID_CLIENT_ID = 'tnp_a1b2c3d4e5f67890';
 const VALID_CONTEXT_ID = '550e8400-e29b-41d4-a716-446655440002';
 const VALID_USER_ID = 'test-user-id';
 const VALID_TOKEN = 'tnp_a1b2c3d4e5f6789012345678901234567890abcdef';
 const VALID_SHORT_TOKEN = 'tnp_' + 'a'.repeat(32);
 
-const mockApp: AuthorizeAppInfo = {
-  id: VALID_APP_ID,
+const mockApp: AuthorizeClientInfo = {
+  client_id: VALID_CLIENT_ID,
   display_name: 'Demo HR System',
   app_name: 'demo-hr',
-  is_active: true,
+  publisher_domain: 'truenametest.com',
 };
 
 const mockContext: AuthorizeContextInfo = {
@@ -82,28 +82,30 @@ consoleWarnSpy?.mockRestore();
 it('should return app info for valid active app', async () => {
   mockSupabaseQuery.single.mockResolvedValue({
 data: {
-  id: VALID_APP_ID,
+  client_id: VALID_CLIENT_ID,
   app_name: 'demo-hr',
   display_name: 'Demo HR System',
-  is_active: true,
+  publisher_domain: 'truenametest.com',
 },
 error: null,
   });
 
   const result = await validateAppAccess(
-VALID_APP_ID,
+VALID_CLIENT_ID,
 mockSupabaseClient as any,
   );
 
   expect(result).toEqual(mockApp);
   expect(mockSupabaseClient.from).toHaveBeenCalledWith(
-'oauth_applications',
+'oauth_client_registry',
   );
   expect(mockSupabaseQuery.select).toHaveBeenCalledWith(
-'id, app_name, display_name, is_active',
+'client_id, app_name, display_name, publisher_domain',
   );
-  expect(mockSupabaseQuery.eq).toHaveBeenCalledWith('id', VALID_APP_ID);
-  expect(mockSupabaseQuery.eq).toHaveBeenCalledWith('is_active', true);
+  expect(mockSupabaseQuery.eq).toHaveBeenCalledWith(
+'client_id',
+VALID_CLIENT_ID,
+  );
 });
 
 it('should return null for non-existent app', async () => {
@@ -113,7 +115,7 @@ error: { message: 'No rows returned', code: 'PGRST116' },
   });
 
   const result = await validateAppAccess(
-VALID_APP_ID,
+VALID_CLIENT_ID,
 mockSupabaseClient as any,
   );
 
@@ -127,7 +129,7 @@ error: null,
   });
 
   const result = await validateAppAccess(
-VALID_APP_ID,
+VALID_CLIENT_ID,
 mockSupabaseClient as any,
   );
 
@@ -139,13 +141,13 @@ it('should return null and log error for database errors', async () => {
   mockSupabaseQuery.single.mockRejectedValue(dbError);
 
   const result = await validateAppAccess(
-VALID_APP_ID,
+VALID_CLIENT_ID,
 mockSupabaseClient as any,
   );
 
   expect(result).toBeNull();
   expect(consoleSpy).toHaveBeenCalledWith(
-'App validation failed:',
+'Client validation failed:',
 dbError,
   );
 });
@@ -153,24 +155,24 @@ dbError,
 it('should handle null is_active field gracefully', async () => {
   mockSupabaseQuery.single.mockResolvedValue({
 data: {
-  id: VALID_APP_ID,
+  client_id: VALID_CLIENT_ID,
   app_name: 'demo-hr',
   display_name: 'Demo HR System',
-  is_active: null, // Edge case: null instead of boolean
+  publisher_domain: 'truenametest.com',
 },
 error: null,
   });
 
   const result = await validateAppAccess(
-VALID_APP_ID,
+VALID_CLIENT_ID,
 mockSupabaseClient as any,
   );
 
   expect(result).toEqual({
-id: VALID_APP_ID,
+client_id: VALID_CLIENT_ID,
 app_name: 'demo-hr',
 display_name: 'Demo HR System',
-is_active: false, // Should default to false
+publisher_domain: 'truenametest.com',
   });
 });
 
@@ -180,17 +182,19 @@ data: mockApp,
 error: null,
   });
 
-  await validateAppAccess(VALID_APP_ID, mockSupabaseClient as any);
+  await validateAppAccess(VALID_CLIENT_ID, mockSupabaseClient as any);
 
   // Verify the complete query chain
   expect(mockSupabaseClient.from).toHaveBeenCalledWith(
-'oauth_applications',
+'oauth_client_registry',
   );
   expect(mockSupabaseQuery.select).toHaveBeenCalledWith(
-'id, app_name, display_name, is_active',
+'client_id, app_name, display_name, publisher_domain',
   );
-  expect(mockSupabaseQuery.eq).toHaveBeenCalledWith('id', VALID_APP_ID);
-  expect(mockSupabaseQuery.eq).toHaveBeenCalledWith('is_active', true);
+  expect(mockSupabaseQuery.eq).toHaveBeenCalledWith(
+'client_id',
+VALID_CLIENT_ID,
+  );
   expect(mockSupabaseQuery.single).toHaveBeenCalled();
 });
   });
@@ -318,7 +322,7 @@ error: null,
   const beforeCall = Date.now();
   const result = await createOAuthSession(
 VALID_USER_ID,
-VALID_APP_ID,
+VALID_CLIENT_ID,
 returnUrl,
 mockSupabaseClient as any,
   );
@@ -341,7 +345,7 @@ mockSupabaseClient as any,
   );
   expect(mockSupabaseQuery.insert).toHaveBeenCalledWith({
 profile_id: VALID_USER_ID,
-app_id: VALID_APP_ID,
+client_id: VALID_CLIENT_ID,
 session_token: VALID_TOKEN,
 expires_at: expect.stringMatching(
   /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
@@ -364,7 +368,7 @@ single: vi.fn().mockResolvedValue({
 
   const result = await createOAuthSession(
 VALID_USER_ID,
-VALID_APP_ID,
+VALID_CLIENT_ID,
 returnUrl,
 mockSupabaseClient as any,
   );
@@ -397,7 +401,7 @@ error: { message: 'Insert failed', code: 'INSERT_ERROR' },
 
   const result = await createOAuthSession(
 VALID_USER_ID,
-VALID_APP_ID,
+VALID_CLIENT_ID,
 returnUrl,
 mockSupabaseClient as any,
   );
@@ -415,7 +419,7 @@ it('should return failure result for unexpected errors', async () => {
 
   const result = await createOAuthSession(
 VALID_USER_ID,
-VALID_APP_ID,
+VALID_CLIENT_ID,
 returnUrl,
 mockSupabaseClient as any,
   );
@@ -441,7 +445,7 @@ single: vi.fn().mockResolvedValue({
 
   const result = await createOAuthSession(
 VALID_USER_ID,
-VALID_APP_ID,
+VALID_CLIENT_ID,
 returnUrl,
 mockSupabaseClient as any,
   );
@@ -553,7 +557,7 @@ error: null,
 
   const result = await assignDefaultContextToApp(
 VALID_USER_ID,
-VALID_APP_ID,
+VALID_CLIENT_ID,
 mockSupabaseClient as any,
   );
 
@@ -562,7 +566,7 @@ mockSupabaseClient as any,
 'assign_default_context_to_app',
 {
   p_profile_id: VALID_USER_ID,
-  p_app_id: VALID_APP_ID,
+  p_client_id: VALID_CLIENT_ID,
 },
   );
 });
@@ -575,7 +579,7 @@ error: { message: 'Assignment failed', code: 'FUNCTION_ERROR' },
 
   const result = await assignDefaultContextToApp(
 VALID_USER_ID,
-VALID_APP_ID,
+VALID_CLIENT_ID,
 mockSupabaseClient as any,
   );
 
@@ -594,7 +598,7 @@ new Error('Database connection failed'),
 
   const result = await assignDefaultContextToApp(
 VALID_USER_ID,
-VALID_APP_ID,
+VALID_CLIENT_ID,
 mockSupabaseClient as any,
   );
 
@@ -610,7 +614,7 @@ it('should verify correct function call parameters', async () => {
 
   await assignDefaultContextToApp(
 VALID_USER_ID,
-VALID_APP_ID,
+VALID_CLIENT_ID,
 mockSupabaseClient as any,
   );
 
@@ -618,7 +622,7 @@ mockSupabaseClient as any,
 'assign_default_context_to_app',
 {
   p_profile_id: VALID_USER_ID,
-  p_app_id: VALID_APP_ID,
+  p_client_id: VALID_CLIENT_ID,
 },
   );
   expect(mockSupabaseClient.rpc).toHaveBeenCalledTimes(1);

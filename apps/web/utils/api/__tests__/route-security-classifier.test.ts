@@ -67,7 +67,7 @@ isHeaderAllowedForRoute('x-authenticated-user-profile', route),
 
   // Should still allow essential OAuth headers
   expect(isHeaderAllowedForRoute('x-oauth-session-id', route)).toBe(true);
-  expect(isHeaderAllowedForRoute('x-oauth-app-id', route)).toBe(true);
+  expect(isHeaderAllowedForRoute('x-oauth-client-id', route)).toBe(true);
 });
   });
 
@@ -169,7 +169,7 @@ it('should provide minimal safe headers for OAuth routes', () => {
 'x-authenticated-user-id',
 'x-oauth-authenticated',
 'x-oauth-session-id',
-'x-oauth-app-id',
+'x-oauth-client-id',
   ]);
 });
   });

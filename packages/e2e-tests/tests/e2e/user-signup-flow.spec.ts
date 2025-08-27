@@ -1,27 +1,17 @@
 /**
- * Complete User Signup Flow E2E Test with Database Trigger Verification
+ * User Signup Flow E2E Test
  *
- * Tests the complete user journey from signup to context management with comprehensive
- * database trigger validation (Enhanced August 23, 2025):
- * 1. Signup Step 1: Email, password, consent checkboxes
- * 2. Signup Step 2: OIDC properties (required and optional)
- * 3. Dashboard verification and navigation
- * 4. DATABASE TRIGGER VERIFICATION:
- *- Verifies names were auto-created (given_name, family_name, full_name, display_name)
- *- Validates default context created with correct properties (permanent=true, visibility=public)
- *- Confirms OIDC property assignments exist and map to correct names
- *- Checks dashboard stats reflect created data
- * 5. UI navigation tests (names tab, contexts tab)
- * 6. End-to-end workflow validation
+ * Tests the complete signup flow and database trigger validation:
+ * 1. Two-step signup form (authentication + OIDC properties)
+ * 2. Database triggers: auto-created names, default context, OIDC assignments
+ * 3. Form validation error handling
  */
 
 import { expect, test } from '@playwright/test';
 import { ensureLoggedOut } from '@/utils/auth-helpers';
 
-test.describe('Complete User Signup Flow', () => {
-  test('should complete full signup and context management', async ({
-page,
-  }) => {
+test.describe('User Signup Flow', () => {
+  test('should complete signup with database triggers', async ({ page }) => {
 // Clean state
 await ensureLoggedOut(page);
 
@@ -52,19 +42,14 @@ await page.getByTestId('signup-step2-submit').click();
 // 4. Verify dashboard redirect
 await expect(page).toHaveURL('/dashboard');
 
-// 5. DATABASE TRIGGER VERIFICATION - Check that signup created correct data through UI
-console.log('🔍 Starting database trigger verification through UI...');
-
-// 6. UI VERIFICATION - Check that created names appear in the Names tab
+// Verify database triggers created names from signup form
 await page.getByTestId('tab-names').click();
 await expect(
   page.getByRole('heading', { name: 'Name Variants' }),
 ).toBeVisible();
 
-// Wait for names to load and verify they appear in the UI
-await page.waitForTimeout(1000); // Wait for SWR to load data
-
-// Check that the names from signup appear in the UI
+// Verify names from signup form are auto-created
+await page.waitForTimeout(1000);
 await expect(page.getByText('TestFirst', { exact: true })).toBeVisible();
 await expect(page.getByText('TestLast', { exact: true })).toBeVisible();
 await expect(
@@ -72,58 +57,27 @@ await expect(
 ).toBeVisible();
 await expect(page.getByText('TestDisplay', { exact: true })).toBeVisible();
 
-console.log('✅ UI Names verification passed - names visible in Names tab');
-
-// 7. UI VERIFICATION - Check that default context appears in Contexts tab
+// Verify database triggers created default context
 await page.getByTestId('tab-contexts').click();
 await expect(
   page.getByRole('heading', { name: 'Context Management' }),
 ).toBeVisible();
 
-// Wait for contexts to load
+// Verify default context is auto-created
 await page.waitForTimeout(1000);
-
-// Verify default context appears with correct properties
 await expect(
   page.getByRole('paragraph').filter({ hasText: /^Default$/ }),
 ).toBeVisible();
-await expect(page.getByText('Default identity context')).toBeVisible(); // Part of description
+await expect(page.getByText('Default identity context')).toBeVisible();
 
-// Check for the default context badge
-await expect(
-  page.locator('span').filter({ hasText: 'Default' }),
-).toBeVisible();
-
-// Verify assignment count shows (at least 3 assignments: given_name, family_name, name)
+// Verify OIDC property assignments were created
 const assignmentBadge = page
   .locator('[data-testid*="assignment"], :has-text("assignment")')
   .first();
 await expect(assignmentBadge).toBeVisible();
-
-console.log(
-  '✅ UI Context verification passed - default context visible in Contexts tab',
-);
-
-// 8. Verify dashboard shows successful signup
-await page.getByTestId('tab-dashboard').click();
-await expect(
-  page.getByRole('heading', { name: 'Welcome back!' }),
-).toBeVisible();
-
-console.log(
-  '✅ UI Dashboard verification passed - welcome message displayed',
-);
-
-console.log('🌟 COMPLETE SUCCESS: Database triggers worked perfectly!');
-console.log('   • Auto-created names from signup form data');
-console.log('   • Set up default context with correct properties');
-console.log('   • Created OIDC property assignments');
-console.log('   • All data visible in dashboard UI');
   });
 
-  test('should handle signup validation errors gracefully', async ({
-page,
-  }) => {
+  test('should validate required form fields', async ({ page }) => {
 await page.goto('/auth/signup');
 
 // Test Step 1 validation by submitting empty form
@@ -142,7 +96,7 @@ const errorCount = await errorElements.count();
 expect(errorCount).toBeGreaterThan(0);
   });
 
-  test('should handle password mismatch validation', async ({ page }) => {
+  test('should validate password confirmation', async ({ page }) => {
 const uniqueId = Date.now();
 const testEmail = `validation${uniqueId}@e2etest.local`;
 

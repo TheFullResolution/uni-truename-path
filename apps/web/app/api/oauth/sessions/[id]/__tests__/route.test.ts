@@ -72,7 +72,7 @@ const MOCK_USER_ID = 'user-123';
 const MOCK_SESSION = {
   id: VALID_SESSION_ID,
   profile_id: MOCK_USER_ID,
-  app_id: 'app-123',
+  client_id: 'tnp_a1b2c3d4e5f67890',
 };
 
 // Helper to create mock NextRequest
@@ -312,7 +312,7 @@ it('should successfully revoke session and return 200', async () => {
   expect(mockSupabaseClient.from).toHaveBeenCalledWith('oauth_sessions');
   expect(mockSupabaseClient.rpc).toHaveBeenCalledWith('log_app_usage', {
 p_profile_id: MOCK_SESSION.profile_id,
-p_app_id: MOCK_SESSION.app_id,
+p_app_id: MOCK_SESSION.client_id,
 p_action: 'revoke',
 p_session_id: VALID_SESSION_ID,
 p_response_time_ms: 0,

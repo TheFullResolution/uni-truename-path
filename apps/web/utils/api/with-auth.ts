@@ -34,7 +34,7 @@ export interface AuthenticatedContext {
   isOAuth: boolean;
   oauthSession?: {
 id: string;
-appId: string;
+clientId: string;
 sessionId: string;
 appName: string;
   };
@@ -157,7 +157,7 @@ request.headers.get('x-authentication-verified') === 'true';
   const isOAuthAuth =
 request.headers.get('x-oauth-authenticated') === 'true';
   const oauthSessionId = request.headers.get('x-oauth-session-id') || '';
-  const oauthAppId = request.headers.get('x-oauth-app-id') || '';
+  const oauthClientId = request.headers.get('x-oauth-client-id') || '';
 
   // 1.2. Read personal data headers (only available for internal routes)
   const userEmail = request.headers.get('x-authenticated-user-email') || '';
@@ -170,9 +170,9 @@ request.headers.get('x-oauth-authenticated') === 'true';
 
   // 2. Build authentication context based on available headers
   if (authVerified && userId) {
-if (isOAuthAuth && oauthSessionId && oauthAppId) {
+if (isOAuthAuth && oauthSessionId && oauthClientId) {
   // OAuth authentication: Handle both minimal and full contexts
-  let appName = oauthAppId; // Default fallback
+  let appName = oauthClientId; // Default fallback
 
   if (userEmail) {
 // Internal OAuth route: Full context with profile data from headers
@@ -188,14 +188,15 @@ if (
   'app_name' in user.profile
 ) {
   appName =
-(user.profile as { app_name?: string }).app_name || oauthAppId;
+(user.profile as { app_name?: string }).app_name ||
+oauthClientId;
 }
   } else {
 // External OAuth route: Minimal context from database
 const oauthContext = await buildOAuthAuthContext(
   userId,
   oauthSessionId,
-  oauthAppId,
+  oauthClientId,
 );
 user = oauthContext.user;
 appName = oauthContext.appName;
@@ -203,7 +204,7 @@ appName = oauthContext.appName;
 
   oauthSession = {
 id: oauthSessionId,
-appId: oauthAppId,
+clientId: oauthClientId,
 sessionId: oauthSessionId,
 appName,
   };
@@ -258,7 +259,6 @@ headers: {
   }
 
   // 3. Create authentication context with authenticated Supabase client
-  // For compatibility, still check for header-based auth as fallback
   const authHeader = request.headers.get('authorization');
   const token = authHeader ? authHeader.replace('Bearer ', '') : undefined;
 
@@ -439,7 +439,7 @@ id,
 async function buildOAuthAuthContext(
   userId: string,
   sessionId: string,
-  appId: string,
+  clientId: string,
 ): Promise<{ user: AuthenticatedUser; appName: string }> {
   try {
 // Create server client for database access
@@ -447,14 +447,15 @@ const supabase = await import('../supabase/server').then((m) =>
   m.createClient(),
 );
 
-// Fetch minimal OAuth session data
+// Fetch minimal OAuth session data with client registry info
 const { data: sessionData } = await supabase
   .from('oauth_sessions')
   .select(
 `
 id,
-oauth_applications!inner(
-  id,
+client_id,
+oauth_client_registry!inner(
+  client_id,
   app_name,
   display_name
 )
@@ -470,7 +471,11 @@ const user: AuthenticatedUser = {
   profile: undefined, // No profile data for OAuth-only routes
 };
 
-const appName = sessionData?.oauth_applications?.display_name || appId;
+const registry = sessionData?.oauth_client_registry;
+const appName =
+  registry && typeof registry === 'object' && 'display_name' in registry
+? (registry as { display_name: string }).display_name
+: clientId;
 
 return { user, appName };
   } catch (error) {
@@ -482,7 +487,7 @@ id: userId,
 email: '',
 profile: undefined,
   },
-  appName: appId,
+  appName: clientId,
 };
   }
 }

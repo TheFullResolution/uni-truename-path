@@ -43,7 +43,7 @@ let consoleSpy: ReturnType<typeof vi.spyOn>;
 // Test constants
 const VALID_SESSION_TOKEN = 'tnp_abcdef1234567890abcdef1234567890';
 const VALID_PROFILE_ID = 'profile_123456789';
-const VALID_CLIENT_ID = 'tnp_a1b2c3d4e5f67890';
+const VALID_APP_ID = 'app_123456789';
 const VALID_CONTEXT_ID = 'context_123456789';
 
 const VALID_CLAIMS_RESULT = {
@@ -320,7 +320,7 @@ beforeEach(() => {
   mockSupabaseQuery.single.mockResolvedValue({
 data: {
   profile_id: VALID_PROFILE_ID,
-  client_id: VALID_CLIENT_ID,
+  client_id: VALID_APP_ID,
 },
 error: null,
   });
@@ -333,7 +333,7 @@ error: null,
 it('should log successful OAuth usage with complete data', async () => {
   const sessionData: ResolveSessionData = {
 profile_id: VALID_PROFILE_ID,
-client_id: VALID_CLIENT_ID,
+client_id: VALID_APP_ID,
 session_id: VALID_SESSION_TOKEN,
 context_id: VALID_CONTEXT_ID,
   };
@@ -344,9 +344,8 @@ select: vi.fn().mockReturnThis(),
 eq: vi.fn().mockReturnThis(),
 single: vi.fn().mockResolvedValue({
   data: {
-id: 'session_12345',
 profile_id: VALID_PROFILE_ID,
-client_id: VALID_CLIENT_ID,
+client_id: VALID_APP_ID,
   },
   error: null,
 }),
@@ -382,10 +381,10 @@ true,
   );
   expect(mockSupabaseClient.rpc).toHaveBeenCalledWith('log_app_usage', {
 p_profile_id: VALID_PROFILE_ID,
-p_client_id: VALID_CLIENT_ID,
+p_client_id: VALID_APP_ID,
 p_action: 'resolve',
 p_context_id: VALID_CONTEXT_ID,
-p_session_id: 'session_12345',
+p_session_id: VALID_SESSION_TOKEN,
 p_response_time_ms: 25,
 p_success: true,
   });
@@ -394,7 +393,7 @@ p_success: true,
 it('should handle successful resolution without context assignment', async () => {
   const sessionData: ResolveSessionData = {
 profile_id: VALID_PROFILE_ID,
-client_id: VALID_CLIENT_ID,
+client_id: VALID_APP_ID,
 session_id: VALID_SESSION_TOKEN,
 context_id: VALID_CONTEXT_ID,
   };
@@ -405,9 +404,8 @@ select: vi.fn().mockReturnThis(),
 eq: vi.fn().mockReturnThis(),
 single: vi.fn().mockResolvedValue({
   data: {
-id: 'session_67890',
 profile_id: VALID_PROFILE_ID,
-client_id: VALID_CLIENT_ID,
+client_id: VALID_APP_ID,
   },
   error: null,
 }),
@@ -439,10 +437,10 @@ true,
   expect(result).toBe(true);
   expect(mockSupabaseClient.rpc).toHaveBeenCalledWith('log_app_usage', {
 p_profile_id: VALID_PROFILE_ID,
-p_client_id: VALID_CLIENT_ID,
+p_client_id: VALID_APP_ID,
 p_action: 'resolve',
 p_context_id: undefined, // No context assignment found
-p_session_id: 'session_67890',
+p_session_id: VALID_SESSION_TOKEN,
 p_response_time_ms: 30,
 p_success: true,
   });
@@ -451,7 +449,7 @@ p_success: true,
 it('should handle session lookup failure for successful resolution', async () => {
   const sessionData: ResolveSessionData = {
 profile_id: VALID_PROFILE_ID,
-client_id: VALID_CLIENT_ID,
+client_id: VALID_APP_ID,
 session_id: VALID_SESSION_TOKEN,
 context_id: VALID_CONTEXT_ID,
   };
@@ -481,7 +479,7 @@ true,
 it('should handle log_app_usage RPC failure', async () => {
   const sessionData: ResolveSessionData = {
 profile_id: VALID_PROFILE_ID,
-client_id: VALID_CLIENT_ID,
+client_id: VALID_APP_ID,
 session_id: VALID_SESSION_TOKEN,
 context_id: VALID_CONTEXT_ID,
   };
@@ -492,9 +490,8 @@ select: vi.fn().mockReturnThis(),
 eq: vi.fn().mockReturnThis(),
 single: vi.fn().mockResolvedValue({
   data: {
-id: 'session_fail_test',
 profile_id: VALID_PROFILE_ID,
-client_id: VALID_CLIENT_ID,
+client_id: VALID_APP_ID,
   },
   error: null,
 }),
@@ -542,9 +539,8 @@ beforeEach(() => {
   // Setup default successful session lookup
   mockSupabaseQuery.single.mockResolvedValue({
 data: {
-  id: 'session_default',
   profile_id: VALID_PROFILE_ID,
-  client_id: VALID_CLIENT_ID,
+  client_id: VALID_APP_ID,
 },
 error: null,
   });
@@ -568,9 +564,9 @@ false,
   expect(mockSupabaseClient.from).toHaveBeenCalledWith('oauth_sessions');
   expect(mockSupabaseClient.rpc).toHaveBeenCalledWith('log_app_usage', {
 p_profile_id: VALID_PROFILE_ID,
-p_client_id: VALID_CLIENT_ID,
+p_client_id: VALID_APP_ID,
 p_action: 'resolve',
-p_session_id: 'session_default',
+p_session_id: VALID_SESSION_TOKEN,
 p_response_time_ms: 40,
 p_success: false,
 p_error_type: 'invalid_token',
@@ -589,9 +585,9 @@ false,
   expect(result).toBe(true);
   expect(mockSupabaseClient.rpc).toHaveBeenCalledWith('log_app_usage', {
 p_profile_id: VALID_PROFILE_ID,
-p_client_id: VALID_CLIENT_ID,
+p_client_id: VALID_APP_ID,
 p_action: 'resolve',
-p_session_id: 'session_default',
+p_session_id: VALID_SESSION_TOKEN,
 p_response_time_ms: 35,
 p_success: false,
 p_error_type: 'resolution_failed',
@@ -690,7 +686,7 @@ expect.any(Error),
 it('should handle exceptions during successful resolution logging', async () => {
   const sessionData: ResolveSessionData = {
 profile_id: VALID_PROFILE_ID,
-client_id: VALID_CLIENT_ID,
+client_id: VALID_APP_ID,
 session_id: VALID_SESSION_TOKEN,
 context_id: VALID_CONTEXT_ID,
   };
@@ -861,7 +857,7 @@ VALID_SESSION_TOKEN,
 it('should handle database timeout scenarios', async () => {
   const sessionData: ResolveSessionData = {
 profile_id: VALID_PROFILE_ID,
-client_id: VALID_CLIENT_ID,
+client_id: VALID_APP_ID,
 session_id: VALID_SESSION_TOKEN,
 context_id: VALID_CONTEXT_ID,
   };

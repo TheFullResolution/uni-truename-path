@@ -150,7 +150,7 @@ createErrorResponse(
 // Check session exists and verify ownership
 const { data: session, error: fetchError } = await supabase
   .from('oauth_sessions')
-  .select('id, profile_id, app_id')
+  .select('id, profile_id, client_id')
   .eq('id', sessionId)
   .single();
 
@@ -210,7 +210,7 @@ timestamp,
   // Step 2: Log revocation action in app_usage_log
   const { error: logError } = await supabase.rpc('log_app_usage', {
 p_profile_id: session.profile_id,
-p_app_id: session.app_id,
+p_app_id: session.client_id,
 p_action: 'revoke',
 p_session_id: sessionId,
 p_response_time_ms: 0, // Not applicable for revocation
@@ -229,7 +229,7 @@ const { error: assignmentError } = await supabase
   .from('app_context_assignments')
   .delete()
   .eq('profile_id', session.profile_id)
-  .eq('app_id', session.app_id);
+  .eq('client_id', session.client_id);
 
 if (assignmentError) {
   console.error(

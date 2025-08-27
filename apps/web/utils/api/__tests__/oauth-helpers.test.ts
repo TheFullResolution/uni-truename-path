@@ -119,7 +119,7 @@ it('should successfully validate a valid, non-expired token', async () => {
   const mockSession = {
 id: 'session-123',
 profile_id: 'profile-456',
-app_id: 'app-789',
+client_id: 'app-789',
 session_token: 'tnp_validtoken1234567890123456789012',
 expires_at: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
 profiles: {
@@ -177,7 +177,7 @@ it('should reject expired token', async () => {
   const expiredSession = {
 id: 'session-123',
 profile_id: 'profile-456',
-app_id: 'app-789',
+client_id: 'app-789',
 expires_at: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
 profiles: { id: 'profile-456', email: 'test@example.com' },
 oauth_applications: {
@@ -213,7 +213,7 @@ it('should update used_at timestamp on successful validation', async () => {
   const mockSession = {
 id: 'session-123',
 profile_id: 'profile-456',
-app_id: 'app-789',
+client_id: 'app-789',
 expires_at: new Date(Date.now() + 3600000).toISOString(),
 profiles: { id: 'profile-456', email: 'test@example.com' },
 oauth_applications: {
@@ -260,7 +260,7 @@ logOAuthAccess('profile-123', 'app-456', 'session-789', 'resolve'),
   expect(mockTrackOAuthUsage).toHaveBeenCalledWith({
 supabase: expect.any(Object),
 profileId: 'profile-123',
-appId: 'app-456',
+clientId: 'app-456',
 action: 'resolve',
 sessionId: 'session-789',
 success: true,
@@ -286,7 +286,7 @@ logOAuthAccess('profile-123', 'app-456', 'session-789'),
   expect(mockTrackOAuthUsage).toHaveBeenCalledWith({
 supabase: expect.any(Object),
 profileId: 'profile-123',
-appId: 'app-456',
+clientId: 'app-456',
 action: 'resolve',
 sessionId: 'session-789',
 success: true,
@@ -312,7 +312,7 @@ logOAuthAccess('profile-123', 'app-456', 'session-789'),
   expect(mockTrackOAuthUsage).toHaveBeenCalledWith({
 supabase: expect.any(Object),
 profileId: 'profile-123',
-appId: 'app-456',
+clientId: 'app-456',
 action: 'resolve',
 sessionId: 'session-789',
 success: true,
@@ -325,7 +325,7 @@ it('should validate token in under 3ms (simulated)', async () => {
   const mockSession = {
 id: 'session-123',
 profile_id: 'profile-456',
-app_id: 'app-789',
+client_id: 'app-789',
 expires_at: new Date(Date.now() + 3600000).toISOString(),
 profiles: { id: 'profile-456', email: 'test@example.com' },
 oauth_applications: {
@@ -357,7 +357,7 @@ it('should handle concurrent validations efficiently', async () => {
   const mockSession = {
 id: 'session-123',
 profile_id: 'profile-456',
-app_id: 'app-789',
+client_id: 'app-789',
 expires_at: new Date(Date.now() + 3600000).toISOString(),
 profiles: { id: 'profile-456', email: 'test@example.com' },
 oauth_applications: {

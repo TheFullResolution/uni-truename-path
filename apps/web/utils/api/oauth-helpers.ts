@@ -12,15 +12,15 @@ import { trackOAuthUsage } from '../analytics';
 
 type OAuthSession = Database['public']['Tables']['oauth_sessions']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
-type OAuthApplication =
-  Database['public']['Tables']['oauth_applications']['Row'];
+type OAuthClientRegistry =
+  Database['public']['Tables']['oauth_client_registry']['Row'];
 
 /**
  * Extended OAuth session with related data for context creation
  */
 export interface OAuthSessionWithProfile extends OAuthSession {
   profiles: Profile;
-  oauth_applications: OAuthApplication;
+  oauth_client_registry: OAuthClientRegistry;
 }
 
 /**
@@ -62,14 +62,13 @@ export async function validateOAuthToken(
   try {
 const supabase = await createClient();
 
-// Query oauth_sessions with related profile and app data
+// Query oauth_sessions with related profile data
 const { data: session, error } = await supabase
   .from('oauth_sessions')
   .select(
 `
 *,
-profiles!inner(id, email),
-oauth_applications!inner(id, app_name, display_name)
+profiles!inner(id, email, created_at, updated_at)
   `,
   )
   .eq('session_token', token)
@@ -93,9 +92,29 @@ await supabase
   .update({ used_at: now.toISOString() })
   .eq('id', session.id);
 
+// Get client registry info separately
+const { data: clientInfo } = await supabase
+  .from('oauth_client_registry')
+  .select(
+'client_id, app_name, display_name, publisher_domain, created_at, last_used_at',
+  )
+  .eq('client_id', session.client_id)
+  .single();
+
 return {
   success: true,
-  session: session as OAuthSessionWithProfile,
+  session: {
+...session,
+profiles: session.profiles,
+oauth_client_registry: clientInfo || {
+  client_id: session.client_id,
+  app_name: 'Unknown',
+  display_name: 'Unknown App',
+  publisher_domain: 'unknown',
+  created_at: new Date().toISOString(),
+  last_used_at: null,
+},
+  } as OAuthSessionWithProfile,
 };
   } catch (error) {
 console.error('OAuth token validation error:', error);
@@ -109,7 +128,7 @@ return { success: false, error: ErrorCodes.INTERNAL_SERVER_ERROR };
  */
 export async function logOAuthAccess(
   profileId: string,
-  appId: string,
+  clientId: string,
   sessionId: string,
   action: 'resolve' | 'authorize' | 'revoke' = 'resolve',
 ): Promise<void> {
@@ -118,7 +137,7 @@ export async function logOAuthAccess(
   await trackOAuthUsage({
 supabase,
 profileId,
-appId,
+clientId,
 action,
 sessionId,
 success: true,
@@ -159,7 +178,7 @@ const timestamp = new Date().toISOString();
 // Get session details for validation and logging
 const { data: session, error: fetchError } = await supabase
   .from('oauth_sessions')
-  .select('id, profile_id, app_id')
+  .select('id, profile_id, client_id')
   .eq('id', sessionId)
   .eq('profile_id', userId) // Ownership check
   .single();
@@ -182,7 +201,7 @@ if (deleteError) {
 // Log revocation action (non-critical)
 await logOAuthAccess(
   session.profile_id,
-  session.app_id,
+  session.client_id,
   sessionId,
   'revoke',
 );

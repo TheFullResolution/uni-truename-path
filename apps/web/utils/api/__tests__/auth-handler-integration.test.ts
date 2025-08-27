@@ -57,7 +57,7 @@ it('should build OAuth context with minimal headers for OAuth routes', async () 
 ['x-authenticated-user-email', 'oauth@example.com'], // Should be filtered out
 ['x-oauth-authenticated', 'true'],
 ['x-oauth-session-id', 'session-456'],
-['x-oauth-app-id', 'app-demo-hr'],
+['x-oauth-client-id', 'app-demo-hr'],
 [
   'x-authenticated-user-profile',
   JSON.stringify({
@@ -90,7 +90,7 @@ headers: oauthHeaders as any,
   // Verify OAuth context has minimal data exposure
   expect(context.oauthSession).toEqual({
 id: 'session-456',
-appId: 'app-demo-hr',
+clientId: 'app-demo-hr',
 sessionId: 'session-456',
 appName: 'Demo HR App',
   });
@@ -119,7 +119,7 @@ expect(allowedHeaders).not.toContain('x-authenticated-user-email');
 expect(allowedHeaders).not.toContain('x-authenticated-user-profile');
 expect(allowedHeaders).toContain('x-authenticated-user-id');
 expect(allowedHeaders).toContain('x-oauth-session-id');
-expect(allowedHeaders).toContain('x-oauth-app-id');
+expect(allowedHeaders).toContain('x-oauth-client-id');
   });
 });
   });
@@ -257,7 +257,7 @@ it('should handle OAuth route with authentication', async () => {
 ['x-authentication-verified', 'true'],
 ['x-authenticated-user-id', 'user-oauth-123'],
 ['x-oauth-authenticated', 'true'],
-['x-oauth-app-id', 'hr-demo-app'],
+['x-oauth-client-id', 'hr-demo-app'],
 ['x-oauth-session-id', 'session-oauth-456'],
   ]);
 
@@ -284,7 +284,7 @@ headers: authenticatedHeaders as any,
   expect(context.user.id).toBe('user-oauth-123');
   expect(context.isOAuth).toBe(true);
   // OAuth app ID extraction depends on authentication context building
-  expect(typeof context.oauthSession?.appId).toBe('string');
+  expect(typeof context.oauthSession?.clientId).toBe('string');
 });
 
 it('should handle OAuth route without authentication', async () => {
@@ -327,7 +327,7 @@ it('should classify OAuth route for security', () => {
 'x-authenticated-user-id',
 'x-oauth-authenticated',
 'x-oauth-session-id',
-'x-oauth-app-id',
+'x-oauth-client-id',
   ]);
   expect(headers).not.toContain('x-authenticated-user-email');
 });
@@ -408,7 +408,7 @@ it('should prevent cross-contamination between OAuth and internal contexts', asy
 ['x-authenticated-user-email', 'oauth@example.com'],
 ['x-oauth-authenticated', 'true'],
 ['x-oauth-session-id', 'session-456'],
-['x-oauth-app-id', 'app-demo-hr'],
+['x-oauth-client-id', 'app-demo-hr'],
   ]);
 
   // Internal context should not have OAuth session

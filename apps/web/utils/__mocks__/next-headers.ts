@@ -60,7 +60,7 @@ export const mockOAuthHeaders = createMockHeaders({
   'x-authenticated-user-id': 'user-oauth-456',
   'x-oauth-authenticated': 'true',
   'x-oauth-session-id': 'oauth-session-789',
-  'x-oauth-app-id': 'demo-hr-app',
+  'x-oauth-client-id': 'demo-hr-app',
   // Note: Intentionally missing email and profile for OAuth security
 });
 
@@ -70,7 +70,7 @@ export const mockOAuthWithSensitiveHeaders = createMockHeaders({
   'x-authenticated-user-email': 'oauth-user@example.com', // Should be filtered
   'x-oauth-authenticated': 'true',
   'x-oauth-session-id': 'oauth-session-789',
-  'x-oauth-app-id': 'demo-hr-app',
+  'x-oauth-client-id': 'demo-hr-app',
   'x-authenticated-user-profile': JSON.stringify({
 // Should be filtered
 id: 'user-oauth-456',

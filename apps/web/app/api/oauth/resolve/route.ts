@@ -43,12 +43,11 @@
  * Academic constraint: Handler ≤50 lines
  */
 
-import { NextRequest } from 'next/server';
-import { withOptionalAuth } from '@/utils/api/with-auth';
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/utils/supabase/server';
 import {
   createSuccessResponse,
   createErrorResponse,
-  AuthenticatedContext,
 } from '@/utils/api/with-auth';
 import { extractBearerToken } from '@/utils/api/oauth-helpers';
 import { ErrorCodes } from '@/utils/api/types';
@@ -60,19 +59,23 @@ import {
   mapErrorToAnalyticsType,
 } from './helpers';
 
-async function handleResolve(
-  request: NextRequest,
-  { supabase, requestId, timestamp }: AuthenticatedContext,
-) {
+async function handleResolve(request: NextRequest) {
   const perf = measurePerformance();
+  const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 12)}`;
+  const timestamp = new Date().toISOString();
+  const supabase = await createClient();
+
   const sessionToken = extractBearerToken(request.headers.get('authorization'));
   if (!sessionToken) {
-return createErrorResponse(
-  ErrorCodes.AUTHENTICATION_REQUIRED,
-  'Valid Bearer token required (Authorization: Bearer tnp_xxx)',
-  requestId,
-  undefined,
-  timestamp,
+return NextResponse.json(
+  createErrorResponse(
+ErrorCodes.AUTHENTICATION_REQUIRED,
+'Valid Bearer token required (Authorization: Bearer tnp_xxx)',
+requestId,
+undefined,
+timestamp,
+  ),
+  { status: 401 },
 );
   }
 
@@ -90,20 +93,19 @@ false,
 perf.getElapsed(),
 'server_error',
   );
-  return createErrorResponse(
-ResolveErrorCodes.RESOLUTION_FAILED,
-'Failed to resolve OIDC claims',
-requestId,
-{ database_error: error?.message },
-timestamp,
+  return NextResponse.json(
+createErrorResponse(
+  ResolveErrorCodes.RESOLUTION_FAILED,
+  'Failed to resolve OIDC claims',
+  requestId,
+  { database_error: error?.message },
+  timestamp,
+),
+{ status: 500 },
   );
 }
 
-if (
-  typeof claimsResult === 'object' &&
-  claimsResult !== null &&
-  'error' in claimsResult
-) {
+if (typeof claimsResult === 'object' && 'error' in claimsResult) {
   const errorResult = claimsResult as { error: string; message?: string };
   const errorCode =
 errorResult.error === 'invalid_token'
@@ -119,12 +121,15 @@ false,
 perf.getElapsed(),
 mapErrorToAnalyticsType(errorResult),
   );
-  return createErrorResponse(
-errorCode,
-errorResult.message || 'Token resolution failed',
-requestId,
-undefined,
-timestamp,
+  return NextResponse.json(
+createErrorResponse(
+  errorCode,
+  errorResult.message || 'Token resolution failed',
+  requestId,
+  undefined,
+  timestamp,
+),
+{ status: errorCode === ResolveErrorCodes.INVALID_TOKEN ? 401 : 400 },
   );
 }
 
@@ -141,14 +146,17 @@ await logOAuthUsage(
   responseTime,
 );
 
-return createSuccessResponse(
-  {
-claims: claimsResult as unknown as OIDCClaims,
-resolved_at: timestamp,
-performance: { response_time_ms: responseTime },
-  },
-  requestId,
-  timestamp,
+return NextResponse.json(
+  createSuccessResponse(
+{
+  claims: claimsResult as unknown as OIDCClaims,
+  resolved_at: timestamp,
+  performance: { response_time_ms: responseTime },
+},
+requestId,
+timestamp,
+  ),
+  { status: 200 },
 );
   } catch {
 await logOAuthUsage(
@@ -159,15 +167,18 @@ await logOAuthUsage(
   perf.getElapsed(),
   'server_error',
 );
-return createErrorResponse(
-  ErrorCodes.INTERNAL_SERVER_ERROR,
-  'OIDC resolution failed',
-  requestId,
-  undefined,
-  timestamp,
+return NextResponse.json(
+  createErrorResponse(
+ErrorCodes.INTERNAL_SERVER_ERROR,
+'OIDC resolution failed',
+requestId,
+undefined,
+timestamp,
+  ),
+  { status: 500 },
 );
   }
 }
 
-// Export POST handler with optional auth for OAUTH_PUBLIC security level
-export const POST = withOptionalAuth(handleResolve);
+// Export POST handler directly (handles custom OAuth token authentication)
+export const POST = handleResolve;

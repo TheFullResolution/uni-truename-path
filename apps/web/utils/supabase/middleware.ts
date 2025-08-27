@@ -120,8 +120,8 @@ if (isHeaderAllowedForRoute('x-oauth-authenticated', pathname)) {
 if (isHeaderAllowedForRoute('x-oauth-session-id', pathname)) {
   response.headers.set('x-oauth-session-id', oauthSession.id);
 }
-if (isHeaderAllowedForRoute('x-oauth-app-id', pathname)) {
-  response.headers.set('x-oauth-app-id', oauthSession.app_id);
+if (isHeaderAllowedForRoute('x-oauth-client-id', pathname)) {
+  response.headers.set('x-oauth-client-id', oauthSession.client_id);
 }
   } else {
 // Set cookie auth headers only if allowed

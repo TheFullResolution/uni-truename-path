@@ -15,6 +15,28 @@ import { z } from 'zod';
 export const UuidSchema = z.string().uuid();
 
 /**
+ * Client ID validation schema
+ * Format: tnp_[a-f0-9]{16} (20 characters total)
+ * Used across OAuth endpoints for client identification
+ */
+export const ClientIdSchema = z
+  .string()
+  .regex(
+/^tnp_[a-f0-9]{16}$/,
+'Client ID must be in format: tnp_[16 hex chars]',
+  );
+
+/**
+ * State parameter validation schema for CSRF protection
+ * Optional string with max 255 characters
+ * Used in OAuth authorization flow to prevent CSRF attacks
+ */
+export const StateSchema = z
+  .string()
+  .max(255, 'State parameter must be 255 characters or less')
+  .optional();
+
+/**
  * App name validation schema
  * Follows OAuth standard naming conventions: lowercase alphanumeric with hyphens
  * Length: 1-50 characters for practical API usage
@@ -38,39 +60,8 @@ export const DisplayNameSchema = z
   .max(100, 'Display name must be 100 characters or less')
   .trim();
 
-/**
- * Description validation schema
- * Optional descriptive text for OAuth applications
- */
-export const DescriptionSchema = z
-  .string()
-  .max(500, 'Description must be 500 characters or less')
-  .trim()
-  .nullable()
-  .optional();
-
-/**
- * Redirect URI validation schema
- * Must be a valid HTTPS URL for security
- */
-export const RedirectUriSchema = z
-  .string()
-  .url('Redirect URI must be a valid URL')
-  .refine(
-(url) => url.startsWith('https://') || url.startsWith('http://localhost'),
-'Redirect URI must use HTTPS (or HTTP for localhost)',
-  );
-
-/**
- * App type validation schema
- * Optional classification for OAuth applications
- */
-export const AppTypeSchema = z
-  .string()
-  .max(50, 'App type must be 50 characters or less')
-  .trim()
-  .nullable()
-  .optional();
+// NOTE: DescriptionSchema, RedirectUriSchema, and AppTypeSchema removed
+// These fields are no longer part of the client_id registry system
 
 // =============================================================================
 // Request Body Schemas
@@ -78,35 +69,33 @@ export const AppTypeSchema = z
 
 /**
  * Schema for creating new OAuth applications
- * Follows database schema requirements for oauth_applications table
+ * Updated for client_id registry system (oauth_client_registry table)
  */
 export const CreateOAuthAppRequestSchema = z.object({
   app_name: AppNameSchema,
   display_name: DisplayNameSchema,
-  description: DescriptionSchema,
-  redirect_uri: RedirectUriSchema,
-  app_type: AppTypeSchema,
+  publisher_domain: z
+.string()
+.min(1, 'Publisher domain is required')
+.max(253, 'Publisher domain must be 253 characters or less')
+.refine(
+  (domain) => /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domain),
+  'Publisher domain must be a valid domain format',
+),
 });
 
 /**
  * Schema for updating existing OAuth applications
- * All fields optional for partial updates
+ * Updated for client_id registry system (simplified fields)
  */
 export const UpdateOAuthAppRequestSchema = z
   .object({
 display_name: DisplayNameSchema.optional(),
-description: DescriptionSchema,
-redirect_uri: RedirectUriSchema.optional(),
-app_type: AppTypeSchema,
-is_active: z.boolean().optional(),
+last_used_at: z.string().datetime().optional(),
   })
   .refine(
 (data) =>
-  data.display_name !== undefined ||
-  data.description !== undefined ||
-  data.redirect_uri !== undefined ||
-  data.app_type !== undefined ||
-  data.is_active !== undefined,
+  data.display_name !== undefined || data.last_used_at !== undefined,
 {
   message: 'At least one field must be provided for update',
 },
@@ -118,6 +107,7 @@ is_active: z.boolean().optional(),
 
 /**
  * Common query parameters for OAuth app endpoints
+ * Updated for client_id registry system (simplified)
  */
 export const OAuthAppQueryParamsSchema = z.object({
   limit: z
@@ -128,14 +118,6 @@ export const OAuthAppQueryParamsSchema = z.object({
 .refine((val) => !val || (val > 0 && val <= 100), {
   message: 'Limit must be between 1 and 100',
 }),
-
-  is_active: z
-.string()
-.nullable()
-.optional()
-.transform((val) =>
-  val === 'true' ? true : val === 'false' ? false : undefined,
-),
 });
 
 // =============================================================================

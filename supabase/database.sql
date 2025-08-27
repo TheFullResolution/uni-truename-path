@@ -4,14 +4,21 @@
 CREATE TABLE public.app_context_assignments (
 id uuid NOT NULL DEFAULT gen_random_uuid(),
 profile_id uuid NOT NULL,
-app_id uuid NOT NULL,
 context_id uuid NOT NULL,
 created_at timestamp with time zone NOT NULL DEFAULT now(),
 updated_at timestamp with time zone DEFAULT now(),
+client_id character varying NOT NULL,
 CONSTRAINT app_context_assignments_pkey PRIMARY KEY (id),
 CONSTRAINT app_context_assignments_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id),
-CONSTRAINT app_context_assignments_app_id_fkey FOREIGN KEY (app_id) REFERENCES public.oauth_applications(id),
 CONSTRAINT app_context_assignments_context_id_fkey FOREIGN KEY (context_id) REFERENCES public.user_contexts(id)
+);
+CREATE TABLE public.app_context_assignments_backup_037 (
+   id uuid,
+   profile_id uuid,
+   app_id uuid,
+   context_id uuid,
+   created_at timestamp with time zone,
+   updated_at timestamp with time zone
 );
 CREATE TABLE public.app_usage_log (
   id bigint NOT NULL DEFAULT nextval('app_usage_log_id_seq'::regclass),
@@ -67,7 +74,8 @@ CREATE TABLE public.context_name_assignments (
  context_id uuid NOT NULL,
  name_id uuid NOT NULL,
  created_at timestamp with time zone NOT NULL DEFAULT now(),
- oidc_property text,
+ oidc_property USER-DEFINED,
+ is_primary boolean DEFAULT false,
  CONSTRAINT context_name_assignments_pkey PRIMARY KEY (id),
  CONSTRAINT context_name_assignments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
  CONSTRAINT context_name_assignments_context_id_fkey FOREIGN KEY (context_id) REFERENCES public.user_contexts(id),
@@ -121,19 +129,28 @@ CREATE TABLE public.oauth_applications (
    updated_at timestamp with time zone DEFAULT now(),
    CONSTRAINT oauth_applications_pkey PRIMARY KEY (id)
 );
+CREATE TABLE public.oauth_client_registry (
+  client_id character varying NOT NULL CHECK (client_id::text ~ '^tnp_[a-f0-9]{16}$'::text),
+  display_name character varying NOT NULL,
+  app_name character varying NOT NULL,
+  publisher_domain character varying NOT NULL CHECK (publisher_domain::text ~ '^[a-z0-9]([a-z0-9\-\.]*[a-z0-9])?$'::text),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  last_used_at timestamp with time zone,
+  CONSTRAINT oauth_client_registry_pkey PRIMARY KEY (client_id)
+);
 CREATE TABLE public.oauth_sessions (
    id uuid NOT NULL DEFAULT gen_random_uuid(),
    profile_id uuid NOT NULL,
-   app_id uuid NOT NULL,
    session_token character varying NOT NULL UNIQUE CHECK (session_token::text ~ '^tnp_[a-f0-9]{32}$'::text),
   return_url text NOT NULL,
   expires_at timestamp with time zone NOT NULL DEFAULT (now() + '02:00:00'::interval),
   used_at timestamp with time zone,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
+  state character varying,
+  client_id character varying NOT NULL,
   CONSTRAINT oauth_sessions_pkey PRIMARY KEY (id),
-  CONSTRAINT oauth_sessions_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id),
-  CONSTRAINT oauth_sessions_app_id_fkey FOREIGN KEY (app_id) REFERENCES public.oauth_applications(id)
+  CONSTRAINT oauth_sessions_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id)
 );
 CREATE TABLE public.profiles (
  id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -149,7 +166,7 @@ CREATE TABLE public.user_contexts (
   description text,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
-  is_permanent boolean NOT NULL DEFAULT false,
+  is_permanent boolean DEFAULT false,
   visibility USER-DEFINED NOT NULL DEFAULT 'restricted'::context_visibility,
   CONSTRAINT user_contexts_pkey PRIMARY KEY (id),
   CONSTRAINT user_contexts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)

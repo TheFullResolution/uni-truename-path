@@ -1,117 +1,212 @@
 // OAuth App Registration Endpoint
-// GET /api/oauth/apps/[appName] - Retrieve OAuth application metadata for authorization flows
-// Date: August 23, 2025
-// Academic project OAuth integration with public access for demo applications
+// GET /api/oauth/apps/[appName] - Secure OAuth client ID generation with domain validation
+// Date: August 25, 2025
+// Academic project OAuth integration with client registry system
 
-import { AppNameSchema } from '@/app/api/oauth/schemas';
+import { NextRequest } from 'next/server';
+import { withOptionalAuth } from '@/utils/api/with-auth';
 import {
   createErrorResponse,
   createSuccessResponse,
-  ErrorCodes,
+  AuthenticatedContext,
   handle_method_not_allowed,
 } from '@/utils/api';
-import { createClient } from '@/utils/supabase/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { AppNameSchema } from '@/app/api/oauth/schemas';
+import {
+  OAuthErrorCodes,
+  type OAuthClientRegistryInfo,
+} from '@/app/api/oauth/types';
+import { ErrorCodes } from '@/utils/api/types';
+import {
+  lookupExistingClient,
+  updateClientUsage,
+  createNewClientWithRetry,
+} from '@/utils/oauth/registry-service';
+
+/**
+ * Extracts domain from Origin header with Referer fallback
+ * Uses Origin first, falls back to Referer for browser navigation
+ */
+function extractDomain(request: NextRequest): string | null {
+  // Try Origin header first (preferred for CORS requests)
+  const origin = request.headers.get('origin');
+  if (origin) {
+try {
+  return new URL(origin).hostname;
+} catch {
+  // Invalid Origin format, continue to fallback
+}
+  }
+
+  // Fallback to Referer header (for browser navigation)
+  const referer = request.headers.get('referer');
+  if (referer) {
+try {
+  return new URL(referer).hostname;
+} catch {
+  // Invalid Referer format
+  return null;
+}
+  }
+
+  return null;
+}
 
 /**
  * GET /api/oauth/apps/[appName]
- * Public endpoint for OAuth application discovery
+ * Secure OAuth client ID generation with domain-based registry
+ * Returns existing client_id or creates new one with collision detection
  *
- * @param request - Next.js request object
- * @returns OAuth application metadata in JSend format
+ * @param request - Next.js request object with Origin header required
+ * @param context - Authenticated context from withOptionalAuth
+ * @returns OAuth client registry information in JSend format
  */
-export async function GET(request: NextRequest) {
-  const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-  const timestamp = new Date().toISOString();
-
+async function handleGet(
+  request: NextRequest,
+  { requestId, timestamp }: AuthenticatedContext,
+) {
   try {
-// Extract app name from URL path
+// Extract and validate domain (Origin or Referer header required)
+const domain = extractDomain(request);
+
+if (!domain) {
+  return createErrorResponse(
+OAuthErrorCodes.MISSING_ORIGIN_HEADER,
+'Origin or Referer header is required for client registration',
+requestId,
+undefined,
+timestamp,
+  );
+}
+
+// Validate domain format
+if (!/^[a-z0-9]([a-z0-9\-.]*[a-z0-9])?$/.test(domain)) {
+  return createErrorResponse(
+OAuthErrorCodes.INVALID_DOMAIN_FORMAT,
+'Invalid domain format in Origin header',
+requestId,
+undefined,
+timestamp,
+  );
+}
+
+// Extract and validate app name from URL
 const url = new URL(request.url);
 const appName = url.pathname.split('/').pop();
 
 if (!appName) {
-  const errorResponse = createErrorResponse(
+  return createErrorResponse(
 ErrorCodes.VALIDATION_ERROR,
 'App name is required',
 requestId,
 undefined,
 timestamp,
   );
-  return NextResponse.json(errorResponse, { status: 400 });
 }
 
-// Validate app name format using Zod schema
-const validation = AppNameSchema.safeParse(appName);
-if (!validation.success) {
-  const errorResponse = createErrorResponse(
+// Validate app name format
+const appNameValidation = AppNameSchema.safeParse(appName);
+if (!appNameValidation.success) {
+  return createErrorResponse(
 ErrorCodes.VALIDATION_ERROR,
 'Invalid app name format',
 requestId,
-validation.error.issues.map((issue) => ({
+appNameValidation.error.issues.map((issue) => ({
   field: 'appName',
   message: issue.message,
   code: issue.code,
 })),
 timestamp,
   );
-  return NextResponse.json(errorResponse, { status: 400 });
 }
 
-// Query database for active application
-const supabase = await createClient();
-const { data: app, error } = await supabase
-  .from('oauth_applications')
-  .select('*')
-  .eq('app_name', validation.data)
-  .eq('is_active', true)
-  .maybeSingle();
-
-if (error) {
-  console.error(`[${requestId}] Database error:`, error);
-  const errorResponse = createErrorResponse(
-ErrorCodes.DATABASE_ERROR,
-'Failed to retrieve application information',
-requestId,
-undefined,
-timestamp,
-  );
-  return NextResponse.json(errorResponse, { status: 500 });
-}
-
-if (!app) {
-  const errorResponse = createErrorResponse(
-ErrorCodes.APP_NOT_FOUND,
-'OAuth application not found or inactive',
-requestId,
-undefined,
-timestamp,
-  );
-  return NextResponse.json(errorResponse, { status: 404 });
-}
-
-// Create success response with caching headers for performance
-const responseData = createSuccessResponse(app, requestId, timestamp);
-
-// Return NextResponse with 5-minute caching for CDN optimization
-return NextResponse.json(responseData, {
-  status: 200,
-  headers: {
-'Cache-Control': 'public, max-age=300, s-maxage=300', // 5 minutes
-'Vary': 'Accept-Encoding',
-  },
-});
+return await handleClientRegistration(
+  domain,
+  appNameValidation.data,
+  requestId,
+  timestamp,
+);
   } catch (error) {
-console.error(`[${requestId}] OAuth app lookup error:`, error);
-const errorResponse = createErrorResponse(
+console.error(`[${requestId}] Client registration error:`, error);
+return createErrorResponse(
   ErrorCodes.INTERNAL_SERVER_ERROR,
-  'Failed to retrieve application information',
+  'Failed to process client registration',
   requestId,
   undefined,
   timestamp,
 );
-return NextResponse.json(errorResponse, { status: 500 });
   }
 }
+
+/**
+ * Handles client registry lookup and creation
+ */
+async function handleClientRegistration(
+  domain: string,
+  appName: string,
+  requestId: string,
+  timestamp: string,
+) {
+  // Check for existing client registration
+  const { data: existingClient, error: lookupError } =
+await lookupExistingClient(domain, appName);
+
+  if (lookupError) {
+console.error(`[${requestId}] Registry lookup error:`, lookupError);
+return createErrorResponse(
+  ErrorCodes.DATABASE_ERROR,
+  'Failed to check client registry',
+  requestId,
+  undefined,
+  timestamp,
+);
+  }
+
+  if (existingClient) {
+// Update last_used_at and return existing client
+await updateClientUsage(existingClient.client_id);
+
+const clientInfo: OAuthClientRegistryInfo = {
+  client_id: existingClient.client_id,
+  display_name: existingClient.display_name,
+  app_name: existingClient.app_name,
+  publisher_domain: existingClient.publisher_domain,
+  created_at: existingClient.created_at,
+  last_used_at: new Date().toISOString(),
+};
+
+return createSuccessResponse({ client: clientInfo }, requestId, timestamp);
+  }
+
+  // Create new client with collision retry
+  const { data: newClient, error: createError } =
+await createNewClientWithRetry(domain, appName, requestId);
+
+  if (createError || !newClient) {
+console.error(`[${requestId}] Client creation failed:`, createError);
+return createErrorResponse(
+  OAuthErrorCodes.CLIENT_ID_GENERATION_FAILED,
+  'Failed to generate unique client ID after multiple attempts',
+  requestId,
+  undefined,
+  timestamp,
+);
+  }
+
+  const clientInfo: OAuthClientRegistryInfo = {
+client_id: newClient.client_id,
+display_name: newClient.display_name,
+app_name: newClient.app_name,
+publisher_domain: newClient.publisher_domain,
+created_at: newClient.created_at,
+last_used_at: newClient.last_used_at,
+  };
+
+  return createSuccessResponse({ client: clientInfo }, requestId, timestamp);
+}
+
+// Export GET handler with optional auth for OAUTH_PUBLIC security level
+export const GET = withOptionalAuth(handleGet);
 
 // Handle unsupported HTTP methods
 export const POST = () => handle_method_not_allowed(['GET']);
