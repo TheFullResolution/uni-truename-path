@@ -3,30 +3,35 @@
  * Displays user identity with CASUAL context emphasis (nickname, preferred_username)
  */
 
-import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { ChatMessage } from '@/components/ChatMessage';
+import { UserBadge } from '@/components/UserBadge';
+import { oauthConfig } from '@/services/oauth';
 import {
-  Container,
-  Title,
-  Text,
-  Button,
-  Stack,
-  Group,
-  Paper,
+  ActionIcon,
+  Alert,
   Badge,
   Box,
-  Card,
-  Grid,
-  Alert,
-  Loader,
+  Button,
+  Container,
   Divider,
+  Group,
+  Image,
+  Paper,
+  ScrollArea,
+  Skeleton,
+  Stack,
+  Text,
+  TextInput,
+  Title,
 } from '@mantine/core';
+import { IconSend } from '@tabler/icons-react';
 import {
-  useStoredOAuthToken,
-  useOAuthToken,
   type OIDCClaims,
+  useOAuthToken,
+  useStoredOAuthToken,
 } from '@uni-final/truename-oauth';
-import { oauthConfig } from '@/services/oauth';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export const ChatPage = () => {
   const navigate = useNavigate();
@@ -61,17 +66,85 @@ return null;
 
   if (isLoading) {
 return (
-  <Box
-style={{
-  minHeight: '100vh',
-  backgroundColor: '#f8f9fa',
-  padding: '2rem',
-}}
-  >
-<Container size='md'>
-  <Stack gap='lg' align='center' style={{ paddingTop: '2rem' }}>
-<Loader size='lg' color='violet' type='dots' />
-<Text c='gray.6'>Loading your chat identity...</Text>
+  <Box h='100vh' bg='var(--mantine-color-gray-0)'>
+{/* Header Skeleton */}
+<Box
+  bg='white'
+  style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}
+>
+  <Container size='lg'>
+<Group justify='space-between' py='md'>
+  <Group>
+<Skeleton height={36} width={36} radius='sm' />
+<Skeleton height={32} width={120} />
+<Skeleton height={24} width={50} radius='sm' />
+<Skeleton height={20} width={1} />
+<Skeleton height={32} width={100} radius='xl' />
+  </Group>
+  <Skeleton height={36} width={80} />
+</Group>
+  </Container>
+</Box>
+
+{/* Main Content Skeleton */}
+<Container size='lg' pt='lg'>
+  <Stack gap='lg'>
+{/* Chat Interface Skeleton */}
+<Paper shadow='sm' radius='md' p='md'>
+  <Stack gap='md'>
+{/* Channel Header Skeleton */}
+<Group justify='space-between'>
+  <Group>
+<Skeleton height={24} width={80} />
+<Skeleton height={20} width={70} radius='sm' />
+<Skeleton height={32} width={100} radius='xl' />
+  </Group>
+  <Skeleton height={20} width={100} radius='sm' />
+</Group>
+
+<Divider />
+
+{/* Message List Skeleton */}
+<ScrollArea h={400}>
+  <Stack gap='md' p='sm'>
+{[...Array(5)].map((_, i) => (
+  <Group key={i} align='flex-start' gap='sm'>
+<Skeleton height={32} width={32} radius='xl' />
+<Stack gap={4} style={{ flex: 1 }}>
+  <Skeleton height={16} width={100} />
+  <Skeleton height={14} width='90%' />
+  <Skeleton height={14} width='60%' />
+</Stack>
+  </Group>
+))}
+  </Stack>
+</ScrollArea>
+
+<Divider />
+
+{/* Message Input Skeleton */}
+<Group gap='xs'>
+  <Skeleton height={32} width={32} radius='xl' />
+  <Skeleton height={36} style={{ flex: 1 }} />
+  <Skeleton height={36} width={36} />
+</Group>
+  </Stack>
+</Paper>
+
+{/* Identity Context Card Skeleton */}
+<Paper shadow='sm' p='lg' radius='md'>
+  <Stack gap='md'>
+<Group>
+  <Skeleton height={20} width={140} />
+  <Skeleton height={18} width={80} radius='sm' />
+</Group>
+<Stack gap='xs'>
+  <Skeleton height={12} width={80} />
+  <Skeleton height={28} width={200} />
+  <Skeleton height={14} width='70%' />
+</Stack>
+  </Stack>
+</Paper>
   </Stack>
 </Container>
   </Box>
@@ -80,20 +153,16 @@ style={{
 
   if (error || !userData) {
 return (
-  <Box
-style={{
-  minHeight: '100vh',
-  backgroundColor: '#f8f9fa',
-  padding: '2rem',
-}}
-  >
+  <Box h='100vh' bg='var(--mantine-color-gray-0)' p='xl'>
 <Container size='md'>
-  <Alert color='red'>
-Failed to load user data. Please try signing in again.
-  </Alert>
-  <Button mt='md' onClick={handleLogout}>
-Return to Sign In
-  </Button>
+  <Stack gap='md' align='center' ta='center' pt='5rem'>
+<Alert color='red' w='100%'>
+  Failed to load user data. Please try signing in again.
+</Alert>
+<Button onClick={handleLogout} size='lg'>
+  Return to Sign In
+</Button>
+  </Stack>
 </Container>
   </Box>
 );
@@ -108,240 +177,304 @@ if (claims.given_name) return claims.given_name;
 return claims.name || 'User';
   };
 
-  const getSecondaryInfo = (claims: OIDCClaims): string => {
-// Secondary display for context
-if (claims.nickname && claims.preferred_username) {
-  return `@${claims.preferred_username}`;
-}
-if (claims.preferred_username && !claims.nickname) {
-  return claims.name || claims.given_name || '';
-}
-return claims.name || '';
-  };
-
   const displayName = getCasualDisplayName(userData);
-  const secondaryInfo = getSecondaryInfo(userData);
+
+  // Static mock messages for demonstration
+  const mockMessages = [
+{
+  id: '1',
+  authorName: 'Alex Chen',
+  content: 'Hey team! Just pushed the latest updates to the project. 🚀',
+  timestamp: '10:15 AM',
+  isCurrentUser: false,
+},
+{
+  id: '2',
+  authorName: 'Sarah Kim',
+  content: 'Awesome work! The OAuth integration looks solid.',
+  timestamp: '10:18 AM',
+  isCurrentUser: false,
+},
+{
+  id: '3',
+  authorName: displayName,
+  content:
+'Thanks! Just integrated with TrueNamePath - context-aware identities are working perfectly.',
+  timestamp: '10:20 AM',
+  isCurrentUser: true,
+},
+{
+  id: '4',
+  authorName: 'Mike Rodriguez',
+  content:
+"That's exactly what we needed. Love seeing my casual name here vs the formal one in HR systems.",
+  timestamp: '10:22 AM',
+  isCurrentUser: false,
+},
+{
+  id: '5',
+  authorName: displayName,
+  content:
+'Right? It makes communication feel much more natural and friendly! 😊',
+  timestamp: '10:25 AM',
+  isCurrentUser: true,
+},
+  ];
 
   return (
-<Box style={{ minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
+<Box h='100vh' bg='var(--mantine-color-gray-0)'>
   {/* Header */}
   <Box
-style={{ backgroundColor: 'white', borderBottom: '1px solid #e9ecef' }}
+bg='white'
+style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}
   >
 <Container size='lg'>
   <Group justify='space-between' py='md'>
-<Group>
-  <Title order={2} c='violet.7'>
+<Group gap='sm'>
+  <Image
+src='/demo_chat_logo.png'
+alt='ChatSpace Logo'
+w={36}
+h={36}
+fit='contain'
+style={{
+  borderRadius: 'var(--mantine-radius-sm)',
+}}
+  />
+  <Title
+order={2}
+c='violet.7'
+fz={{ base: 'lg', sm: 'xl', md: 'xxl' }}
+  >
 ChatSpace
   </Title>
-  <Badge color='violet' variant='light'>
+  <Badge color='violet' variant='light' size='sm'>
 Demo
   </Badge>
+  <Divider orientation='vertical' hiddenFrom='xs' />
+  <Box hiddenFrom='xs'>
+<UserBadge
+  userData={userData}
+  showPresence={true}
+  presenceStatus='online'
+/>
+  </Box>
 </Group>
-<Button variant='outline' color='gray' onClick={handleLogout}>
+<Button
+  variant='outline'
+  color='gray'
+  onClick={handleLogout}
+  size='md'
+  px='md'
+>
   Sign Out
 </Button>
   </Group>
 </Container>
   </Box>
 
-  {/* Main Content */}
-  <Container size='lg' pt='xl'>
-<Grid>
-  {/* Identity Display - Casual Context Focus */}
-  <Grid.Col span={{ base: 12, md: 4 }}>
-<Paper shadow='sm' p='lg' radius='md'>
-  <Stack gap='md'>
-<Group>
-  <Title order={3} c='violet.7'>
-Your Chat Identity
-  </Title>
-  <Badge color='teal' variant='light' size='sm'>
-CASUAL
-  </Badge>
-</Group>
-
-{/* Primary Display - Casual Name */}
-<Box>
-  <Text size='xs' tt='uppercase' fw={500} c='gray.6' mb={4}>
-Display Name
-  </Text>
-  <Title order={2} c='gray.8'>
-{displayName}
-  </Title>
-  {secondaryInfo && (
-<Text c='gray.6' size='sm' mt={2}>
-  {secondaryInfo}
-</Text>
-  )}
-</Box>
-
-<Divider />
-
-{/* Context Explanation */}
-<Box>
-  <Text size='sm' c='gray.7' fw={500} mb='xs'>
-Context-Aware Identity
-  </Text>
-  <Text size='xs' c='gray.6' style={{ lineHeight: 1.5 }}>
-ChatSpace shows your casual identity for friendly team
-communication. Your nickname and preferred username take
-priority here.
-  </Text>
-</Box>
-
-{/* Identity Breakdown */}
-<Stack gap='xs'>
-  <Text size='sm' fw={500} c='gray.7'>
-Available Identities
-  </Text>
-  {userData.nickname && (
-<Group gap='xs'>
-  <Badge size='xs' color='teal'>
-nickname
-  </Badge>
-  <Text size='sm' c='gray.8'>
-{userData.nickname}
-  </Text>
-</Group>
-  )}
-  {userData.preferred_username && (
-<Group gap='xs'>
-  <Badge size='xs' color='blue'>
-preferred_username
-  </Badge>
-  <Text size='sm' c='gray.8'>
-{userData.preferred_username}
-  </Text>
-</Group>
-  )}
-  {userData.given_name && (
-<Group gap='xs'>
-  <Badge size='xs' color='gray'>
-given_name
-  </Badge>
-  <Text size='sm' c='gray.8'>
-{userData.given_name}
-  </Text>
-</Group>
-  )}
-  {userData.family_name && (
-<Group gap='xs'>
-  <Badge size='xs' color='gray'>
-family_name
-  </Badge>
-  <Text size='sm' c='gray.8'>
-{userData.family_name}
-  </Text>
-</Group>
-  )}
-</Stack>
-  </Stack>
-</Paper>
-  </Grid.Col>
-
-  {/* Mock Chat Interface */}
-  <Grid.Col span={{ base: 12, md: 8 }}>
-<Paper
-  shadow='sm'
-  p='lg'
-  radius='md'
-  style={{ minHeight: '400px' }}
->
-  <Stack gap='md'>
-<Group>
-  <Title order={3} c='gray.8'>
+  {/* Main Chat Interface */}
+  <Container size='lg' pt='lg'>
+<Stack gap='lg'>
+  {/* Chat Interface */}
+  <Paper shadow='sm' radius='md' p='md'>
+<Stack gap='md'>
+  {/* Channel Header */}
+  <Group justify='space-between' wrap='wrap'>
+<Group gap='sm'>
+  <Title
+order={3}
+c='gray.8'
+fz={{ base: 'md', sm: 'lg', md: 'xl' }}
+  >
 #general
   </Title>
-  <Badge variant='light'>Mock Chat</Badge>
+  <Badge variant='light' color='violet' size='sm'>
+Team Chat
+  </Badge>
+  <Box visibleFrom='sm'>
+<UserBadge
+  userData={userData}
+  showPresence={true}
+  presenceStatus='online'
+/>
+  </Box>
 </Group>
+<Badge color='teal' variant='light' size='xs'>
+  {userData.context_name || 'DEFAULT'} CONTEXT
+</Badge>
+  </Group>
 
-<Divider />
+  <Divider />
 
-{/* Mock Messages showing context-aware display */}
-<Stack gap='sm'>
-  <Card
-p='sm'
-radius='md'
-style={{ backgroundColor: '#f8f9fa' }}
-  >
-<Group gap='xs' mb='xs'>
-  <Text fw={600} size='sm' c='violet.7'>
-{displayName}
-  </Text>
-  <Text size='xs' c='gray.5'>
-just now
-  </Text>
-</Group>
-<Text size='sm'>
-  Hey everyone! 👋 This is how my name appears in ChatSpace
-  - optimized for casual team communication!
-</Text>
-  </Card>
-
-  <Card p='sm' radius='md' style={{ backgroundColor: 'white' }}>
-<Group gap='xs' mb='xs'>
-  <Text fw={600} size='sm' c='gray.7'>
-teammate
-  </Text>
-  <Text size='xs' c='gray.5'>
-2 min ago
-  </Text>
-</Group>
-<Text size='sm'>
-  Welcome {displayName}! Great to see context-aware
-  identities in action.
-</Text>
-  </Card>
+  {/* Message List */}
+  <ScrollArea h={400} type='scroll'>
+<Stack gap='md' p='sm'>
+  {mockMessages.map((message) => (
+<ChatMessage
+  key={message.id}
+  authorName={message.authorName}
+  content={message.content}
+  timestamp={message.timestamp}
+  isCurrentUser={message.isCurrentUser}
+/>
+  ))}
 </Stack>
+  </ScrollArea>
 
-<Box
-  mt='auto'
-  pt='md'
-  style={{ borderTop: '1px solid #e9ecef' }}
->
-  <Text
-size='sm'
-c='gray.6'
-ta='center'
-style={{ fontStyle: 'italic' }}
+  <Divider />
+
+  {/* Message Input (Static - Demo Only) */}
+  <Stack gap='xs'>
+<Group gap='xs'>
+  <Box hiddenFrom='xs'>
+<UserBadge
+  userData={userData}
+  showPresence={true}
+  presenceStatus='online'
+/>
+  </Box>
+  <TextInput
+placeholder={`Message as ${displayName}...`}
+style={{ flex: 1 }}
+size='md'
+disabled
+styles={{
+  input: {
+backgroundColor: 'var(--mantine-color-gray-0)',
+  },
+}}
+  />
+  <ActionIcon
+size='lg'
+variant='filled'
+color='violet'
+disabled
   >
-This is a demo interface showing how your identity appears
-in chat context.
-<br />
-Compare with the HR Demo to see professional vs casual
-identity display.
-  </Text>
-</Box>
+<IconSend size={18} />
+  </ActionIcon>
+</Group>
   </Stack>
-</Paper>
-  </Grid.Col>
-</Grid>
 
-{/* OIDC Claims Details */}
-<Paper shadow='sm' p='lg' radius='md' mt='xl'>
-  <Stack gap='md'>
-<Title order={4} c='gray.8'>
-  Complete OIDC Claims (Technical View)
+  <Text size='xs' c='gray.6' ta='center' fs='italic' px='md'>
+This is a demo interface showing context-aware identity in
+action. Compare how &ldquo;{displayName}&rdquo; appears here vs
+professional contexts.
+  </Text>
+</Stack>
+  </Paper>
+
+  {/* Identity Context Card */}
+  <Paper shadow='sm' p='lg' radius='md'>
+<Stack gap='md'>
+  <Group wrap='wrap'>
+<Title
+  order={4}
+  c='violet.7'
+  fz={{ base: 'sm', sm: 'md', md: 'lg' }}
+>
+  Your Chat Identity
 </Title>
-<Text size='sm' c='gray.6'>
-  Raw identity data from TrueNamePath OAuth integration
+<Badge color='teal' variant='light' size='xs'>
+  {userData.context_name || 'DEFAULT'} CONTEXT
+</Badge>
+  </Group>
+
+  {/* Primary Display - Casual Name */}
+  <Box>
+<Text size='xs' tt='uppercase' fw={500} c='gray.6' mb={4}>
+  Display Name
 </Text>
-<Box
-  p='md'
+<Title
+  order={2}
+  c='gray.8'
+  fz={{ base: 'xl', sm: 'xxl', md: 'h1' }}
+>
+  {displayName}
+</Title>
+<Text size='sm' c='gray.6' mt={4}>
+  This is how you appear in casual chat environments
+</Text>
+  </Box>
+
+  <Divider />
+
+  {/* Identity Breakdown */}
+  <Stack gap='xs'>
+<Text size='sm' fw={500} c='gray.7'>
+  Available Identity Fields
+</Text>
+{userData.nickname && (
+  <Group gap='xs' wrap='wrap'>
+<Badge size='xs' color='teal'>
+  nickname
+</Badge>
+<Text size='sm' c='gray.8'>
+  {userData.nickname}
+</Text>
+  </Group>
+)}
+{userData.preferred_username && (
+  <Group gap='xs' wrap='wrap'>
+<Badge size='xs' color='blue'>
+  preferred_username
+</Badge>
+<Text size='sm' c='gray.8'>
+  {userData.preferred_username}
+</Text>
+  </Group>
+)}
+{userData.given_name && (
+  <Group gap='xs' wrap='wrap'>
+<Badge size='xs' color='gray'>
+  given_name
+</Badge>
+<Text size='sm' c='gray.8'>
+  {userData.given_name}
+</Text>
+  </Group>
+)}
+  </Stack>
+</Stack>
+  </Paper>
+
+  {/* OIDC Claims Details */}
+  <Paper shadow='sm' p='lg' radius='md' hiddenFrom='xs'>
+<Stack gap='md'>
+  <Title
+order={4}
+c='gray.8'
+fz={{ base: 'sm', sm: 'md', md: 'lg' }}
+  >
+Complete OIDC Claims (Technical View)
+  </Title>
+  <Text size='sm' c='gray.6'>
+Raw identity data from TrueNamePath OAuth integration
+  </Text>
+  <Box
+p='md'
+bg='var(--mantine-color-gray-0)'
+style={{
+  border: '1px solid var(--mantine-color-gray-3)',
+  borderRadius: 'var(--mantine-radius-md)',
+  fontFamily: 'var(--mantine-font-family-monospace)',
+  fontSize: '0.8rem',
+  overflow: 'auto',
+}}
+  >
+<pre
   style={{
-backgroundColor: '#f8f9fa',
-border: '1px solid #e9ecef',
-borderRadius: '8px',
-fontFamily: 'monospace',
-fontSize: '0.85rem',
-overflow: 'auto',
+margin: 0,
+whiteSpace: 'pre-wrap',
+wordBreak: 'break-word',
   }}
 >
-  <pre>{JSON.stringify(userData, null, 2)}</pre>
-</Box>
-  </Stack>
-</Paper>
+  {JSON.stringify(userData, null, 2)}
+</pre>
+  </Box>
+</Stack>
+  </Paper>
+</Stack>
   </Container>
 </Box>
   );

@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Box, Container, useMantineTheme, rem, Image } from '@mantine/core';
+import { Box, Container, rem, Image } from '@mantine/core';
 
 interface PageLayoutProps {
   children: React.ReactNode;
@@ -19,10 +19,8 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
   centered = true,
   showLogo = true,
 }) => {
-  const theme = useMantineTheme();
-
   return (
-<Box style={{ minHeight: '100vh', backgroundColor: theme.colors.gray[0] }}>
+<Box bg='gray.0' style={{ minHeight: '100vh' }}>
   {showLogo && (
 <Box ta='center' pt={rem(24)} pb={rem(16)}>
   <Image
@@ -35,13 +33,13 @@ mx='auto'
 </Box>
   )}
   <Box
+display={centered ? 'flex' : 'block'}
 style={{
   minHeight: showLogo ? 'calc(100vh - 140px)' : '100vh',
-  display: centered ? 'flex' : 'block',
   alignItems: centered ? 'center' : 'initial',
   justifyContent: centered ? 'center' : 'initial',
 }}
-p={centered ? rem(16) : { base: rem(16), sm: theme.spacing.lg }}
+p={centered ? rem(16) : { base: rem(16), sm: 'lg' }}
   >
 <Container size={size}>{children}</Container>
   </Box>

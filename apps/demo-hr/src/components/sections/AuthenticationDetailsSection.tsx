@@ -14,7 +14,11 @@ import {
   Divider,
 } from '@mantine/core';
 import { IconShield, IconClock } from '@tabler/icons-react';
-import { paperStyles, authenticationFields } from '../shared/styles';
+import {
+  paperStyles,
+  authenticationFields,
+  fieldGroupSpacing,
+} from '../shared/styles';
 import type { OIDCClaims } from '@uni-final/truename-oauth';
 
 interface AuthenticationDetailsSectionProps {
@@ -59,8 +63,8 @@ OAuth 2.0 / OIDC
 
 <Stack gap='md'>
   {authenticationFields.map((field) => (
-<Group key={field.label} justify='space-between' wrap='nowrap'>
-  <Text size='sm' c='gray.6' fw={500} style={{ minWidth: '140px' }}>
+<Group key={field.label} {...fieldGroupSpacing}>
+  <Text size='sm' c='gray.6' fw={500} miw='140px'>
 {field.label.toUpperCase()}
   </Text>
   <Text
@@ -69,7 +73,7 @@ c='gray.8'
 fw={600}
 ff={field.mono ? 'monospace' : undefined}
 ta='right'
-style={{ flex: 1 }}
+flex={1}
 data-testid={`demo-hr-${field.key}`}
   >
 {field.isDate

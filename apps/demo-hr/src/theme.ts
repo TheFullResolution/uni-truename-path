@@ -155,10 +155,10 @@ root: {
   'fontFamily': '"Source Sans Pro", sans-serif',
   '&:not(:disabled):hover': {
 transform: 'translateY(-1px)',
-boxShadow: '0 4px 8px rgba(139, 38, 53, 0.1)',
+boxShadow: '0 4px 8px var(--mantine-color-corporate-1)',
   },
   '&:focusVisible': {
-outline: '2px solid #D4A574', // gold focus ring
+outline: '2px solid var(--mantine-color-gold-5)', // gold focus ring
 outlineOffset: '2px',
   },
 },
@@ -172,11 +172,11 @@ shadow: 'xs', // Subtle shadow
   },
   styles: {
 root: {
-  'backgroundColor': '#faf9f7', // Warm cream
-  'border': '1px solid #d7d1c8', // Visible border
+  'backgroundColor': 'var(--mantine-color-gray-0)', // Warm cream
+  'border': '1px solid var(--mantine-color-gray-3)', // Visible border
   'transition': 'border-color 0.15s ease', // No transform animations
   '&:hover': {
-borderColor: '#c4bbb0', // Subtle border change only
+borderColor: 'var(--mantine-color-gray-4)', // Subtle border change only
   },
 },
   },
@@ -185,7 +185,7 @@ borderColor: '#c4bbb0', // Subtle border change only
 Title: {
   styles: {
 root: {
-  color: '#8B2635', // Corporate burgundy for headings
+  color: 'var(--mantine-color-corporate-5)', // Corporate burgundy for headings
   fontFamily: 'Georgia, "Times New Roman", Times, serif',
   fontWeight: '500',
 },
@@ -195,7 +195,7 @@ root: {
 Text: {
   styles: {
 root: {
-  color: '#6b5d50', // Warm brown text
+  color: 'var(--mantine-color-gray-6)', // Warm brown text
   lineHeight: 1.5,
   fontFamily: '"Source Sans Pro", sans-serif',
 },
@@ -210,16 +210,16 @@ radius: 'sm', // Traditional form styling
 input: {
   'fontSize': rem(14),
   'padding': rem(12),
-  'backgroundColor': '#ffffff',
-  'border': '1px solid #d7d1c8',
+  'backgroundColor': 'var(--mantine-color-white)',
+  'border': '1px solid var(--mantine-color-gray-3)',
   'fontFamily': '"Source Sans Pro", sans-serif',
   '&:focus': {
-borderColor: '#8B2635', // Corporate burgundy focus
-boxShadow: '0 0 0 1px rgba(139, 38, 53, 0.2)', // Subtle focus
+borderColor: 'var(--mantine-color-corporate-5)', // Corporate burgundy focus
+boxShadow: '0 0 0 1px var(--mantine-color-corporate-1)', // Subtle focus
   },
 },
 label: {
-  color: '#4a3f36',
+  color: 'var(--mantine-color-gray-7)',
   fontWeight: 500,
   fontSize: rem(13),
   textTransform: 'uppercase',
@@ -247,8 +247,8 @@ radius: 'sm',
   },
   styles: {
 root: {
-  backgroundColor: '#faf9f7',
-  border: '1px solid #d7d1c8',
+  backgroundColor: 'var(--mantine-color-gray-0)',
+  border: '1px solid var(--mantine-color-gray-3)',
 },
   },
 },
@@ -256,7 +256,7 @@ root: {
 Divider: {
   styles: {
 root: {
-  borderTopColor: '#d7d1c8',
+  borderTopColor: 'var(--mantine-color-gray-3)',
 },
   },
 },
@@ -278,20 +278,20 @@ overlayProps: {
 Table: {
   styles: {
 th: {
-  backgroundColor: '#f2f0ed',
-  color: '#4a3f36',
+  backgroundColor: 'var(--mantine-color-gray-1)',
+  color: 'var(--mantine-color-gray-7)',
   fontSize: rem(12),
   fontWeight: 600,
   textTransform: 'uppercase',
   letterSpacing: '0.5px',
   padding: `${rem(12)} ${rem(16)}`,
-  borderBottom: '2px solid #d7d1c8',
+  borderBottom: '2px solid var(--mantine-color-gray-3)',
 },
 td: {
   padding: `${rem(10)} ${rem(16)}`,
   fontSize: rem(14),
-  color: '#6b5d50',
-  borderBottom: '1px solid #e6e2dc',
+  color: 'var(--mantine-color-gray-6)',
+  borderBottom: '1px solid var(--mantine-color-gray-2)',
 },
   },
 },

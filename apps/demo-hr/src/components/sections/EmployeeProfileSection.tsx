@@ -14,7 +14,11 @@ import {
   Divider,
 } from '@mantine/core';
 import { IconUser, IconBriefcase } from '@tabler/icons-react';
-import { paperStyles, employeeFields } from '../shared/styles';
+import {
+  paperStyles,
+  employeeFields,
+  fieldGroupSpacing,
+} from '../shared/styles';
 import type { OIDCClaims } from '@uni-final/truename-oauth';
 
 interface EmployeeProfileSectionProps {
@@ -48,8 +52,8 @@ export const EmployeeProfileSection: React.FC<EmployeeProfileSectionProps> = ({
 
 <Stack gap='md'>
   {employeeFields.map((field) => (
-<Group key={field.label} justify='space-between' wrap='nowrap'>
-  <Text size='sm' c='gray.6' fw={500} style={{ minWidth: '140px' }}>
+<Group key={field.label} {...fieldGroupSpacing}>
+  <Text size='sm' c='gray.6' fw={500} miw='140px'>
 {field.label.toUpperCase()}
   </Text>
   <Text
@@ -58,7 +62,7 @@ c='gray.8'
 fw={600}
 ff={field.mono ? 'monospace' : undefined}
 ta='right'
-style={{ flex: 1 }}
+flex={1}
 data-testid={`demo-hr-${field.key.replace('_', '-')}`}
   >
 {userData[field.key] || 'Not provided'}

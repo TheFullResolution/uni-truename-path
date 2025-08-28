@@ -25,6 +25,11 @@ height: '48px',
   },
 };
 
+export const fieldGroupSpacing = {
+  justify: 'space-between' as const,
+  wrap: 'nowrap' as const,
+} as const;
+
 // Enhanced employee field configuration for complete OIDC claims display
 export const employeeFields = [
   {

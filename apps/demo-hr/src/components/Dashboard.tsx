@@ -157,7 +157,7 @@ return (
 {/* Header with Welcome Message */}
 <Group justify='space-between' align='flex-start'>
   <Stack gap='xs'>
-<Title order={1} c='corporate.5'>
+<Title order={1} c='corporate.5' fz={{ base: 'xl', sm: '2rem' }}>
   Enterprise HR Portal
 </Title>
 <Group gap='sm' align='center'>
@@ -202,7 +202,7 @@ identity management in enterprise environments.
 {/* Main Content Sections */}
 <Stack gap='lg'>
   <EmployeeProfileSection userData={userData} />
-  <Group align='flex-start' grow>
+  <Group align='flex-start' grow preventGrowOverflow>
 <AuthenticationDetailsSection userData={userData} />
 <ContextAwarenessSection userData={userData} />
   </Group>

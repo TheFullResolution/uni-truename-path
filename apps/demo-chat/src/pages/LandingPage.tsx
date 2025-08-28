@@ -13,8 +13,10 @@ import {
   Center,
   Box,
   Alert,
+  Image,
 } from '@mantine/core';
 import { oauthClient } from '@/services/oauth';
+import { brandGradient } from '@/theme';
 
 export const LandingPage = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -38,9 +40,9 @@ setError('Authentication failed');
 
   return (
 <Box
+  h='100vh'
   style={{
-minHeight: '100vh',
-background: 'linear-gradient(135deg, #7C3AED 0%, #14B8A6 100%)',
+background: brandGradient,
 display: 'flex',
 alignItems: 'center',
 justifyContent: 'center',
@@ -51,20 +53,57 @@ justifyContent: 'center',
   <Stack
 align='center'
 gap='xl'
-style={{
-  textAlign: 'center',
-  color: 'white',
-  maxWidth: '500px',
-}}
+maw={{ base: 400, sm: 500 }}
+ta='center'
+c='white'
   >
+{/* Professional Logo Integration */}
+<Box
+  style={{
+position: 'relative',
+display: 'flex',
+justifyContent: 'center',
+alignItems: 'center',
+marginBottom: '2rem',
+  }}
+>
+  <Image
+src='/demo_chat_logo.png'
+alt='TrueNamePath ChatSpace Logo'
+w={{ base: 100, sm: 120 }}
+h={{ base: 100, sm: 120 }}
+style={{
+  borderRadius: '50%',
+  boxShadow: '0 8px 32px rgba(255, 255, 255, 0.2)',
+  filter: 'drop-shadow(0 0 20px rgba(20, 184, 166, 0.3))',
+  animation: 'logoGlow 3s ease-in-out infinite alternate',
+  border: '3px solid rgba(255, 255, 255, 0.2)',
+  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  backdropFilter: 'blur(10px)',
+}}
+  />
+  <style>
+{`
+  @keyframes logoGlow {
+0% {
+  filter: drop-shadow(0 0 20px rgba(20, 184, 166, 0.3));
+}
+100% {
+  filter: drop-shadow(0 0 30px rgba(124, 58, 237, 0.4));
+}
+  }
+`}
+  </style>
+</Box>
+
 {/* ChatSpace Branding */}
 <Title
   order={1}
-  size='3rem'
   fw={700}
+  c='white'
+  mb='xs'
+  fz={{ base: 40, sm: 44, md: 48 }}
   style={{
-color: 'white',
-marginBottom: '0.5rem',
 fontFamily: '"Poppins", sans-serif',
   }}
 >
@@ -74,12 +113,10 @@ fontFamily: '"Poppins", sans-serif',
 {/* Simple Tagline */}
 <Title
   order={2}
-  size='1.5rem'
   fw={400}
-  style={{
-color: 'rgba(255, 255, 255, 0.9)',
-marginBottom: '1rem',
-  }}
+  c='rgba(255, 255, 255, 0.9)'
+  mb='md'
+  fz={{ base: 'lg', sm: 'xl', md: 'xxl' }}
 >
   Connect with your team in real-time
 </Title>
@@ -87,12 +124,11 @@ marginBottom: '1rem',
 {/* Brief Description */}
 <Text
   size='lg'
-  style={{
-color: 'rgba(255, 255, 255, 0.8)',
-marginBottom: '2rem',
-maxWidth: '400px',
-lineHeight: 1.6,
-  }}
+  c='rgba(255, 255, 255, 0.8)'
+  mb='xl'
+  maw={400}
+  lh={1.6}
+  fz={{ base: 'md', sm: 'lg' }}
 >
   A modern chat platform designed for seamless team communication
   and collaboration.
@@ -104,7 +140,8 @@ lineHeight: 1.6,
 color='red'
 w='100%'
 data-testid='demo-chat-error-alert'
-style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}
+bg='rgba(255, 255, 255, 0.95)'
+c='var(--mantine-color-red-7)'
   >
 {error}
   </Alert>
@@ -118,12 +155,12 @@ style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}
   loaderProps={{ type: 'dots' }}
   onClick={handleSignIn}
   data-testid='demo-chat-signin-button'
+  bg='white'
+  c='electric.5'
+  fw={600}
+  px='xl'
+  py='lg'
   style={{
-backgroundColor: 'white',
-color: '#7C3AED',
-fontWeight: 600,
-fontSize: '1.1rem',
-padding: '1rem 2.5rem',
 border: 'none',
 boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
 transition: 'all 0.2s ease',
@@ -131,7 +168,7 @@ transition: 'all 0.2s ease',
   styles={{
 root: {
   '&:hover': {
-backgroundColor: '#f8fafc',
+backgroundColor: 'var(--mantine-color-gray-0)',
 transform: 'translateY(-2px)',
 boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
   },
@@ -143,13 +180,7 @@ boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
 : 'Sign in with TrueNamePath'}
 </Button>
 
-<Text
-  size='sm'
-  style={{
-color: 'rgba(255, 255, 255, 0.7)',
-marginTop: '1rem',
-  }}
->
+<Text size='sm' c='rgba(255, 255, 255, 0.7)' mt='md'>
   Secure chat with context-aware identity
 </Text>
   </Stack>

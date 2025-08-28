@@ -11,6 +11,10 @@ import { createTheme, rem, MantineThemeOverride } from '@mantine/core';
  * - Styling: Playful/social vs professional/corporate
  * - Philosophy: Casual communication vs business/enterprise
  */
+// Shared brand gradient for consistent theming across components
+export const brandGradient =
+  'linear-gradient(135deg, var(--mantine-color-electric-5) 0%, var(--mantine-color-teal-5) 100%)';
+
 export const chatTheme: MantineThemeOverride = createTheme({
   // Electric purple as primary
   primaryColor: 'electric',

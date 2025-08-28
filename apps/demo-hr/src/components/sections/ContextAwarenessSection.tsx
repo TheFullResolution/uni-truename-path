@@ -15,7 +15,11 @@ import {
   Alert,
 } from '@mantine/core';
 import { IconSettings, IconInfoCircle } from '@tabler/icons-react';
-import { paperStyles, contextFields } from '../shared/styles';
+import {
+  paperStyles,
+  contextFields,
+  fieldGroupSpacing,
+} from '../shared/styles';
 import type { OIDCClaims } from '@uni-final/truename-oauth';
 
 interface ContextAwarenessSectionProps {
@@ -44,8 +48,8 @@ Dynamic Identity
 
 <Stack gap='md'>
   {contextFields.map((field) => (
-<Group key={field.label} justify='space-between' wrap='nowrap'>
-  <Text size='sm' c='gray.6' fw={500} style={{ minWidth: '140px' }}>
+<Group key={field.label} {...fieldGroupSpacing}>
+  <Text size='sm' c='gray.6' fw={500} miw='140px'>
 {field.label.toUpperCase()}
   </Text>
   <Text
@@ -53,7 +57,7 @@ size={field.size}
 c='gray.8'
 fw={600}
 ta='right'
-style={{ flex: 1 }}
+flex={1}
 data-testid={`demo-hr-${field.key.replace('_', '-')}`}
   >
 {userData[field.key]}

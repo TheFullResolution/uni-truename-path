@@ -12,10 +12,12 @@ import {
   Stack,
   Text,
   Title,
+  Progress,
 } from '@mantine/core';
 import { useOAuthToken, useStoredOAuthToken } from '@uni-final/truename-oauth';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { oauthConfig } from '@/services/oauth';
+import { brandGradient } from '@/theme';
 
 export const CallbackPage = () => {
   const navigate = useNavigate();
@@ -55,25 +57,26 @@ if (userData?.sub && token && !hasRedirected.current) {
   if (!token) {
 return (
   <Box
+h='100vh'
 style={{
-  minHeight: '100vh',
-  background: 'linear-gradient(135deg, #7C3AED 0%, #14B8A6 100%)',
+  background: brandGradient,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
 }}
   >
 <Container size='sm'>
-  <Stack gap='lg' align='center' style={{ textAlign: 'center' }}>
+  <Stack gap='lg' align='center' ta='center'>
 <Alert
   color='red'
   w='100%'
   data-testid='demo-chat-callback-error'
-  style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)' }}
+  bg='rgba(255, 255, 255, 0.95)'
+  c='var(--mantine-color-red-7)'
 >
   Invalid callback: Missing authentication token
 </Alert>
-<Text size='sm' style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+<Text size='sm' c='rgba(255, 255, 255, 0.8)'>
   Please return to the landing page and try again.
 </Text>
   </Stack>
@@ -85,25 +88,26 @@ style={{
   if (error) {
 return (
   <Box
+h='100vh'
 style={{
-  minHeight: '100vh',
-  background: 'linear-gradient(135deg, #7C3AED 0%, #14B8A6 100%)',
+  background: brandGradient,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
 }}
   >
 <Container size='sm'>
-  <Stack gap='lg' align='center' style={{ textAlign: 'center' }}>
+  <Stack gap='lg' align='center' ta='center'>
 <Alert
   color='red'
   w='100%'
   data-testid='demo-chat-callback-error'
-  style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)' }}
+  bg='rgba(255, 255, 255, 0.95)'
+  c='var(--mantine-color-red-7)'
 >
   Authentication failed: {error.message}
 </Alert>
-<Text size='sm' style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+<Text size='sm' c='rgba(255, 255, 255, 0.8)'>
   Please return to the landing page and try again.
 </Text>
   </Stack>
@@ -115,32 +119,36 @@ style={{
   if (isLoading) {
 return (
   <Box
+h='100vh'
 style={{
-  minHeight: '100vh',
-  background: 'linear-gradient(135deg, #7C3AED 0%, #14B8A6 100%)',
+  background: brandGradient,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
 }}
   >
 <Container size='sm'>
-  <Stack
-gap='lg'
-align='center'
-style={{ textAlign: 'center', color: 'white' }}
-  >
+  <Stack gap='lg' align='center' ta='center' c='white'>
 <Loader
   size='lg'
   color='white'
   type='dots'
   data-testid='demo-chat-callback-loading'
 />
-<Title order={3} style={{ color: 'white' }}>
+<Title order={3} c='white' fz={{ base: 'lg', sm: 'xl', md: 'xxl' }}>
   Resolving Authentication
 </Title>
-<Text size='md' style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+<Text size='md' c='rgba(255, 255, 255, 0.8)'>
   Setting up your chat identity...
 </Text>
+<Progress
+  value={75}
+  color='white'
+  size='sm'
+  w={250}
+  bg='rgba(255, 255, 255, 0.2)'
+  animated
+/>
   </Stack>
 </Container>
   </Box>
@@ -151,34 +159,37 @@ style={{ textAlign: 'center', color: 'white' }}
 // Token storage and redirect handled by useEffect
 return (
   <Box
+h='100vh'
 style={{
-  minHeight: '100vh',
-  background: 'linear-gradient(135deg, #7C3AED 0%, #14B8A6 100%)',
+  background: brandGradient,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
 }}
   >
 <Container size='sm'>
-  <Stack
-gap='lg'
-align='center'
-style={{ textAlign: 'center', color: 'white' }}
-  >
+  <Stack gap='lg' align='center' ta='center' c='white'>
 <Loader
   size='lg'
   color='white'
   type='dots'
   data-testid='demo-chat-callback-success-loading'
 />
-<Title order={3} style={{ color: 'white' }}>
+<Title order={3} c='white' fz={{ base: 'lg', sm: 'xl', md: 'xxl' }}>
   Authentication Successful
 </Title>
-<Text size='md' style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+<Text size='md' c='rgba(255, 255, 255, 0.8)'>
   Welcome{' '}
   {userData.nickname || userData.given_name || 'to ChatSpace'}!
   Entering chat...
 </Text>
+<Progress
+  value={100}
+  color='teal'
+  size='sm'
+  w={250}
+  bg='rgba(255, 255, 255, 0.2)'
+/>
   </Stack>
 </Container>
   </Box>
@@ -188,22 +199,22 @@ style={{ textAlign: 'center', color: 'white' }}
   // Fallback state
   return (
 <Box
+  h='100vh'
   style={{
-minHeight: '100vh',
-background: 'linear-gradient(135deg, #7C3AED 0%, #14B8A6 100%)',
+background: brandGradient,
 display: 'flex',
 alignItems: 'center',
 justifyContent: 'center',
   }}
 >
   <Container size='sm'>
-<Stack
-  gap='lg'
-  align='center'
-  style={{ textAlign: 'center', color: 'white' }}
->
+<Stack gap='lg' align='center' ta='center' c='white'>
   <Loader size='lg' color='white' type='dots' />
-  <Title order={3} style={{ color: 'white' }}>
+  <Title
+order={3}
+c='white'
+style={{ fontSize: 'clamp(1.25rem, 3vw, 1.5rem)' }}
+  >
 Processing Authentication
   </Title>
 </Stack>
