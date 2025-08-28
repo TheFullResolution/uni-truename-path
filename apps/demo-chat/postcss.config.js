@@ -1,0 +1,17 @@
+import mantinePreset from 'postcss-preset-mantine';
+import simpleVars from 'postcss-simple-vars';
+
+export default {
+  plugins: [
+mantinePreset(),
+simpleVars({
+  variables: {
+'mantine-breakpoint-xs': '36em',
+'mantine-breakpoint-sm': '48em',
+'mantine-breakpoint-md': '62em',
+'mantine-breakpoint-lg': '75em',
+'mantine-breakpoint-xl': '88em',
+  },
+}),
+  ],
+};

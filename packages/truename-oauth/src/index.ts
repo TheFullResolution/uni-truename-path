@@ -23,7 +23,24 @@ export {
 // API client functions
 export { fetchClientInfo, resolveOIDCClaims } from './api-client.js';
 
-// Type definitions
+// SWR Hooks for OAuth token resolution
+export { useOAuthToken } from './hooks/useOAuthToken.js';
+export { useStoredOAuthToken } from './hooks/useStoredOAuthToken.js';
+
+// SWR OAuth Token Fetching utilities
+export {
+  generateOAuthCacheKey,
+  createOAuthTokenFetcher,
+  fetchOAuthToken,
+} from './utils/oauth-token-fetcher.js';
+
+// SWR OAuth Cache Provider utilities
+export {
+  createOAuthCacheProvider,
+  clearOAuthCache,
+} from './utils/oauth-cache-provider.js';
+
+// Type definitions - Core types
 export type {
   OAuthConfig,
   OIDCClaims,
@@ -33,3 +50,30 @@ export type {
   ApiResponse,
   OAuthError,
 } from './types.js';
+
+// Type definitions - SWR Cache types
+export type {
+  SWRState,
+  OAuthCacheKey,
+  OAuthCacheValue,
+  OAuthCacheEntry,
+  OAuthCacheEntries,
+  Cache,
+  OAuthSWRCache,
+  SerializedCacheData,
+  SerializedCacheEntries,
+  CacheProvider,
+  OAuthCacheProvider,
+  CacheProviderOptions,
+} from './types/swr-cache.js';
+
+// SWR Cache utility functions
+export {
+  isSWRState,
+  isOAuthCacheKey,
+  isOAuthCacheEntry,
+  isSerializedCacheData,
+  createLoadingSWRState,
+  createSuccessSWRState,
+  createErrorSWRState,
+} from './types/swr-cache.js';

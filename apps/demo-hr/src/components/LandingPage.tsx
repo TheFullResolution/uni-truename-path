@@ -3,11 +3,11 @@
  * Handles OAuth flow initiation for TrueNamePath integration
  */
 
+import { oauthClient } from '@/services/oauth';
+import { Alert, Button, Paper, Stack, Text } from '@mantine/core';
 import { useState } from 'react';
-import { Paper, Title, Text, Button, Stack, Alert } from '@mantine/core';
 import { PageLayout } from './shared/PageLayout';
-import { paperStyles, buttonStyles } from './shared/styles';
-import { oauthClient } from '@/oauth-client';
+import { buttonStyles, paperStyles } from './shared/styles';
 
 export const LandingPage = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -40,14 +40,7 @@ setError('Authentication failed');
   style={{ textAlign: 'center', width: '100%' }}
 >
   <Stack gap='lg' align='center'>
-<Title order={1} size='h1' c='corporate.5'>
-  Enterprise HR Portal
-</Title>
-<Text size='lg' c='gray.7' fw={500}>
-  Human Resources Management System
-</Text>
-
-<Text size='md' c='gray.6' ta='center'>
+<Text size='lg' c='gray.7' fw={500} ta='center'>
   Please sign in to access HR services and employee resources.
 </Text>
 

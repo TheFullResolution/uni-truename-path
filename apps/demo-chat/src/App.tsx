@@ -2,22 +2,21 @@ import React from 'react';
 import { MantineProvider } from '@mantine/core';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { SWRConfig } from 'swr';
-import { hrTheme } from './theme';
-import { LandingPage } from './components/LandingPage';
-import { Callback } from './components/Callback';
-import { Dashboard } from './components/Dashboard';
+import { chatTheme } from './theme';
+import { LandingPage } from './pages/LandingPage';
+import { CallbackPage } from './pages/CallbackPage';
+import { ChatPage } from './pages/ChatPage';
 import { createOAuthCacheProvider } from '@uni-final/truename-oauth';
 
 /**
- * Demo HR Application Root Component
+ * Demo Chat Application Root Component
  *
  * Configures SWR with persistent cache provider for OAuth token management.
- * Combines request deduplication (React StrictMode fix) with localStorage
- * persistence for academic demonstration of proper cache management.
+ * Focuses on casual context-aware identity display for chat communication.
  */
 const App: React.FC = () => {
   return (
-<MantineProvider theme={hrTheme}>
+<MantineProvider theme={chatTheme}>
   <SWRConfig
 value={{
   // Custom cache provider: Syncs with localStorage for persistence
@@ -38,8 +37,8 @@ value={{
 <BrowserRouter>
   <Routes>
 <Route path='/' element={<LandingPage />} />
-<Route path='/callback' element={<Callback />} />
-<Route path='/dashboard' element={<Dashboard />} />
+<Route path='/callback' element={<CallbackPage />} />
+<Route path='/chat' element={<ChatPage />} />
   </Routes>
 </BrowserRouter>
   </SWRConfig>

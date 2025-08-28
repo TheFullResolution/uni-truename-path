@@ -8,16 +8,17 @@
  */
 
 import useSWR from 'swr';
-import type { OIDCClaims } from '@uni-final/truename-oauth';
+import type { OIDCClaims } from '../types.js';
 import {
-  fetchOAuthToken,
   generateOAuthCacheKey,
-} from '../utils/oauth-token-fetcher';
+  createOAuthTokenFetcher,
+  type OAuthTokenFetcherConfig,
+} from '../utils/oauth-token-fetcher.js';
 
 /**
  * Configuration options for OAuth token resolution
  */
-interface UseOAuthTokenOptions {
+interface UseOAuthTokenOptions extends OAuthTokenFetcherConfig {
   token: string | null;
   enabled?: boolean;
   revalidateOnMount?: boolean; // Allow controlling mount behavior
@@ -40,16 +41,24 @@ interface UseOAuthTokenReturn {
  * React StrictMode causes components to render twice. This is the primary
  * solution for avoiding OAuth session collision errors.
  *
- * @param options - Token and optional enabled flag
+ * @param options - Token, API configuration, and optional enabled flag
  * @returns SWR hook results with OAuth claims data
  */
 export function useOAuthToken({
   token,
+  apiBaseUrl,
+  isDevelopment = false,
   enabled = true,
   revalidateOnMount = false,
 }: UseOAuthTokenOptions): UseOAuthTokenReturn {
   // Generate cache key for proper SWR deduplication
   const cacheKey = token && enabled ? generateOAuthCacheKey(token) : null;
+
+  // Create the configured fetcher function
+  const fetchOAuthToken = createOAuthTokenFetcher({
+apiBaseUrl,
+isDevelopment,
+  });
 
   const { data, error, isLoading, mutate } = useSWR(
 cacheKey,

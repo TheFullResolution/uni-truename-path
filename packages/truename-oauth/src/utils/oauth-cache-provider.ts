@@ -12,8 +12,8 @@ import type {
   Cache,
   SWRState,
   OIDCClaims,
-} from '@/types';
-import { isOAuthCacheEntry } from '@/types';
+} from '../types/swr-cache.js';
+import { isOAuthCacheEntry } from '../types/swr-cache.js';
 
 /**
  * Creates a simple cache that restores once and saves on each set()
@@ -41,7 +41,7 @@ validEntries.forEach(([key, value]) => {
   }
 
   // Helper to save to localStorage
-  const saveToStorage = () => {
+  const saveToStorage = (): void => {
 if (typeof window !== 'undefined') {
   try {
 const cacheEntries = Array.from(internalMap.entries());
@@ -87,7 +87,6 @@ delete(key: string): void {
  * @returns SWR-compatible cache that implements the standard Cache interface
  */
 export function createOAuthCacheProvider(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _cache: Readonly<Cache>,
 ): Cache<OIDCClaims> {
   // Return the OAuth cache that implements the Cache interface

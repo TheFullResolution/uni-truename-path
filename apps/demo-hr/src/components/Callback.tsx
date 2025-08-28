@@ -5,16 +5,18 @@
  */
 
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
 import { Paper, Title, Text, Stack, Loader, Alert } from '@mantine/core';
 import { PageLayout } from './shared/PageLayout';
 import { paperStyles, cardStyles } from './shared/styles';
-import { useOAuthToken } from '@/hooks/useOAuthToken';
-import { useStoredOAuthToken } from '@/hooks/useStoredOAuthToken';
+import { useOAuthToken, useStoredOAuthToken } from '@uni-final/truename-oauth';
+import { oauthConfig } from '@/services/oauth';
 
 export const Callback = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { setToken } = useStoredOAuthToken();
+  const redirectHandledRef = useRef(false);
 
   // Extract token from callback URL parameters
   const token = (() => {
@@ -32,7 +34,17 @@ isLoading,
 token,
 enabled: !!token,
 revalidateOnMount: true, // Fresh tokens need to be resolved
+...oauthConfig,
   });
+
+  // Handle token storage and redirect in useEffect to avoid side effects during render
+  useEffect(() => {
+if (userData?.sub && token && !redirectHandledRef.current) {
+  redirectHandledRef.current = true;
+  setToken(token);
+  navigate('/dashboard', { replace: true });
+}
+  }, [userData?.sub, token, setToken, navigate]);
 
   // Simple declarative rendering based on hook states
   if (!token) {
@@ -93,9 +105,7 @@ return (
   }
 
   if (userData) {
-// Store token in SWR cache and redirect
-setToken(token);
-navigate('/dashboard', { replace: true });
+// Token storage and redirect handled by useEffect
 return (
   <PageLayout>
 <Paper {...paperStyles} style={cardStyles}>

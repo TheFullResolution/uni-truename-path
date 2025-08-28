@@ -8,7 +8,7 @@
  * Academic Implementation: Zero `any` types, strict TypeScript compliance
  */
 
-import type { OIDCClaims } from '@uni-final/truename-oauth';
+import type { OIDCClaims } from '../types.js';
 
 // =============================================================================
 // SWR v2 Internal State Structure
@@ -254,4 +254,4 @@ isLoading: false,
 // =============================================================================
 
 /** Re-export OIDCClaims for convenience */
-export type { OIDCClaims } from '@uni-final/truename-oauth';
+export type { OIDCClaims } from '../types.js';

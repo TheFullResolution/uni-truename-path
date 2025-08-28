@@ -28,9 +28,12 @@ import { paperStyles, cardStyles } from './shared/styles';
 import { EmployeeProfileSection } from './sections/EmployeeProfileSection';
 import { AuthenticationDetailsSection } from './sections/AuthenticationDetailsSection';
 import { ContextAwarenessSection } from './sections/ContextAwarenessSection';
-import { clearOAuthCache } from '@/utils/oauth-cache-provider';
-import { useStoredOAuthToken } from '@/hooks/useStoredOAuthToken';
-import { useOAuthToken } from '@/hooks/useOAuthToken';
+import {
+  clearOAuthCache,
+  useStoredOAuthToken,
+  useOAuthToken,
+} from '@uni-final/truename-oauth';
+import { oauthConfig } from '@/services/oauth';
 
 export const Dashboard = () => {
   const navigate = useNavigate();
@@ -44,6 +47,7 @@ isLoading,
   } = useOAuthToken({
 token,
 enabled: !!token,
+...oauthConfig,
   });
 
   // Handle navigation in effect to avoid render-phase side effects

@@ -66,7 +66,7 @@ null, // No fetcher needed - we manage the data manually via mutate
    *
    * @param newToken - The OAuth token to store, or null to clear
    */
-  const setToken = (newToken: string | null) => {
+  const setToken = (newToken: string | null): void => {
 mutate(newToken, { revalidate: false });
   };
 
@@ -74,7 +74,7 @@ mutate(newToken, { revalidate: false });
    * Clear the OAuth token from SWR cache
    * Convenience method for setToken(null)
    */
-  const clearToken = () => {
+  const clearToken = (): void => {
 mutate(null, { revalidate: false });
   };
 
