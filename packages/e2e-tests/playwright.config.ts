@@ -3,19 +3,9 @@ import { defineConfig, devices } from '@playwright/test';
 import { config } from 'dotenv';
 import { existsSync } from 'fs';
 
-// Load environment variables from .env.local if it exists
-// Check both package-local and project root .env files
+// Load local environment variables if available
 if (existsSync('./.env.local')) {
   config({ path: './.env.local' });
-  console.log('✅ Loaded .env.local from current directory');
-} else if (existsSync('../../.env.local')) {
-  config({ path: '../../.env.local' });
-  console.log('✅ Loaded .env.local from project root');
-} else if (existsSync('./.env')) {
-  config({ path: './.env' });
-  console.log('✅ Loaded .env from current directory');
-} else {
-  console.warn('⚠️  No .env.local or .env file found');
 }
 
 /**
@@ -39,46 +29,88 @@ trace: 'on-first-retry',
 screenshot: 'only-on-failure',
   },
 
-  projects: process.env.CI
-? [
+  projects: [
+// Setup project - runs once to create authenticated state
 {
-  name: 'chromium',
-  use: { ...devices['Desktop Chrome'] },
+  name: 'setup',
+  testMatch: /.*\.setup\.ts/,
 },
-{
-  name: 'firefox',
-  use: { ...devices['Desktop Firefox'] },
+
+// Main test projects with authentication state
+...(process.env.CI
+  ? [
+  {
+name: 'chromium',
+use: {
+  ...devices['Desktop Chrome'],
+  // Use stored authentication state
+  storageState: 'playwright/.auth/user.json',
 },
-{
-  name: 'webkit',
-  use: {
-...devices['Desktop Safari'],
-actionTimeout: 30000, // 30s for actions in WebKit CI
-navigationTimeout: 30000, // 30s for navigation in WebKit CI
+dependencies: ['setup'],
   },
-  timeout: 60000, // Give WebKit tests more time
-  retries: 3, // More retries for WebKit specifically
+  {
+name: 'firefox',
+use: {
+  ...devices['Desktop Firefox'],
+  // Use stored authentication state
+  storageState: 'playwright/.auth/user.json',
 },
-{
-  name: 'mobile',
-  use: { ...devices['iPhone 13'] },
+dependencies: ['setup'],
+  },
+  {
+name: 'webkit',
+use: {
+  ...devices['Desktop Safari'],
+  // Use stored authentication state
+  storageState: 'playwright/.auth/user.json',
+  actionTimeout: 30000, // 30s for actions in WebKit CI
+  navigationTimeout: 30000, // 30s for navigation in WebKit CI
 },
-  ]
-: [
-{
-  name: 'chromium',
-  use: { ...devices['Desktop Chrome'] },
+timeout: 60000, // Give WebKit tests more time
+retries: 3, // More retries for WebKit specifically
+dependencies: ['setup'],
+  },
+  {
+name: 'mobile',
+use: {
+  ...devices['iPhone 13'],
+  // Use stored authentication state
+  storageState: 'playwright/.auth/user.json',
 },
+dependencies: ['setup'],
+  },
+]
+  : [
+  {
+name: 'chromium',
+use: {
+  ...devices['Desktop Chrome'],
+  // Use stored authentication state
+  storageState: 'playwright/.auth/user.json',
+},
+dependencies: ['setup'],
+  },
+]),
   ],
 
-  webServer: {
-// Use production server in CI (already built), dev server locally
-command: process.env.CI
-  ? 'yarn workspace uni-final-project-web start'
-  : 'yarn dev',
-url: 'http://localhost:3000',
-reuseExistingServer: true,
-timeout: process.env.CI ? 60 * 1000 : 30 * 1000,
-cwd: '../../', // Run commands from project root
-  },
+  webServer: [
+{
+  // Main TrueNamePath application
+  command: process.env.CI
+? 'yarn workspace @uni-final/web start'
+: 'yarn workspace @uni-final/web dev',
+  url: 'http://localhost:3000',
+  reuseExistingServer: !process.env.CI,
+  timeout: process.env.CI ? 60 * 1000 : 30 * 1000,
+  cwd: '../../', // Run commands from project root
+},
+{
+  // Demo HR application for OAuth integration tests
+  command: 'yarn workspace @uni-final/demo-hr dev',
+  url: 'http://localhost:4000',
+  reuseExistingServer: !process.env.CI,
+  timeout: 30 * 1000,
+  cwd: '../../', // Run commands from project root
+},
+  ],
 });

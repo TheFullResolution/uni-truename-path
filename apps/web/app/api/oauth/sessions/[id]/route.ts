@@ -210,7 +210,7 @@ timestamp,
   // Step 2: Log revocation action in app_usage_log
   const { error: logError } = await supabase.rpc('log_app_usage', {
 p_profile_id: session.profile_id,
-p_app_id: session.client_id,
+p_client_id: session.client_id,
 p_action: 'revoke',
 p_session_id: sessionId,
 p_response_time_ms: 0, // Not applicable for revocation

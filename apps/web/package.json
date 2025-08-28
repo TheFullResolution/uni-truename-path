@@ -1,5 +1,5 @@
 {
-  "name": "uni-final-project-web",
+  "name": "@uni-final/web",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -34,7 +34,6 @@
 "zod": "^4.0.17"
   },
   "devDependencies": {
-"@eslint/eslintrc": "^3",
 "@next/eslint-plugin-next": "15.5.0",
 "@types/jsdom": "^21.1.7",
 "@types/node": "24.2.1",

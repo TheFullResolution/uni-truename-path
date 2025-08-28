@@ -96,5 +96,7 @@ playwright-report/
 
 test-results/
 
+# Playwright authentication state (should not be committed)
+**/playwright/.auth/
 
 .playwright-mcp/

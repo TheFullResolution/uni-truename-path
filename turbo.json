@@ -9,11 +9,14 @@
   "persistent": true,
   "cache": false
 },
+"transit": {
+  "dependsOn": ["^transit"]
+},
 "lint": {
-  "dependsOn": ["^build"]
+  "dependsOn": ["transit"]
 },
 "lint:fix": {
-  "dependsOn": ["^build"],
+  "dependsOn": ["transit"],
   "cache": false
 },
 "type-check": {

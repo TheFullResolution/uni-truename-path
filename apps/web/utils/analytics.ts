@@ -137,7 +137,7 @@ const { data: logId, error: dbError } = await supabase.rpc(
   'log_app_usage',
   {
 p_profile_id: profileId,
-p_app_id: clientId,
+p_client_id: clientId,
 p_action: action,
 p_context_id: contextId,
 p_session_id: sessionId,

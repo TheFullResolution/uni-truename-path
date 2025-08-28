@@ -312,7 +312,7 @@ it('should successfully revoke session and return 200', async () => {
   expect(mockSupabaseClient.from).toHaveBeenCalledWith('oauth_sessions');
   expect(mockSupabaseClient.rpc).toHaveBeenCalledWith('log_app_usage', {
 p_profile_id: MOCK_SESSION.profile_id,
-p_app_id: MOCK_SESSION.client_id,
+p_client_id: MOCK_SESSION.client_id,
 p_action: 'revoke',
 p_session_id: VALID_SESSION_ID,
 p_response_time_ms: 0,

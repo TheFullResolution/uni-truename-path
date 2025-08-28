@@ -22,6 +22,7 @@ import {
   updateClientUsage,
   createNewClientWithRetry,
 } from '@/utils/oauth/registry-service';
+import { createCORSOptionsResponse } from '@/utils/api/cors';
 
 /**
  * Extracts domain from Origin header with Referer fallback
@@ -213,3 +214,11 @@ export const POST = () => handle_method_not_allowed(['GET']);
 export const PUT = () => handle_method_not_allowed(['GET']);
 export const DELETE = () => handle_method_not_allowed(['GET']);
 export const PATCH = () => handle_method_not_allowed(['GET']);
+
+/**
+ * OPTIONS handler for CORS preflight requests
+ * Required for cross-origin requests from demo-hr app
+ */
+export async function OPTIONS(): Promise<Response> {
+  return createCORSOptionsResponse('GET, OPTIONS');
+}

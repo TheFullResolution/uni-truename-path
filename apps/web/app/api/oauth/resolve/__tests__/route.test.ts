@@ -2,107 +2,50 @@
  * Comprehensive Unit Tests for OAuth Resolve Endpoint
  *
  * Tests for POST /api/oauth/resolve - Bearer token to OIDC claims resolution
- * Complete test suite validating all success/error paths with 100% critical coverage
+ * Complete test suite validating all success/error paths with core functionality
  * Academic project - Step 16 OAuth integration testing
+ * Note: Database triggers now handle all OAuth usage logging automatically
  */
 
 /// <reference types="node" />
 
 import { ErrorCodes } from '@/utils/api';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST } from '../route';
 import type { OIDCClaims } from '../types';
 import { ResolveErrorCodes } from '../types';
 
-// Type declarations for DOM and Web API types used in test mocks
-type ResponseType =
-  | 'basic'
-  | 'cors'
-  | 'default'
-  | 'error'
-  | 'opaque'
-  | 'opaqueredirect';
-type XMLHttpRequestBodyInit =
-  | string
-  | Document
-  | Blob
-  | ArrayBufferView
-  | ArrayBuffer
-  | FormData;
-type HeadersInit = [string, string][] | Record<string, string> | Headers;
-type BodyInit = ReadableStream<Uint8Array> | XMLHttpRequestBodyInit;
-type ResponseInit = {
-  status?: number;
-  statusText?: string;
-  headers?: HeadersInit;
+// Mock NextResponse.json to return a proper Response-like object
+vi.mock('next/server', async () => {
+  const actual = await vi.importActual('next/server');
+  return {
+...actual,
+NextResponse: {
+  ...((actual as any).NextResponse || {}),
+  json: vi.fn((data: any, init?: any) => {
+// Create a Response-like object with proper methods
+return {
+  json: async () => data,
+  text: async () => JSON.stringify(data),
+  status: init?.status || 200,
+  headers: init?.headers || {},
+  ok: (init?.status || 200) >= 200 && (init?.status || 200) < 300,
 };
-type RequestInit = {
-  method?: string;
-  headers?: HeadersInit;
-  body?: BodyInit | null;
-  cache?: RequestCache;
-  credentials?: RequestCredentials;
-  integrity?: string;
-  keepalive?: boolean;
-  mode?: RequestMode;
-  redirect?: RequestRedirect;
-  referrer?: string;
-  referrerPolicy?: ReferrerPolicy;
-  signal?: AbortSignal | null;
-  window?: any;
-};
-type RequestCache =
-  | 'default'
-  | 'no-store'
-  | 'reload'
-  | 'no-cache'
-  | 'force-cache'
-  | 'only-if-cached';
-type RequestCredentials = 'omit' | 'same-origin' | 'include';
-type RequestMode = 'navigate' | 'same-origin' | 'no-cors' | 'cors';
-type RequestRedirect = 'follow' | 'error' | 'manual';
-type ReferrerPolicy =
-  | ''
-  | 'no-referrer'
-  | 'no-referrer-when-downgrade'
-  | 'origin'
-  | 'origin-when-cross-origin'
-  | 'same-origin'
-  | 'strict-origin'
-  | 'strict-origin-when-cross-origin'
-  | 'unsafe-url';
+  }),
+},
+  };
+});
 
-// Mock the helper functions from helpers.ts
+// Mock the helper functions from helpers.ts (only measurePerformance remains)
 vi.mock('../helpers', () => ({
   measurePerformance: vi.fn(() => ({
 startTime: Date.now(),
 getElapsed: vi.fn(() => 2), // Mock 2ms response time
   })),
-  extractSessionDataFromClaims: vi.fn(() => ({
-profile_id: 'test-profile-id',
-client_id: 'test-app-id',
-session_id: 'tnp_test_session_token',
-context_id: 'test-context-id',
-  })),
-  logOAuthUsage: vi.fn(() => Promise.resolve(true)),
-  mapErrorToAnalyticsType: vi.fn((error) => {
-if (typeof error === 'object' && error !== null && 'error' in error) {
-  const errorResult = error as { error: string };
-  switch (errorResult.error) {
-case 'invalid_token':
-  return 'invalid_token';
-case 'no_context_assigned':
-  return 'context_missing';
-default:
-  return 'resolution_failed';
-  }
-}
-return 'server_error';
-  }),
 }));
 
-// Setup detailed Supabase mock chain that properly simulates the real implementation
+// Mock Supabase client
 const mockSupabaseClient = {
   rpc: vi.fn(),
 };
@@ -111,357 +54,105 @@ const mockSupabaseQuery = {
   single: vi.fn(),
 };
 
-// Mock extractBearerToken from oauth-helpers
+// Mock OAuth helpers
 vi.mock('@/utils/api/oauth-helpers', () => ({
-  extractBearerToken: vi.fn((authHeader: string | null) => {
-if (!authHeader || !authHeader.startsWith('Bearer ')) {
-  return null;
-}
-const token = authHeader.substring(7);
-if (!token.startsWith('tnp_') || token.length !== 36) {
-  return null;
-}
-return token;
-  }),
+  extractBearerToken: vi.fn(),
 }));
 
-// Mock the createClient function from @/utils/supabase/server
-vi.mock('@/utils/supabase/server', () => ({
-  createClient: vi.fn(() => Promise.resolve(mockSupabaseClient)),
-}));
-
-// Mock next/server with proper hoisting-safe structure
-vi.mock('next/server', () => {
-  // Create mock classes inside the factory to avoid hoisting issues
-  class MockRequestCookies {
-public size: number = 0;
-
-get(name: string): { name: string; value: string } | undefined {
-  return undefined;
-}
-
-getAll(): { name: string; value: string }[] {
-  return [];
-}
-
-has(name: string): boolean {
-  return false;
-}
-
-set(name: string, value: string): this {
-  return this;
-}
-
-delete(name: string): boolean {
-  return true;
-}
-
-clear(): this {
-  return this;
-}
-
-[Symbol.iterator](): IterableIterator<{ name: string; value: string }> {
-  return [][Symbol.iterator]();
-}
-  }
-
-  class MockResponse {
-public readonly headers: Headers;
-public readonly status: number;
-public readonly body: ReadableStream<Uint8Array> | null;
-public readonly ok: boolean;
-public readonly redirected: boolean;
-public readonly statusText: string;
-public readonly url: string;
-public readonly type: ResponseType;
-private _jsonData: any;
-
-constructor(body?: BodyInit | null, init?: ResponseInit) {
-  this.headers = new Headers(init?.headers);
-  this.status = init?.status ?? 200;
-  this.body = null;
-  this.ok = this.status >= 200 && this.status < 300;
-  this.redirected = false;
-  this.statusText = init?.statusText ?? '';
-  this.url = '';
-  this.type = 'default' as ResponseType;
-  this._jsonData = null;
-}
-
-static json(object: any, init?: ResponseInit): Response {
-  const response = new MockResponse(JSON.stringify(object), {
-...init,
-headers: {
-  'Content-Type': 'application/json',
-  ...init?.headers,
-},
-  });
-  response._jsonData = object;
-  return response as any;
-}
-
-async json(): Promise<any> {
-  return this._jsonData || {};
-}
-
-clone(): Response {
-  return this as any;
-}
-
-async text(): Promise<string> {
-  return '';
-}
-
-async arrayBuffer(): Promise<ArrayBuffer> {
-  return new ArrayBuffer(0);
-}
-
-async blob(): Promise<Blob> {
-  return new Blob();
-}
-
-async formData(): Promise<FormData> {
-  return new FormData();
-}
-
-get bodyUsed(): boolean {
-  return false;
-}
-  }
-
-  class MockNextRequest {
-public method: string;
-public url: string;
-public headers: Headers;
-public cookies: MockRequestCookies;
-public nextUrl: URL;
-public page: any;
-public ua: any;
-public cache: RequestCache;
-public credentials: RequestCredentials;
-public destination: any;
-public integrity: string;
-public keepalive: boolean;
-public mode: RequestMode;
-public redirect: RequestRedirect;
-public referrer: string;
-public referrerPolicy: ReferrerPolicy;
-public signal: AbortSignal;
-public body: ReadableStream<Uint8Array> | null;
-public bodyUsed: boolean;
-public ok: boolean;
-public redirected: boolean;
-public status: number;
-public statusText: string;
-public type: ResponseType;
-public geo: any;
-public ip: string;
-public bytes: () => Promise<Uint8Array>;
-
-constructor(
-  input: string | Request,
-  init?: RequestInit & { geo?: any; ip?: string },
-) {
-  this.method = init?.method || 'GET';
-  this.url = typeof input === 'string' ? input : input.url;
-  this.headers = new Headers(init?.headers as HeadersInit);
-  this.cookies = new MockRequestCookies();
-  this.nextUrl = new URL(this.url);
-
-  // Initialize all required properties
-  this.page = {};
-  this.ua = {};
-  this.cache = 'default';
-  this.credentials = 'same-origin';
-  this.destination = 'document';
-  this.integrity = '';
-  this.keepalive = false;
-  this.mode = 'cors';
-  this.redirect = 'follow';
-  this.referrer = '';
-  this.referrerPolicy = '';
-  this.signal = new AbortController().signal;
-  this.body = null;
-  this.bodyUsed = false;
-  this.ok = true;
-  this.redirected = false;
-  this.status = 200;
-  this.statusText = 'OK';
-  this.type = 'default';
-  this.geo = init?.geo || {};
-  this.ip = init?.ip || '';
-  this.bytes = async () => new Uint8Array();
-}
-
-async json(): Promise<any> {
-  return {};
-}
-
-clone(): NextRequest {
-  return this as unknown as NextRequest;
-}
-
-async text(): Promise<string> {
-  return '';
-}
-
-async arrayBuffer(): Promise<ArrayBuffer> {
-  return new ArrayBuffer(0);
-}
-
-async blob(): Promise<Blob> {
-  return new Blob();
-}
-
-async formData(): Promise<FormData> {
-  return new FormData();
-}
-  }
-
-  return {
-NextRequest: MockNextRequest,
-NextResponse: MockResponse,
-  };
-});
-
-// Authentication control flag for tests
-let shouldAuthFail = false;
-let authFailureResponse: any = null;
-
-// Mock the withOptionalAuth to match the actual implementation
-vi.mock('@/utils/api/with-auth', () => {
-  return {
-withOptionalAuth: vi.fn((handler) => async (request: NextRequest) => {
-  // Check if this test wants auth to fail
-  if (shouldAuthFail && authFailureResponse) {
-return authFailureResponse;
-  }
-
-  const mockAuthContext = {
-user: null, // Optional auth - user can be null
-supabase: mockSupabaseClient,
-requestId: 'req_123456_test',
-timestamp: '2025-08-23T10:30:00.000Z',
-isAuthenticated: false, // Optional auth defaults to false
-isOAuth: true, // This is an OAuth endpoint
-  };
-  return await handler(request, mockAuthContext);
-}),
-createErrorResponse: vi.fn(
-  (code, message, requestId, details, timestamp) => ({
-success: false,
-error: { code, message, details },
+// Mock auth utilities
+vi.mock('@/utils/api/with-auth', () => ({
+  createSuccessResponse: vi.fn((data, requestId, timestamp) => ({
+success: true,
+data,
 requestId,
 timestamp,
-  }),
-),
-createSuccessResponse: vi.fn((data, requestId, timestamp) => ({
-  success: true,
-  data: {
-...data,
-performance: data.performance || { response_time_ms: 2 },
+  })),
+  createErrorResponse: vi.fn(
+(code, message, requestId, details, timestamp) => ({
+  success: false,
+  error: {
+code,
+message,
+details,
   },
   requestId,
   timestamp,
-})),
-  };
-});
+}),
+  ),
+}));
+
+// Mock CORS utilities
+vi.mock('@/utils/api/cors', () => ({
+  withCORSHeaders: vi.fn(() => ({
+'Access-Control-Allow-Origin': '*',
+'Access-Control-Allow-Methods': 'POST, OPTIONS',
+'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  })),
+}));
+
+// Mock Supabase server client
+vi.mock('@/utils/supabase/server', () => ({
+  createClient: vi.fn(() => mockSupabaseClient),
+}));
 
 // Test constants
 const VALID_BEARER_TOKEN = 'tnp_abcdef1234567890abcdef1234567890';
-const INVALID_BEARER_TOKEN = 'invalid_token_format';
-const EXPIRED_BEARER_TOKEN = 'tnp_expired123456789012345678901234';
+const EXPIRED_BEARER_TOKEN = 'tnp_expired12345678901234567890';
 
 const VALID_OIDC_CLAIMS: OIDCClaims = {
-  sub: 'test-user-id',
+  sub: 'profile_123456789',
+  name: 'John Smith',
+  given_name: 'John',
+  family_name: 'Smith',
+  nickname: 'Johnny',
   iss: 'https://truename.test',
   aud: 'test-app',
-  iat: Math.floor(Date.now() / 1000),
-  name: 'John Doe',
-  given_name: 'John',
-  family_name: 'Doe',
-  nickname: 'Johnny',
-  preferred_username: 'john.doe',
-  context_name: 'Work Context',
-  app_name: 'Test Application',
+  iat: 1692801330,
+  context_name: 'Work Colleagues',
+  app_name: 'Test App',
 };
 
-// Helper functions for test setup
+// Mock authentication state
+let shouldAuthFail = false;
+let authFailureResponse: any = null;
+
+// Utility functions for test setup
 function createMockRequest(authHeader?: string): NextRequest {
-  const headers: HeadersInit = authHeader ? { authorization: authHeader } : {};
+  const headers: Record<string, string> = {};
+  if (authHeader) {
+headers.authorization = authHeader;
+  }
 
-  // Create mock request object that matches NextRequest interface
-  const mockRequest = {
-method: 'POST',
-url: 'https://test.com/api/oauth/resolve',
-headers: new Headers(headers),
-cookies: {
-  size: 0,
-  get: () => undefined,
-  getAll: () => [],
-  has: () => false,
-  set: function () {
-return this;
-  },
-  delete: () => true,
-  clear: function () {
-return this;
-  },
-  [Symbol.iterator]: () => [][Symbol.iterator](),
+  return {
+headers: {
+  get: vi.fn((name: string) => {
+return headers[name.toLowerCase()] || null;
+  }),
 },
-nextUrl: new URL('https://test.com/api/oauth/resolve'),
-page: {},
-ua: {},
-cache: 'default' as RequestCache,
-credentials: 'same-origin' as RequestCredentials,
-destination: 'document',
-integrity: '',
-keepalive: false,
-mode: 'cors' as RequestMode,
-redirect: 'follow' as RequestRedirect,
-referrer: '',
-referrerPolicy: '' as ReferrerPolicy,
-signal: new AbortController().signal,
-body: null,
-bodyUsed: false,
-ok: true,
-redirected: false,
-status: 200,
-statusText: 'OK',
-type: 'default' as ResponseType,
-geo: {},
-ip: '',
-bytes: async () => new Uint8Array(),
-json: async () => ({}),
-clone: function () {
-  return this as unknown as NextRequest;
-},
-text: async () => '',
-arrayBuffer: async () => new ArrayBuffer(0),
-blob: async () => new Blob(),
-formData: async () => new FormData(),
   } as unknown as NextRequest;
-
-  return mockRequest;
 }
 
 async function parseJsonResponse(response: any): Promise<any> {
-  if (response && typeof response === 'object' && 'json' in response) {
+  // Handle mocked NextResponse.json() which returns JSON directly
+  if (response && typeof response.json === 'function') {
 return await response.json();
   }
+
+  // Handle real Response objects in tests
+  if (response && typeof response.text === 'function') {
+const text = await response.text();
+return JSON.parse(text);
+  }
+
+  // If it's already parsed JSON (from our mock), return it directly
   return response;
 }
 
+// Test suite
 describe('OAuth Resolve Endpoint - POST /api/oauth/resolve', () => {
-  let consoleSpy: ReturnType<typeof vi.spyOn>;
-
   beforeEach(async () => {
 // Configure automatic mock cleanup
 vi.restoreAllMocks();
-
-// Setup console spy fresh for each test
-consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
 vi.clearAllMocks();
 shouldAuthFail = false;
 authFailureResponse = null;
@@ -751,107 +442,6 @@ error: null,
 });
   });
 
-  describe('Analytics Logging Verification', () => {
-it('should log successful resolution analytics', async () => {
-  mockSupabaseQuery.single.mockResolvedValue({
-data: VALID_OIDC_CLAIMS,
-error: null,
-  });
-
-  const request = createMockRequest(`Bearer ${VALID_BEARER_TOKEN}`);
-  await POST(request);
-
-  const mockLogOAuthUsage = vi.mocked(
-(await import('../helpers')).logOAuthUsage,
-  );
-
-  expect(mockLogOAuthUsage).toHaveBeenCalledWith(
-mockSupabaseClient,
-expect.any(Object), // sessionData
-VALID_BEARER_TOKEN,
-true, // success
-2, // responseTime
-  );
-});
-
-it('should log failed resolution analytics with error type', async () => {
-  // Mock extractBearerToken to return the token
-  const mockExtractBearerToken = vi.mocked(
-(await import('@/utils/api/oauth-helpers')).extractBearerToken,
-  );
-  mockExtractBearerToken.mockReturnValue(EXPIRED_BEARER_TOKEN);
-
-  const errorResult = {
-error: 'invalid_token',
-message: 'Token expired',
-  };
-
-  mockSupabaseQuery.single.mockResolvedValue({
-data: errorResult,
-error: null,
-  });
-
-  const request = createMockRequest(`Bearer ${EXPIRED_BEARER_TOKEN}`);
-  await POST(request);
-
-  const mockLogOAuthUsage = vi.mocked(
-(await import('../helpers')).logOAuthUsage,
-  );
-
-  expect(mockLogOAuthUsage).toHaveBeenCalledWith(
-mockSupabaseClient,
-null, // no sessionData for failures
-EXPIRED_BEARER_TOKEN,
-false, // success = false
-2, // responseTime
-'invalid_token', // error type from mapErrorToAnalyticsType
-  );
-});
-
-it('should log server error analytics for database failures', async () => {
-  mockSupabaseQuery.single.mockResolvedValue({
-data: null,
-error: { message: 'Database error' },
-  });
-
-  const request = createMockRequest(`Bearer ${VALID_BEARER_TOKEN}`);
-  await POST(request);
-
-  const mockLogOAuthUsage = vi.mocked(
-(await import('../helpers')).logOAuthUsage,
-  );
-
-  expect(mockLogOAuthUsage).toHaveBeenCalledWith(
-mockSupabaseClient,
-null,
-VALID_BEARER_TOKEN,
-false,
-2,
-'server_error',
-  );
-});
-
-it('should log analytics for exception scenarios', async () => {
-  mockSupabaseQuery.single.mockRejectedValue(new Error('Unexpected error'));
-
-  const request = createMockRequest(`Bearer ${VALID_BEARER_TOKEN}`);
-  await POST(request);
-
-  const mockLogOAuthUsage = vi.mocked(
-(await import('../helpers')).logOAuthUsage,
-  );
-
-  expect(mockLogOAuthUsage).toHaveBeenCalledWith(
-mockSupabaseClient,
-null,
-VALID_BEARER_TOKEN,
-false,
-2,
-'server_error',
-  );
-});
-  });
-
   describe('Performance Measurement', () => {
 it('should measure and include performance metrics', async () => {
   const mockMeasurePerformance = vi.mocked(
@@ -892,88 +482,6 @@ error: { message: 'Error' },
   await POST(request);
 
   expect(mockMeasurePerformance).toHaveBeenCalled();
-});
-  });
-
-  describe('Session Data Extraction', () => {
-it('should extract session data from successful claims', async () => {
-  mockSupabaseQuery.single.mockResolvedValue({
-data: VALID_OIDC_CLAIMS,
-error: null,
-  });
-
-  const mockExtractSessionData = vi.mocked(
-(await import('../helpers')).extractSessionDataFromClaims,
-  );
-
-  const request = createMockRequest(`Bearer ${VALID_BEARER_TOKEN}`);
-  await POST(request);
-
-  expect(mockExtractSessionData).toHaveBeenCalledWith(
-VALID_OIDC_CLAIMS,
-VALID_BEARER_TOKEN,
-  );
-});
-
-it('should not extract session data for failed resolutions', async () => {
-  const errorResult = {
-error: 'invalid_token',
-message: 'Token invalid',
-  };
-
-  mockSupabaseQuery.single.mockResolvedValue({
-data: errorResult,
-error: null,
-  });
-
-  const mockExtractSessionData = vi.mocked(
-(await import('../helpers')).extractSessionDataFromClaims,
-  );
-
-  const request = createMockRequest(`Bearer ${VALID_BEARER_TOKEN}`);
-  await POST(request);
-
-  expect(mockExtractSessionData).not.toHaveBeenCalled();
-});
-  });
-
-  describe('Error Type Mapping', () => {
-it('should map error types correctly for analytics', async () => {
-  const errorResult = {
-error: 'no_context_assigned',
-message: 'Context not assigned',
-  };
-
-  mockSupabaseQuery.single.mockResolvedValue({
-data: errorResult,
-error: null,
-  });
-
-  const mockMapErrorToAnalyticsType = vi.mocked(
-(await import('../helpers')).mapErrorToAnalyticsType,
-  );
-
-  const request = createMockRequest(`Bearer ${VALID_BEARER_TOKEN}`);
-  await POST(request);
-
-  expect(mockMapErrorToAnalyticsType).toHaveBeenCalledWith(errorResult);
-});
-
-it('should handle error mapping for server errors', async () => {
-  mockSupabaseQuery.single.mockResolvedValue({
-data: null,
-error: { message: 'Server error' },
-  });
-
-  const mockMapErrorToAnalyticsType = vi.mocked(
-(await import('../helpers')).mapErrorToAnalyticsType,
-  );
-
-  // Server errors don't call mapErrorToAnalyticsType, they directly use 'server_error'
-  const request = createMockRequest(`Bearer ${VALID_BEARER_TOKEN}`);
-  await POST(request);
-
-  expect(mockMapErrorToAnalyticsType).not.toHaveBeenCalled();
 });
   });
 
@@ -1094,20 +602,6 @@ error: null,
   expect(errorData).toHaveProperty('requestId');
   expect(errorData).toHaveProperty('timestamp');
 });
-
-it('should use withOptionalAuth wrapper correctly', async () => {
-  // This test verifies the endpoint is properly wrapped
-  mockSupabaseQuery.single.mockResolvedValue({
-data: VALID_OIDC_CLAIMS,
-error: null,
-  });
-
-  const request = createMockRequest(`Bearer ${VALID_BEARER_TOKEN}`);
-  const response = await POST(request);
-
-  // If withOptionalAuth is working, we should get a response
-  expect(response).toBeDefined();
-});
   });
 
   describe('Coverage Validation', () => {
@@ -1125,13 +619,10 @@ ResolveErrorCodes.RESOLUTION_FAILED,
   expect(errorCodes).toContain('RESOLUTION_FAILED');
 });
 
-it('should verify all helper functions are called', async () => {
-  // This test ensures all helper functions are properly imported and available
+it('should verify helper functions are available', async () => {
+  // This test ensures helper functions are properly imported and available
   const helpers = await import('../helpers');
   expect(typeof helpers.measurePerformance).toBe('function');
-  expect(typeof helpers.extractSessionDataFromClaims).toBe('function');
-  expect(typeof helpers.logOAuthUsage).toBe('function');
-  expect(typeof helpers.mapErrorToAnalyticsType).toBe('function');
 });
   });
 });

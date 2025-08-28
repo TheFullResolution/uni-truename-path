@@ -6,12 +6,12 @@
  * @description Exchanges OAuth Bearer tokens for full OIDC claims objects with context-aware name resolution
  * @authentication Bearer token required (Authorization: Bearer tnp_xxx)
  * @performance <3ms average response time
- * @analytics Logs all requests to app_usage_log table
+ * @analytics Database triggers handle all usage logging automatically
  *
  * Flow:
  * 1. Extract Bearer token from Authorization header
  * 2. Call resolve_oauth_oidc_claims database function
- * 3. Handle success/error responses with appropriate analytics
+ * 3. Handle success/error responses (analytics logged via database triggers)
  * 4. Return OIDC-compliant claims object with resolved names
  *
  * @example
@@ -52,12 +52,8 @@ import {
 import { extractBearerToken } from '@/utils/api/oauth-helpers';
 import { ErrorCodes } from '@/utils/api/types';
 import { ResolveErrorCodes, OIDCClaims } from './types';
-import {
-  measurePerformance,
-  extractSessionDataFromClaims,
-  logOAuthUsage,
-  mapErrorToAnalyticsType,
-} from './helpers';
+import { measurePerformance } from './helpers';
+import { createCORSOptionsResponse, withCORSHeaders } from '@/utils/api/cors';
 
 async function handleResolve(request: NextRequest) {
   const perf = measurePerformance();
@@ -75,7 +71,10 @@ requestId,
 undefined,
 timestamp,
   ),
-  { status: 401 },
+  {
+status: 401,
+headers: withCORSHeaders(),
+  },
 );
   }
 
@@ -85,14 +84,6 @@ const { data: claimsResult, error } = await supabase
   .single();
 
 if (error || !claimsResult) {
-  await logOAuthUsage(
-supabase,
-null,
-sessionToken,
-false,
-perf.getElapsed(),
-'server_error',
-  );
   return NextResponse.json(
 createErrorResponse(
   ResolveErrorCodes.RESOLUTION_FAILED,
@@ -101,7 +92,10 @@ createErrorResponse(
   { database_error: error?.message },
   timestamp,
 ),
-{ status: 500 },
+{
+  status: 500,
+  headers: withCORSHeaders(),
+},
   );
 }
 
@@ -113,14 +107,6 @@ errorResult.error === 'invalid_token'
   : errorResult.error === 'no_context_assigned'
 ? ResolveErrorCodes.NO_CONTEXT_ASSIGNED
 : ResolveErrorCodes.RESOLUTION_FAILED;
-  await logOAuthUsage(
-supabase,
-null,
-sessionToken,
-false,
-perf.getElapsed(),
-mapErrorToAnalyticsType(errorResult),
-  );
   return NextResponse.json(
 createErrorResponse(
   errorCode,
@@ -129,23 +115,14 @@ createErrorResponse(
   undefined,
   timestamp,
 ),
-{ status: errorCode === ResolveErrorCodes.INVALID_TOKEN ? 401 : 400 },
+{
+  status: errorCode === ResolveErrorCodes.INVALID_TOKEN ? 401 : 400,
+  headers: withCORSHeaders(),
+},
   );
 }
 
-const sessionData = extractSessionDataFromClaims(
-  claimsResult,
-  sessionToken,
-);
 const responseTime = perf.getElapsed();
-await logOAuthUsage(
-  supabase,
-  sessionData,
-  sessionToken,
-  true,
-  responseTime,
-);
-
 return NextResponse.json(
   createSuccessResponse(
 {
@@ -156,17 +133,12 @@ return NextResponse.json(
 requestId,
 timestamp,
   ),
-  { status: 200 },
+  {
+status: 200,
+headers: withCORSHeaders(),
+  },
 );
   } catch {
-await logOAuthUsage(
-  supabase,
-  null,
-  sessionToken,
-  false,
-  perf.getElapsed(),
-  'server_error',
-);
 return NextResponse.json(
   createErrorResponse(
 ErrorCodes.INTERNAL_SERVER_ERROR,
@@ -175,10 +147,31 @@ requestId,
 undefined,
 timestamp,
   ),
-  { status: 500 },
+  {
+status: 500,
+headers: withCORSHeaders(),
+  },
 );
   }
 }
 
 // Export POST handler directly (handles custom OAuth token authentication)
 export const POST = handleResolve;
+
+// Handle unsupported HTTP methods
+export const GET = () =>
+  new Response(JSON.stringify({ error: 'Method not allowed' }), {
+status: 405,
+headers: withCORSHeaders(),
+  });
+export const PUT = GET;
+export const DELETE = GET;
+export const PATCH = GET;
+
+/**
+ * OPTIONS handler for CORS preflight requests
+ * Required for cross-origin requests from demo-hr app
+ */
+export async function OPTIONS(): Promise<Response> {
+  return createCORSOptionsResponse('POST, OPTIONS');
+}

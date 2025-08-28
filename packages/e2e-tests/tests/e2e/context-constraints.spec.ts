@@ -1,14 +1,11 @@
 import { expect, test } from '@playwright/test';
-import {
-  ensureLoggedOut,
-  createAndLoginTestUser,
-  createTestContext,
-} from '@/utils/auth-helpers';
+import { getOrCreateTestUser, createTestContext } from '@/utils/auth-helpers';
 
 test.describe('Default Context Constraints', () => {
   test.beforeEach(async ({ page }) => {
-await ensureLoggedOut(page);
-await createAndLoginTestUser(page);
+// Use getOrCreateTestUser for UI mode compatibility
+const user = await getOrCreateTestUser(page);
+console.log(`✅ Using authenticated test user: ${user.email}`);
 
 // Create a test context for the test to use
 await createTestContext(page, 'Test Work Context');

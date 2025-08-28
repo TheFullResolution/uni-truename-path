@@ -52,6 +52,8 @@ rules: {
   'react/prop-types': 'off',
   // Allow triple-slash references in auto-generated files
   '@typescript-eslint/triple-slash-reference': 'off',
+  // Ban explicit any types
+  '@typescript-eslint/no-explicit-any': 'error',
 },
 settings: {
   react: {
@@ -76,6 +78,20 @@ languageOptions: {
 },
 rules: {
   '@typescript-eslint/no-require-imports': 'off',
+},
+  },
+  {
+// Relaxed rules for test files and mocks globally
+files: [
+  '**/__tests__/**/*',
+  '**/*.test.{ts,tsx}',
+  '**/__mocks__/**/*',
+  '**/vitest.setup.ts',
+  'packages/e2e-tests/**/*',
+],
+rules: {
+  '@typescript-eslint/no-explicit-any': 'off',
+  '@typescript-eslint/no-unused-vars': 'off',
 },
   },
 ];

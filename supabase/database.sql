@@ -12,18 +12,9 @@ CONSTRAINT app_context_assignments_pkey PRIMARY KEY (id),
 CONSTRAINT app_context_assignments_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id),
 CONSTRAINT app_context_assignments_context_id_fkey FOREIGN KEY (context_id) REFERENCES public.user_contexts(id)
 );
-CREATE TABLE public.app_context_assignments_backup_037 (
-   id uuid,
-   profile_id uuid,
-   app_id uuid,
-   context_id uuid,
-   created_at timestamp with time zone,
-   updated_at timestamp with time zone
-);
 CREATE TABLE public.app_usage_log (
   id bigint NOT NULL DEFAULT nextval('app_usage_log_id_seq'::regclass),
   profile_id uuid NOT NULL,
-  app_id uuid NOT NULL,
   session_id uuid,
   action character varying NOT NULL CHECK (action::text = ANY (ARRAY['authorize'::character varying, 'resolve'::character varying, 'revoke'::character varying, 'assign_context'::character varying]::text[])),
   context_id uuid,
@@ -31,9 +22,11 @@ CREATE TABLE public.app_usage_log (
   success boolean NOT NULL DEFAULT true,
   error_type character varying CHECK (error_type::text = ANY (ARRAY['authorization_denied'::character varying, 'invalid_token'::character varying, 'context_missing'::character varying, 'server_error'::character varying, 'rate_limited'::character varying]::text[])),
   created_at timestamp with time zone NOT NULL DEFAULT now(),
+  client_id character varying NOT NULL CHECK (client_id::text ~ '^tnp_[a-f0-9]{16}$'::text),
+  resource_type character varying,
+  resource_id text,
   CONSTRAINT app_usage_log_pkey PRIMARY KEY (id),
   CONSTRAINT app_usage_log_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id),
-  CONSTRAINT app_usage_log_app_id_fkey FOREIGN KEY (app_id) REFERENCES public.oauth_applications(id),
   CONSTRAINT app_usage_log_context_id_fkey FOREIGN KEY (context_id) REFERENCES public.user_contexts(id)
 );
 CREATE TABLE public.audit_log_entries (

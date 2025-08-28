@@ -790,18 +790,7 @@ Args: { p_granter_user_id: string; p_requester_user_id: string }
 Returns: boolean
   }
   log_app_usage: {
-Args:
-  | {
-  p_action: string
-  p_app_id: string
-  p_context_id?: string
-  p_error_type?: string
-  p_profile_id: string
-  p_response_time_ms?: number
-  p_session_id?: string
-  p_success?: boolean
-}
-  | {
+Args: {
   p_action: string
   p_client_id: string
   p_context_id?: string

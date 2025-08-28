@@ -11,26 +11,28 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { createAndLoginTestUser, ensureLoggedOut } from '@/utils/auth-helpers';
+import {
+  getOrCreateTestUser,
+  createAndLoginTestUser,
+  ensureLoggedOut,
+} from '@/utils/auth-helpers';
 import { OAUTH_TEST_CONFIG } from '@/utils/oauth-config';
 
 test.describe('OAuth Complete Flow', () => {
   // Reduced timeout for faster, more reliable server-rendered flow
   test.use({ actionTimeout: 15000 });
 
-  test.beforeEach(async ({ page }) => {
-await ensureLoggedOut(page);
-  });
+  // Note: Tests now start pre-authenticated via auth.setup.ts
 
   test('Complete authorization flow with context selection', async ({
 page,
   }) => {
 console.log('🚀 Starting complete OAuth authorization flow test');
 
-// Step 1: Create test user (automatically gets Default context from signup trigger)
-const user = await createAndLoginTestUser(page);
+// Step 1: Get pre-authenticated test user from setup
+const user = await getOrCreateTestUser(page);
 console.log(
-  `✅ Test setup complete: ${user.email} with Default context from signup`,
+  `✅ Using pre-authenticated test user: ${user.email} with Default context`,
 );
 
 // Step 2: Navigate to OAuth page (server-side rendering - no loading states!)
@@ -119,9 +121,9 @@ console.log(
   test('Bearer token resolves to OIDC claims', async ({ page }) => {
 console.log('🚀 Testing Bearer token resolution to OIDC claims');
 
-// Step 1: Create test user and get OAuth token
-const user = await createAndLoginTestUser(page);
-console.log(`✅ Created test user: ${user.email}`);
+// Step 1: Use stored authenticated test user
+const user = await getOrCreateTestUser(page);
+console.log(`✅ Using stored test user: ${user.email}`);
 
 // Step 2: Complete OAuth flow to get token
 const testState = 'resolve-test-123';
@@ -270,9 +272,9 @@ console.log(
   '🚀 Testing OAuth resolution logging with client_id conversion fix',
 );
 
-// Step 1: Create test user and get OAuth token
-const user = await createAndLoginTestUser(page);
-console.log(`✅ Created test user: ${user.email}`);
+// Step 1: Use stored authenticated test user
+const user = await getOrCreateTestUser(page);
+console.log(`✅ Using stored test user: ${user.email}`);
 
 // Step 2: Complete OAuth flow to get valid token
 const testState = 'logging-test-456';
@@ -430,49 +432,28 @@ console.log(
 page,
 browserName,
   }) => {
-test.setTimeout(60000); // Increase timeout for multiple user operations
+test.setTimeout(60000); // Increase timeout for multiple operations
 // Mark test as slow for WebKit specifically
 test.slow(browserName === 'webkit', 'WebKit needs more time in CI');
 console.log(
   '🚀 Testing OAuth logging performance and client_id validation',
 );
 
-// Step 1: Create multiple test users to test concurrent logging
-const users = [];
-for (let i = 0; i < 3; i++) {
-  await ensureLoggedOut(page);
-  const user = await createAndLoginTestUser(page);
-  users.push(user);
-  console.log(
-`✅ Created test user ${i + 1}: ${user.email.substring(0, 20)}...`,
-  );
-}
+// Step 1: Use the stored authenticated test user for performance testing
+const user = await getOrCreateTestUser(page);
+console.log(
+  `✅ Using stored test user for performance testing: ${user.email}`,
+);
 
 console.log(
-  '🔄 Testing concurrent OAuth operations for logging stress test...',
+  '🔄 Testing multiple OAuth operations for logging performance test...',
 );
 
 const tokens: any[] = [];
 const performanceMetrics: any[] = [];
 
-// Step 2: Get OAuth tokens for all users (re-login with their credentials)
-for (const [index, user] of users.entries()) {
-  await ensureLoggedOut(page);
-
-  // Login with existing user credentials
-  await page.goto('/auth/login');
-  await page.waitForLoadState('domcontentloaded');
-
-  // Wait for form to be ready
-  await page.waitForSelector('[data-testid="login-email-input"]', {
-timeout: 5000,
-  });
-
-  await page.getByTestId('login-email-input').fill(user.email);
-  await page.getByTestId('login-password-input').fill(user.password);
-  await page.getByTestId('login-submit-button').click();
-  await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
-
+// Step 2: Get multiple OAuth tokens using same user (simulating multiple app integrations)
+for (let index = 0; index < 3; index++) {
   const testState = `perf-test-${index}-${Date.now()}`;
   const callbackUrl = OAUTH_TEST_CONFIG.CALLBACK_URLS.HR;
 
@@ -495,6 +476,20 @@ await route.fulfill({
   });
 
   await page.goto(oauthUrl);
+  await page.waitForLoadState('domcontentloaded');
+
+  // Handle both CLI mode (pre-authenticated) and UI mode (not authenticated)
+  if (page.url().includes('/auth/login')) {
+console.log('🔐 Not pre-authenticated, logging in...');
+await page.getByTestId('login-email-input').fill(user.email);
+await page.getByTestId('login-password-input').fill(user.password);
+await page.getByTestId('login-submit-button').click();
+console.log('✅ Login completed');
+
+// Wait for redirect back to OAuth authorization page
+await page.waitForURL(/oauth-authorize/);
+  }
+
   await page.getByTestId('oauth-authorize-button').click();
   await page.waitForURL(/localhost:3001\/callback/);
 
@@ -652,7 +647,7 @@ console.log(
   '🎉 OAuth logging performance and validation test completed successfully',
 );
 console.log('🏆 Summary:');
-console.log(`   ✓ Processed ${users.length} concurrent users successfully`);
+console.log(`   ✓ Processed 3 concurrent operations successfully`);
 console.log(
   `   ✓ Average response time: ${averageResponseTime.toFixed(2)}ms`,
 );

@@ -16,6 +16,8 @@
   ],
   "scripts": {
 "dev": "turbo run dev",
+"dev:clean": "yarn kill-ports && yarn dev",
+"predev": "yarn kill-ports",
 "build": "turbo run build",
 "lint": "turbo run lint",
 "lint:fix": "turbo run lint:fix",
@@ -29,6 +31,7 @@
 "test:e2e:ui": "yarn workspace @uni-final/e2e-tests test:ui",
 "test:e2e:headed": "yarn workspace @uni-final/e2e-tests test:headed",
 "format": "prettier . --write",
+"kill-ports": "chmod +x scripts/kill-ports.sh && scripts/kill-ports.sh",
 "db:types": "supabase gen types typescript --local > apps/web/generated/database.ts",
 "types:remote": "supabase gen types typescript --project-id txfcnjvmkaqzblztkjmr > apps/web/generated/database.ts",
 "diagrams:erd": "mmdc -i docs/report-materials/academic-report-diagrams.md -o enhanced-erd.png -t neutral -s 2 --cssFile docs/mermaid-theme.css",

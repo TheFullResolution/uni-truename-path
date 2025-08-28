@@ -14,6 +14,8 @@ import {
   getStatusCode,
 } from './types';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { classifyRoute, RouteSecurityLevel } from './route-security-classifier';
+import { withCORSHeaders } from './cors';
 
 /**
  * Authentication modes for API routes
@@ -248,12 +250,21 @@ requestId,
 `Authentication failed [${requestId}]: ${finalError.error.code}`,
   );
 
+  // Add CORS headers for OAuth routes even in error responses
+  const securityLevel = classifyRoute(new URL(request.url).pathname);
+  const errorHeaders = {
+'Content-Type': 'application/json',
+'X-Request-ID': requestId,
+  };
+
+  const headers =
+securityLevel === RouteSecurityLevel.OAUTH_PUBLIC
+  ? withCORSHeaders(errorHeaders)
+  : errorHeaders;
+
   return NextResponse.json(finalError, {
 status: 401,
-headers: {
-  'Content-Type': 'application/json',
-  'X-Request-ID': requestId,
-},
+headers,
   });
 }
   }
@@ -290,14 +301,22 @@ const errorResult = result as StandardErrorResponse;
 statusCode = getStatusCode(errorResult.error.code as ErrorCode);
   }
 
-  // 7. Return standardized response
+  // 7. Return standardized response with CORS headers for OAuth routes
+  const securityLevel = classifyRoute(new URL(request.url).pathname);
+  const baseHeaders = {
+'Content-Type': 'application/json',
+'Cache-Control': 'no-cache, no-store, must-revalidate',
+'X-Request-ID': requestId,
+  };
+
+  const headers =
+securityLevel === RouteSecurityLevel.OAUTH_PUBLIC
+  ? withCORSHeaders(baseHeaders)
+  : baseHeaders;
+
   return NextResponse.json(result, {
 status: statusCode,
-headers: {
-  'Content-Type': 'application/json',
-  'Cache-Control': 'no-cache, no-store, must-revalidate',
-  'X-Request-ID': requestId,
-},
+headers,
   });
 } catch (error) {
   // Handle unexpected errors in the authentication wrapper
@@ -318,12 +337,21 @@ process.env.NODE_ENV === 'development'
 timestamp,
   );
 
+  // Add CORS headers for OAuth routes even in catch block
+  const securityLevel = classifyRoute(new URL(request.url).pathname);
+  const errorHeaders = {
+'Content-Type': 'application/json',
+'X-Request-ID': requestId,
+  };
+
+  const headers =
+securityLevel === RouteSecurityLevel.OAUTH_PUBLIC
+  ? withCORSHeaders(errorHeaders)
+  : errorHeaders;
+
   return NextResponse.json(errorResponse, {
 status: 500,
-headers: {
-  'Content-Type': 'application/json',
-  'X-Request-ID': requestId,
-},
+headers,
   });
 }
   };
