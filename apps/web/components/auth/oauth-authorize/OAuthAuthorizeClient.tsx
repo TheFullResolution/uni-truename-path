@@ -1,21 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  Stack,
-  Button,
-  Group,
-  Alert,
-  Text,
-  RadioGroup,
-  Radio,
-} from '@mantine/core';
-import {
-  IconCheck,
-  IconX,
-  IconAlertCircle,
-  IconShield,
-} from '@tabler/icons-react';
+import { Stack, Button, Group, Alert, Text, Radio, Badge } from '@mantine/core';
+import { IconCheck, IconX, IconAlertCircle } from '@tabler/icons-react';
 import type { UserContext } from '@/types/database';
 import type {
   OAuthClientRegistryInfo,
@@ -95,8 +82,9 @@ title='No Contexts Available'
 color='red'
 variant='light'
   >
-<Text size='sm'>
-  You need at least one context to authorize applications.
+<Text size='md'>
+  You need at least one identity context to authorize applications.
+  Please set up your contexts in your dashboard first.
 </Text>
   </Alert>
 );
@@ -104,101 +92,102 @@ variant='light'
 
   return (
 <Stack gap='lg' data-testid='oauth-authorize-form'>
-  <Alert
-icon={<IconShield size={16} />}
-title={app.display_name}
-color='blue'
-variant='light'
-data-testid='oauth-app-info'
-  >
-<Group justify='space-between' align='center' mb='xs'>
-  <Text size='sm'>
-{app.app_name || 'Third-party application requesting access'}
-  </Text>
-</Group>
-<Text size='xs' c='dimmed'>
-  From: {app.publisher_domain}
-</Text>
-  </Alert>
-
   {/* Context Selection */}
-  <RadioGroup
+  <Radio.Group
 value={selectedContext}
 onChange={setSelectedContext}
-label='Select Context'
-description='Choose which identity context this application should see'
+label='Select Identity Context'
+description='Choose which version of your name information this application will receive'
 required
 data-testid='context-selector-radio-group'
+styles={{
+  label: { fontSize: 'var(--mantine-font-size-lg)', fontWeight: 500 },
+  description: { fontSize: 'var(--mantine-font-size-md)' },
+}}
   >
-<Stack gap='xs' mt='xs'>
+<Stack gap='sm' mt='md'>
   {contexts.map((context) => (
-<Radio
-  key={context.id}
+<Radio.Card
+  radius='md'
   value={context.id}
-  label={
-<Stack gap={2}>
-  <Text size='sm' fw={500}>
+  key={context.id}
+  p='md'
+  styles={{
+card: {
+  'cursor': 'pointer',
+  'transition': 'border-color 0.2s ease',
+  '&:hover': {
+borderColor: 'var(--mantine-color-blue-5)',
+  },
+},
+  }}
+>
+  <Group wrap='nowrap' align='flex-start'>
+<Radio.Indicator />
+<div style={{ flex: 1 }}>
+  <Text size='md' fw={500}>
 {context.context_name}
   </Text>
-  {context.description && (
-<Text size='xs' c='dimmed'>
-  {context.description}
-</Text>
-  )}
+  <Text size='sm' c='dimmed' lineClamp={2}>
+{context.description}
+  </Text>
   {existingAssignment?.context_id === context.id && (
-<Text size='xs' c='green.6' fw={500}>
+<Badge size='xs' color='green' mt='xs'>
   Currently authorized
-</Text>
+</Badge>
   )}
-</Stack>
-  }
-/>
+</div>
+  </Group>
+</Radio.Card>
   ))}
 </Stack>
-  </RadioGroup>
+  </Radio.Group>
 
+  {/* Impact Explanation */}
   {selectedContextData && (
 <Alert
-  icon={<IconShield size={16} />}
-  title='Authorization Summary'
-  color='green'
+  color='blue'
   variant='light'
+  icon={<IconAlertCircle size={16} />}
+  mb='md'
   data-testid='oauth-authorization-summary'
 >
   <Text size='sm'>
-<strong>{app.display_name}</strong> from{' '}
-<strong>{app.publisher_domain}</strong> will see your{' '}
-<strong>{selectedContextData.context_name}</strong> identity.
+<strong>{app.display_name}</strong> will see your{' '}
+<strong>{selectedContextData.context_name}</strong> information:{' '}
+{selectedContextData.description}
   </Text>
 </Alert>
   )}
 
-  <Group justify='space-between'>
+  <Group justify='space-between' mt='lg'>
 <Button
-  variant='light'
-  color='gray'
+  variant='subtle'
+  size='md'
   onClick={handleDeny}
   disabled={isLoading}
   leftSection={<IconX size={16} />}
   data-testid='oauth-deny-button'
 >
-  Deny Access
+  Cancel
 </Button>
 <Button
+  variant='filled'
+  color='blue'
+  size='md'
   onClick={handleAuthorize}
   loading={isLoading}
   disabled={!selectedContext || !selectedContextData}
   leftSection={<IconCheck size={16} />}
-  color='green'
   data-testid='oauth-authorize-button'
 >
-  {isLoading ? 'Authorizing...' : 'Authorize Access'}
+  {isLoading ? 'Authorizing...' : 'Authorize Application'}
 </Button>
   </Group>
 
-  <Text size='xs' c='gray.6' ta='center'>
-<strong>Privacy Notice:</strong> This application will only receive
-authorized names.
+  <Text size='sm' c='dimmed' ta='center' mt='md'>
+You can revoke this authorization anytime from your dashboard. The
+application will only access names from your selected context.
   </Text>
 </Stack>
   );

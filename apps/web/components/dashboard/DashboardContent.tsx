@@ -22,8 +22,8 @@ import { notifications } from '@mantine/notifications';
 import {
   IconDashboard,
   IconLogout,
+  IconPlug,
   IconSettings,
-  IconShieldCheck,
   IconTags,
   IconUser,
 } from '@tabler/icons-react';
@@ -32,7 +32,12 @@ import { useCallback, useEffect, useState } from 'react';
 import useSWR from 'swr';
 import { DashboardTabs } from './DashboardTabs';
 
-type ValidTab = 'dashboard' | 'names' | 'contexts' | 'consents' | 'settings';
+type ValidTab =
+  | 'dashboard'
+  | 'names'
+  | 'contexts'
+  | 'connected-apps'
+  | 'settings';
 
 interface DashboardContentProps {
   initialTab: ValidTab;
@@ -87,8 +92,8 @@ value &&
   'dashboard',
   'names',
   'contexts',
+  'connected-apps',
   'oidc-preview',
-  'consents',
   'settings',
 ].includes(value)
   ) {
@@ -175,11 +180,11 @@ Sign Out
   Names
 </Tabs.Tab>
 <Tabs.Tab
-  value='consents'
-  leftSection={<IconShieldCheck size={16} />}
-  data-testid='tab-consents'
+  value='connected-apps'
+  leftSection={<IconPlug size={16} />}
+  data-testid='tab-connected-apps'
 >
-  Consents
+  Connected Apps
 </Tabs.Tab>
 <Tabs.Tab
   value='settings'

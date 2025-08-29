@@ -2,6 +2,61 @@
 // Date: August 11, 2025
 
 import { vi, beforeEach, afterEach } from 'vitest';
+import '@testing-library/jest-dom';
+
+// Mock NextRequest before any other imports to ensure it's available
+class MockNextRequest {
+  private _url: string;
+  method: string;
+  headers: Headers;
+  body?: string;
+  nextUrl: URL;
+
+  constructor(url: string, options: any = {}) {
+this._url = url;
+this.method = options.method || 'GET';
+this.headers = new Headers(options.headers || {});
+this.body = options.body;
+this.nextUrl = new URL(url);
+
+// Define read-only url property using getter
+Object.defineProperty(this, 'url', {
+  get: () => this._url,
+  enumerable: true,
+  configurable: false,
+});
+  }
+
+  async json() {
+return JSON.parse(this.body || '{}');
+  }
+
+  async text() {
+return this.body || '';
+  }
+
+  clone() {
+const headersObj: Record<string, string> = {};
+this.headers.forEach((value, key) => {
+  headersObj[key] = value;
+});
+
+return new MockNextRequest(this._url, {
+  method: this.method,
+  headers: headersObj,
+  body: this.body,
+});
+  }
+}
+
+// Mock the entire next/server module at the top level
+vi.mock('next/server', async () => {
+  const actual = await vi.importActual('next/server');
+  return {
+...actual,
+NextRequest: MockNextRequest,
+  };
+});
 
 // Mock environment variables for testing
 process.env.NEXT_PUBLIC_SUPABASE_URL =
@@ -27,6 +82,29 @@ if (typeof global.performance === 'undefined') {
   vi.spyOn(global.performance, 'now').mockImplementation(mockPerformanceNow);
 }
 
+// Mock window.matchMedia for Mantine components
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation((query) => ({
+matches: false,
+media: query,
+onchange: null,
+addListener: vi.fn(), // deprecated
+removeListener: vi.fn(), // deprecated
+addEventListener: vi.fn(),
+removeEventListener: vi.fn(),
+dispatchEvent: vi.fn(),
+  })),
+});
+
+// Mock window.getComputedStyle for Mantine components
+Object.defineProperty(window, 'getComputedStyle', {
+  writable: true,
+  value: vi.fn().mockImplementation(() => ({
+getPropertyValue: vi.fn().mockReturnValue(''),
+  })),
+});
+
 // Reset performance counter before each test
 beforeEach(() => {
   performanceCounter = 0;
@@ -44,18 +122,25 @@ global.console = {
   error: console.error,
 };
 
-// Mock Next.js request handling
+// Mock Next.js request handling with getter-only URL
 global.Request = class MockRequest {
-  url: string;
+  private _url: string;
   method: string;
   headers: Map<string, string>;
   body?: string;
 
   constructor(url: string, options: any = {}) {
-this.url = url;
+this._url = url;
 this.method = options.method || 'GET';
 this.headers = new Map(Object.entries(options.headers || {}));
 this.body = options.body;
+
+// Define read-only url property using getter
+Object.defineProperty(this, 'url', {
+  get: () => this._url,
+  enumerable: true,
+  configurable: false,
+});
   }
 
   async json() {

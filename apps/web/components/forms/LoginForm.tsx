@@ -320,6 +320,7 @@ variant='filled'
 color='blue'
 disabled={loading}
 onClick={onCreateAccount}
+data-testid='login-create-account-button'
 style={{
   'backgroundColor': '#3498db',
   '&:hover': {

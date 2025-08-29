@@ -76,33 +76,6 @@ referencedColumns: ["id"]
   },
 ]
   }
-  app_context_assignments_backup_037: {
-Row: {
-  app_id: string | null
-  context_id: string | null
-  created_at: string | null
-  id: string | null
-  profile_id: string | null
-  updated_at: string | null
-}
-Insert: {
-  app_id?: string | null
-  context_id?: string | null
-  created_at?: string | null
-  id?: string | null
-  profile_id?: string | null
-  updated_at?: string | null
-}
-Update: {
-  app_id?: string | null
-  context_id?: string | null
-  created_at?: string | null
-  id?: string | null
-  profile_id?: string | null
-  updated_at?: string | null
-}
-Relationships: []
-  }
   app_usage_log: {
 Row: {
   action: string
@@ -112,6 +85,8 @@ Row: {
   error_type: string | null
   id: number
   profile_id: string
+  resource_id: string | null
+  resource_type: string | null
   response_time_ms: number | null
   session_id: string | null
   success: boolean
@@ -124,6 +99,8 @@ Insert: {
   error_type?: string | null
   id?: number
   profile_id: string
+  resource_id?: string | null
+  resource_type?: string | null
   response_time_ms?: number | null
   session_id?: string | null
   success?: boolean
@@ -136,6 +113,8 @@ Update: {
   error_type?: string | null
   id?: number
   profile_id?: string
+  resource_id?: string | null
+  resource_type?: string | null
   response_time_ms?: number | null
   session_id?: string | null
   success?: boolean
@@ -156,45 +135,6 @@ referencedRelation: "profiles"
 referencedColumns: ["id"]
   },
 ]
-  }
-  app_usage_log_backup_040: {
-Row: {
-  action: string | null
-  app_id: string | null
-  context_id: string | null
-  created_at: string | null
-  error_type: string | null
-  id: number | null
-  profile_id: string | null
-  response_time_ms: number | null
-  session_id: string | null
-  success: boolean | null
-}
-Insert: {
-  action?: string | null
-  app_id?: string | null
-  context_id?: string | null
-  created_at?: string | null
-  error_type?: string | null
-  id?: number | null
-  profile_id?: string | null
-  response_time_ms?: number | null
-  session_id?: string | null
-  success?: boolean | null
-}
-Update: {
-  action?: string | null
-  app_id?: string | null
-  context_id?: string | null
-  created_at?: string | null
-  error_type?: string | null
-  id?: number | null
-  profile_id?: string | null
-  response_time_ms?: number | null
-  session_id?: string | null
-  success?: boolean | null
-}
-Relationships: []
   }
   audit_log_entries: {
 Row: {
@@ -726,14 +666,6 @@ Returns: string
 Args: { p_name_id: string; p_user_id: string }
 Returns: Json
   }
-  cleanup_expired_oauth_sessions: {
-Args: Record<PropertyKey, never>
-Returns: number
-  }
-  cleanup_old_app_logs: {
-Args: { days_to_keep?: number }
-Returns: number
-  }
   current_aud: {
 Args: Record<PropertyKey, never>
 Returns: string
@@ -741,24 +673,6 @@ Returns: string
   generate_oauth_token: {
 Args: Record<PropertyKey, never>
 Returns: string
-  }
-  get_active_consent: {
-Args: { p_requester_user_id: string; p_target_user_id: string }
-Returns: {
-  consent_id: string
-  context_id: string
-  context_name: string
-  expires_at: string
-  granted_at: string
-}[]
-  }
-  get_cleanup_rollback_info: {
-Args: Record<PropertyKey, never>
-Returns: Json
-  }
-  get_context_oidc_claims: {
-Args: { p_context_id: string }
-Returns: Json
   }
   get_oauth_dashboard_stats: {
 Args: { p_profile_id: string }
@@ -773,16 +687,6 @@ Returns: {
   details: Json
   requester_user_id: string
   resolved_name: string
-}[]
-  }
-  get_user_contexts: {
-Args: { p_user_id: string }
-Returns: {
-  assigned_name: string
-  context_id: string
-  context_name: string
-  created_at: string
-  description: string
 }[]
   }
   grant_consent: {
@@ -818,18 +722,6 @@ Returns: Json
   revoke_consent: {
 Args: { p_granter_user_id: string; p_requester_user_id: string }
 Returns: boolean
-  }
-  test_enhanced_signup_functionality: {
-Args: Record<PropertyKey, never>
-Returns: Json
-  }
-  validate_enhanced_signup_setup: {
-Args: Record<PropertyKey, never>
-Returns: Json
-  }
-  verify_database_consistency: {
-Args: Record<PropertyKey, never>
-Returns: Json
   }
 }
 Enums: {

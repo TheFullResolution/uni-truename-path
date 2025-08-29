@@ -9,8 +9,10 @@ import {
   ThemeIcon,
   Stack,
   Badge,
+  Button,
 } from '@mantine/core';
 import { IconPlug } from '@tabler/icons-react';
+import { useRouter } from 'next/navigation';
 
 interface ConnectedAppsCardProps {
   stats: DashboardStatsResponse | null;
@@ -18,8 +20,13 @@ interface ConnectedAppsCardProps {
 }
 
 export function ConnectedAppsCard({ stats, loading }: ConnectedAppsCardProps) {
+  const router = useRouter();
   const connectedApps = stats?.oauth_metrics?.connected_apps || 0;
   const topApp = stats?.oauth_metrics?.top_app_name;
+
+  const handleViewAll = () => {
+router.push('/dashboard/connected-apps');
+  };
 
   return (
 <Card
@@ -58,6 +65,18 @@ Top: {topApp}
   <IconPlug size={24} />
 </ThemeIcon>
   </Group>
+  {!loading && connectedApps > 0 && (
+<Button
+  variant='light'
+  size='xs'
+  mt='md'
+  fullWidth
+  onClick={handleViewAll}
+  data-testid='view-all-connected-apps'
+>
+  View All
+</Button>
+  )}
 </Card>
   );
 }

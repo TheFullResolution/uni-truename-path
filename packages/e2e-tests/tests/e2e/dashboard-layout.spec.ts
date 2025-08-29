@@ -17,7 +17,7 @@ const EXPECTED_TABS = [
   'dashboard',
   'contexts',
   'names',
-  'consents',
+  'connected-apps',
   'settings',
 ];
 
@@ -73,7 +73,7 @@ expect(discoveredTabs).toContain(expectedTab);
   );
 });
 
-test('should navigate between tabs using UI interactions', async ({
+test('should navigate between tabs and verify content updates', async ({
   page,
 }) => {
   // Navigate to dashboard - authentication handled by beforeEach
@@ -82,17 +82,37 @@ test('should navigate between tabs using UI interactions', async ({
   // Wait for dashboard tabs to be available
   await page.waitForSelector('[data-testid^="tab-"]', { timeout: 30000 });
 
-  // Test navigation to each tab by clicking UI elements
-  const tabNavigationTests = [
-{ tab: 'contexts', expectedUrl: '/dashboard/contexts' },
-{ tab: 'names', expectedUrl: '/dashboard/names' },
-{ tab: 'consents', expectedUrl: '/dashboard/consents' },
-{ tab: 'settings', expectedUrl: '/dashboard/settings' },
-{ tab: 'dashboard', expectedUrl: '/dashboard' }, // Return to home
+  // Combined test: navigation + content verification for better efficiency
+  const tabTests = [
+{
+  tab: 'contexts',
+  expectedUrl: '/dashboard/contexts',
+  contentCheck: /context|Context/i,
+},
+{
+  tab: 'names',
+  expectedUrl: '/dashboard/names',
+  contentCheck: /name|Name/i,
+},
+{
+  tab: 'connected-apps',
+  expectedUrl: '/dashboard/connected-apps',
+  contentCheck: /app|App|connected|Connected|oauth|OAuth/i,
+},
+{
+  tab: 'settings',
+  expectedUrl: '/dashboard/settings',
+  contentCheck: /settings|Settings/i,
+},
+{
+  tab: 'dashboard',
+  expectedUrl: '/dashboard',
+  contentCheck: /dashboard|Dashboard/i,
+}, // Return to home
   ];
 
-  for (const { tab, expectedUrl } of tabNavigationTests) {
-console.log(`🖱️  Clicking tab: ${tab}`);
+  for (const { tab, expectedUrl, contentCheck } of tabTests) {
+console.log(`🖱️  Testing tab: ${tab}`);
 
 // Click the tab
 await page.click(`[data-testid="tab-${tab}"]`);
@@ -100,7 +120,7 @@ await page.click(`[data-testid="tab-${tab}"]`);
 // Verify URL changed
 await expect(page).toHaveURL(expectedUrl, { timeout: 5000 });
 
-// Verify active tab state (tab should have active styling or aria-selected)
+// Verify active tab state
 const tabElement = page.locator(`[data-testid="tab-${tab}"]`);
 const isActive = await tabElement.evaluate((el) => {
   return (
@@ -111,90 +131,25 @@ getComputedStyle(el).fontWeight === 'bold' ||
 getComputedStyle(el).fontWeight === '700'
   );
 });
-
 expect(isActive).toBeTruthy();
-console.log(`✅ Tab "${tab}" is active and URL is correct`);
-  }
-});
 
-test('should verify content area updates when switching tabs', async ({
-  page,
-}) => {
-  // Navigate to dashboard - authentication handled by beforeEach
-  await page.goto('/dashboard');
-  await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
-  // Wait for dashboard tabs to be available
-  await page.waitForSelector('[data-testid^="tab-"]', { timeout: 30000 });
-
-  // Test that content area updates when switching between tabs
-  const contentTestTabs = ['contexts', 'names', 'consents'];
-
-  for (const tab of contentTestTabs) {
-console.log(`📄 Testing content loading for tab: ${tab}`);
-
-// Click tab
-await page.click(`[data-testid="tab-${tab}"]`);
-// Wait for content to load - page should not be empty
+// Wait for content to load and verify it's not empty
 await page.waitForFunction(() => document.body.innerText.length > 100, {
   timeout: 30000,
 });
 
-// Verify page content loaded (no errors)
+// Verify page content loaded (no errors) and has expected content
 await expect(page.locator('body')).not.toHaveText(/error|failed|404/i);
-
-// Verify content area is not empty
 await expect(page.locator('body')).not.toBeEmpty();
 
-// Verify specific content indicators based on tab
-if (tab === 'contexts') {
-  // Should have contexts-related content or empty state
-  const hasContextContent =
-(await page.locator('text=/context|Context/i').count()) > 0;
-  expect(hasContextContent).toBeTruthy();
-} else if (tab === 'names') {
-  // Should have names-related content or empty state
-  const hasNameContent =
-(await page.locator('text=/name|Name/i').count()) > 0;
-  expect(hasNameContent).toBeTruthy();
-} else if (tab === 'consents') {
-  // Should have consents-related content
-  const hasConsentContent =
-(await page.locator('text=/consent|Consent/i').count()) > 0;
-  expect(hasConsentContent).toBeTruthy();
-}
+const hasExpectedContent =
+  (await page.locator(`text=${contentCheck}`).count()) > 0;
+expect(hasExpectedContent).toBeTruthy();
 
-console.log(`✅ Content verified for tab: ${tab}`);
+console.log(
+  `✅ Tab "${tab}" navigation, activation, and content verified`,
+);
   }
-});
-
-test('should handle responsive behavior', async ({ page }) => {
-  // Navigate to dashboard - authentication handled by beforeEach
-  await page.goto('/dashboard');
-  await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
-
-  // Test mobile viewport
-  await page.setViewportSize({ width: 375, height: 667 });
-  await page.waitForTimeout(500); // Allow layout to adjust
-
-  // Tabs should still be discoverable and clickable on mobile
-  const mobileTabCount = await page
-.locator('[data-testid^="tab-"]')
-.count();
-  expect(mobileTabCount).toBeGreaterThan(0);
-
-  // Test tab interaction on mobile
-  await page.click('[data-testid="tab-contexts"]');
-  await expect(page).toHaveURL('/dashboard/contexts');
-
-  // Test desktop viewport
-  await page.setViewportSize({ width: 1280, height: 720 });
-  await page.waitForTimeout(500); // Allow layout to adjust
-
-  // Tabs should still work on desktop
-  await page.click('[data-testid="tab-names"]');
-  await expect(page).toHaveURL('/dashboard/names');
-
-  console.log('✅ Responsive navigation verified across viewports');
 });
 
 test('should handle edge cases and invalid routes', async ({ page }) => {

@@ -92,12 +92,15 @@ const nameIds = assignments
   .map((assignment) => assignment.name_id!)
   .filter((id): id is string => id !== null);
 
-if (nameIds.length > 0) {
+// Deduplicate name IDs to handle cases where same name is assigned to multiple OIDC properties
+const uniqueNameIds = Array.from(new Set(nameIds));
+
+if (uniqueNameIds.length > 0) {
   const { data: nameData, error: nameError } = await supabase
 .from('names')
 .select('id, name_text')
 .eq('user_id', user!.id)
-.in('id', nameIds);
+.in('id', uniqueNameIds);
 
   if (nameError) {
 console.error('Database error validating names:', nameError);
@@ -111,15 +114,15 @@ return createErrorResponse(
   }
 
   // Check if all requested names exist and belong to user
-  if (!nameData || nameData.length !== nameIds.length) {
+  if (!nameData || nameData.length !== uniqueNameIds.length) {
 return createErrorResponse(
   ErrorCodes.AUTHORIZATION_FAILED,
   'One or more names not found or access denied',
   requestId,
   {
-requested_names: nameIds,
+requested_names: uniqueNameIds,
 found_names: nameData?.length || 0,
-missing_count: nameIds.length - (nameData?.length || 0),
+missing_count: uniqueNameIds.length - (nameData?.length || 0),
   },
   timestamp,
 );

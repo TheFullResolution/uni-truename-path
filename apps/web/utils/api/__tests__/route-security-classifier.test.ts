@@ -81,7 +81,6 @@ const internalRoutes = [
   '/api/assignments/oidc',
   '/api/consents',
   '/api/dashboard/stats',
-  '/api/audit',
 ];
 
 it('should classify internal routes as INTERNAL_APP', () => {
@@ -191,7 +190,6 @@ const allKnownRoutes = [
   '/api/assignments/oidc',
   '/api/consents',
   '/api/dashboard/stats',
-  '/api/audit',
 
   // Public routes
   '/api/auth/login',

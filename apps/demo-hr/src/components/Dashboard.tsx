@@ -44,6 +44,8 @@ export const Dashboard = () => {
 data: userData,
 error,
 isLoading,
+isValidating,
+mutate,
   } = useOAuthToken({
 token,
 enabled: !!token,
@@ -111,7 +113,7 @@ return (
   Loading Dashboard
 </Title>
 <Text size='md' c='gray.6' ta='center'>
-  Retrieving your professional identity and context information...
+  Retrieving your identity and context information...
 </Text>
   </Stack>
 </Paper>
@@ -133,8 +135,8 @@ return (
   Failed to load your dashboard information
 </Alert>
 <Text size='sm' c='gray.6' ta='center'>
-  There was an issue retrieving your professional identity data.
-  Please try signing in again.
+  There was an issue retrieving your identity data. Please try
+  signing in again.
 </Text>
 <Button
   color='corporate'
@@ -175,27 +177,40 @@ Welcome, {userData.given_name}!
   </Text>
 </Group>
   </Stack>
-  <Button
-variant='outline'
-color='corporate'
-onClick={handleLogout}
-leftSection={<IconBuildingStore size={16} />}
-data-testid='demo-hr-logout-button'
-  >
-Sign Out
-  </Button>
+  <Group gap='sm'>
+<Button
+  variant='light'
+  color='corporate'
+  size='sm'
+  onClick={() => mutate()}
+  loading={isValidating}
+  leftSection={<IconRefresh size={16} />}
+  data-testid='demo-hr-refresh-button'
+>
+  Refresh Data
+</Button>
+<Button
+  variant='outline'
+  color='corporate'
+  onClick={handleLogout}
+  leftSection={<IconBuildingStore size={16} />}
+  data-testid='demo-hr-logout-button'
+>
+  Sign Out
+</Button>
+  </Group>
 </Group>
 
-{/* Professional Context Notice */}
+{/* Context Notice */}
 <Alert
   variant='light'
   color='corporate'
   icon={<IconUserCheck size={16} />}
 >
   <Text size='sm'>
-You are viewing your <strong>professional identity</strong> as
-configured for workplace contexts. This demonstrates context-aware
-identity management in enterprise environments.
+You are viewing your identity as configured for the{' '}
+<strong>{userData.context_name}</strong> context. This demonstrates
+context-aware identity management in enterprise environments.
   </Text>
 </Alert>
 

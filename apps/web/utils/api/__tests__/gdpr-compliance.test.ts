@@ -45,7 +45,6 @@ it('should allow full data access only for first-party internal routes', () => {
 '/api/assignments',
 '/api/dashboard/stats',
 '/api/consents',
-'/api/audit',
   ];
 
   internalRoutes.forEach((route) => {
@@ -158,7 +157,6 @@ it('should limit internal route data access to legitimate business purposes', ()
 { route: '/api/assignments', purpose: 'assignment_management' },
 { route: '/api/consents', purpose: 'consent_management' },
 { route: '/api/dashboard/stats', purpose: 'dashboard_analytics' },
-{ route: '/api/audit', purpose: 'audit_compliance' },
   ];
 
   businessRoutes.forEach(({ route, purpose }) => {

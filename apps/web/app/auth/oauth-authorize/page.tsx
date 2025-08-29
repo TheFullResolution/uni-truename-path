@@ -9,10 +9,11 @@ import {
   Box,
   Center,
   Group,
-  Alert,
+  Card,
   Badge,
+  Divider,
+  Alert,
 } from '@mantine/core';
-import { IconShield, IconExternalLink } from '@tabler/icons-react';
 import type {
   AppContextAssignment,
   OAuthClientRegistryInfo,
@@ -116,6 +117,13 @@ async function fetchUserContexts(
 throw new Error(`Failed to fetch user contexts: ${error.message}`);
   }
 
+  // For new users with no contexts yet, this is handled by the fallback in assignContextToClient
+  if (!contexts || contexts.length === 0) {
+console.log(
+  `No contexts found for user ${userId} - may be new user with signup trigger still processing`,
+);
+  }
+
   return contexts || [];
 }
 
@@ -197,120 +205,61 @@ function OAuthAuthorizePageContent({ data }: { data: PageData }) {
   const { client, contexts, existingAssignment, authorizeParams, user } = data;
 
   return (
-<Container size='lg' py='xl' data-testid='oauth-authorize-page'>
-  <Paper
-shadow='lg'
-radius='lg'
-p='xl'
-style={{ backgroundColor: 'white' }}
-  >
-{/* Simple header */}
+<Container maw={600} px='md' py='xl' data-testid='oauth-authorize-page'>
+  <Paper shadow='sm' radius='md' p='xl'>
+{/* Header with consistent typography */}
 <Center mb='xl'>
-  <Box style={{ textAlign: 'center' }}>
+  <Box ta='center'>
 <Logo size='lg' />
-<Title order={1} size='h2' fw={600} c='brand.8' mt='md'>
-  TrueNamePath Authorization
+<Title order={1} size='xl' fw={600} c='brand.8' mt='md'>
+  Application Authorization
 </Title>
   </Box>
 </Center>
 
-{/* Simple content layout */}
-<Box>
-  <Group gap='xs' mb='lg'>
-<IconExternalLink size={20} color='#4A7FE7' />
-<Title order={2} c='gray.8'>
-  Application Details
-</Title>
-  </Group>
-
-  {/* App info */}
-  <Box
-style={{
-  backgroundColor: 'white',
-  border: '1px solid #dee2e6',
-  borderRadius: '8px',
-  padding: '16px',
-}}
-mb='lg'
-  >
-<Text fw={600} size='lg' c='gray.8' mb='xs'>
+{/* App info card with professional styling */}
+<Card
+  shadow='sm'
+  padding='xl'
+  radius='md'
+  withBorder
+  mb='xl'
+  data-testid='oauth-app-info'
+>
+  <Group justify='space-between' mb='md'>
+<Text size='xl' fw={600}>
   {client.display_name}
 </Text>
-<Text size='sm' c='gray.6'>
-  {client.app_name}
+<Badge color='green' size='xs'>
+  Verified
+</Badge>
+  </Group>
+  <Text c='dimmed' size='sm'>
+<strong>{client.display_name}</strong> is requesting permission to
+access your name information. You can choose which identity context
+to share.
+  </Text>
+</Card>
+
+<Divider my='xl' />
+
+<Title order={2} size='lg' fw={500} c='gray.8' mb='md'>
+  Choose Your Identity
+</Title>
+
+<Text size='md' c='dimmed' mb='lg'>
+  Signed in as {user.email}. Select which context to share with this
+  application.
 </Text>
-  </Box>
 
-  {/* Security notice with domain display */}
-  <Alert
-icon={<IconShield size={16} />}
-title='Security Notice'
-color='yellow'
-variant='light'
-mb='md'
-  >
-<Box>
-  <Text component='span' size='sm' fw={500}>
-Application published by:{' '}
-  </Text>
-  <Badge color='blue' component='span'>
-{client.publisher_domain}
-  </Badge>
-</Box>
-<Text size='xs' c='dimmed'>
-  Only authorize if you trust this domain.
-</Text>
-  </Alert>
-
-  <Alert
-icon={<IconShield size={16} />}
-title='Privacy Notice'
-color='blue'
-variant='light'
-mb='md'
-  >
-<Text size='xs'>
-  This application will only receive the names you authorize.
-</Text>
-  </Alert>
-
-  <Title order={2} c='gray.8' mb='md' mt='xl'>
-Authorize Access
-  </Title>
-
-  <Text size='sm' c='gray.7' mb='md'>
-{user.email} - Grant this application access to your names?
-  </Text>
-
-  {/* Simple assignment status */}
-  {existingAssignment && (
-<Alert
-  icon={<IconShield size={16} />}
-  title='Previously Authorized'
-  color='green'
-  variant='light'
-  mb='lg'
->
-  <Text size='sm'>
-This application already has access to your names.
-  </Text>
-</Alert>
-  )}
-
-  {/* Simple context count */}
-  <Text size='sm' fw={500} c='gray.8' mb='lg'>
-Available Contexts: {contexts.length}
-  </Text>
-
-  {/* Authorization Form */}
-  <OAuthAuthorizeClient
-app={client}
-contexts={contexts}
-existingAssignment={existingAssignment || undefined}
-returnUrl={authorizeParams.return_url}
-state={authorizeParams.state}
-  />
-</Box>
+{/* Authorization Form */}
+<OAuthAuthorizeClient
+  app={client}
+  contexts={contexts}
+  existingAssignment={existingAssignment || undefined}
+  returnUrl={authorizeParams.return_url}
+  state={authorizeParams.state}
+/>
   </Paper>
 </Container>
   );
@@ -354,11 +303,11 @@ return (
   title='Error Loading Authorization Request'
   data-testid='oauth-error-alert'
 >
-  <Text size='sm'>
+  <Text size='md'>
 Failed to load authorization request. Please try again.
   </Text>
   {process.env.NODE_ENV === 'development' && (
-<Text size='xs' mt='sm' c='dimmed'>
+<Text size='sm' mt='md' c='dimmed'>
   Debug: {error instanceof Error ? error.message : String(error)}
 </Text>
   )}

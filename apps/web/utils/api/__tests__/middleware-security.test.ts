@@ -94,7 +94,6 @@ const internalRoutes = [
   '/api/assignments/oidc',
   '/api/consents',
   '/api/dashboard/stats',
-  '/api/audit',
 ];
 
 it('should allow all headers for authenticated internal routes', () => {

@@ -27,7 +27,14 @@ import {
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
-import { IconPlus, IconTrash, IconAlertTriangle } from '@tabler/icons-react';
+import {
+  IconPlus,
+  IconTrash,
+  IconAlertTriangle,
+  IconEdit,
+  IconCheck,
+  IconX,
+} from '@tabler/icons-react';
 import { useState } from 'react';
 import useSWR from 'swr';
 import useSWRMutation from 'swr/mutation';
@@ -47,6 +54,10 @@ export function NamesTab({ user }: NamesTabProps) {
   const [deletingName, setDeletingName] = useState<Name | null>(null);
   const [canDeleteName, setCanDeleteName] = useState(true);
   const [deleteReason, setDeleteReason] = useState<string>('');
+
+  // Edit functionality state
+  const [editingName, setEditingName] = useState<Name | null>(null);
+  const [editText, setEditText] = useState<string>('');
 
   // Fetch names with simplified structure
   const {
@@ -70,6 +81,33 @@ notifications.show({
 revalidateNames();
 setShowAddForm(false);
 form.reset();
+  },
+  onError: (error) => {
+notifications.show({
+  title: 'Error',
+  message: formatSWRError(error),
+  color: 'red',
+  autoClose: 5000,
+});
+  },
+},
+  );
+
+  // Update name mutation
+  const { trigger: updateName, isMutating: isUpdating } = useSWRMutation(
+'/api/names',
+createMutationFetcher('PUT'),
+{
+  onSuccess: () => {
+notifications.show({
+  title: 'Name Updated',
+  message: 'Name variant updated successfully',
+  color: 'green',
+  autoClose: 3000,
+});
+revalidateNames();
+setEditingName(null);
+setEditText('');
   },
   onError: (error) => {
 notifications.show({
@@ -161,6 +199,26 @@ color: 'red',
 
   const handleConfirmDelete = async (nameId: string) => {
 await deleteName({ name_id: nameId });
+  };
+
+  // Edit handler functions
+  const handleStartEdit = (name: Name) => {
+setEditingName(name);
+setEditText(name.name_text);
+  };
+
+  const handleSaveEdit = async () => {
+if (!editingName || !editText.trim()) return;
+
+await updateName({
+  name_id: editingName.id,
+  name_text: editText.trim(),
+});
+  };
+
+  const handleCancelEdit = () => {
+setEditingName(null);
+setEditText('');
   };
 
   const names = (namesResponse as { names: Name[] } | undefined)?.names || [];
@@ -271,24 +329,77 @@ icon={<IconAlertTriangle size={16} />}
 {names.map((name: Tables<'names'>) => (
   <Card key={name.id} p='md' withBorder>
 <Group justify='space-between'>
-  <Group>
-<div>
-  <Text fw={500} size='lg'>
-{name.name_text}
-  </Text>
-</div>
+  <Group style={{ flex: 1 }}>
+{editingName?.id === name.id ? (
+  // Edit mode
+  <Group style={{ flex: 1 }} gap='xs'>
+<TextInput
+  value={editText}
+  onChange={(e) => setEditText(e.target.value)}
+  style={{ flex: 1 }}
+  data-testid='edit-name-input'
+  onKeyDown={(e) => {
+if (e.key === 'Enter') {
+  handleSaveEdit();
+} else if (e.key === 'Escape') {
+  handleCancelEdit();
+}
+  }}
+  autoFocus
+/>
+<ActionIcon
+  color='green'
+  variant='light'
+  onClick={handleSaveEdit}
+  loading={isUpdating}
+  disabled={isUpdating || !editText.trim()}
+  data-testid='save-edit-button'
+>
+  <IconCheck size={16} />
+</ActionIcon>
+<ActionIcon
+  color='gray'
+  variant='light'
+  onClick={handleCancelEdit}
+  disabled={isUpdating}
+  data-testid='cancel-edit-button'
+>
+  <IconX size={16} />
+</ActionIcon>
+  </Group>
+) : (
+  // Display mode
+  <div>
+<Text fw={500} size='lg'>
+  {name.name_text}
+</Text>
+  </div>
+)}
   </Group>
 
+  {editingName?.id !== name.id && (
+<Group gap='xs'>
+  <ActionIcon
+color='blue'
+variant='light'
+onClick={() => handleStartEdit(name)}
+disabled={!!editingName || isDeleting}
+data-testid='edit-name-button'
+  >
+<IconEdit size={16} />
+  </ActionIcon>
   <ActionIcon
 color='red'
 variant='light'
 onClick={() => handleDelete(name)}
 loading={isDeleting}
-disabled={isDeleting}
+disabled={isDeleting || !!editingName}
 data-testid='delete-name-button'
   >
 <IconTrash size={16} />
   </ActionIcon>
+</Group>
+  )}
 </Group>
   </Card>
 ))}

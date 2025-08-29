@@ -80,6 +80,18 @@ return result.data as TResponse;
 }
 
 /**
+ * SWR configuration for focus-based revalidation
+ * Enables automatic data refresh when users switch tabs/windows
+ * Perfect for dashboard scenarios where data freshness is important
+ */
+export const swrFocusConfig = {
+  revalidateOnFocus: true,
+  revalidateOnReconnect: true,
+  refreshInterval: 0, // Focus-only updates, no polling
+  dedupingInterval: 2000, // Prevent duplicate requests within 2s
+} as const;
+
+/**
  * Error handling utility for SWR error boundaries
  * Extracts meaningful error messages from various error types
  *

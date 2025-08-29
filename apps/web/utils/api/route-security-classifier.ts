@@ -57,7 +57,6 @@ const INTERNAL_APP_ROUTE_PATTERNS = [
   '/api/assignments/',
   '/api/consents/',
   '/api/dashboard/',
-  '/api/audit/',
 ] as const;
 
 /**

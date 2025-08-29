@@ -17,7 +17,7 @@
 /**
  * OAuth-specific CORS configuration
  * Uses wildcard origin to support demo applications from any domain
- * Follows existing codebase patterns from /api/consents and /api/audit
+ * Follows existing codebase patterns from /api/consents
  */
 export const OAUTH_CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',

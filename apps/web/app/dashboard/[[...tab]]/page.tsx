@@ -3,13 +3,18 @@ import { Suspense } from 'react';
 import { DashboardContent } from '@/components/dashboard/DashboardContent';
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
 
-type ValidTab = 'dashboard' | 'names' | 'contexts' | 'consents' | 'settings';
+type ValidTab =
+  | 'dashboard'
+  | 'names'
+  | 'contexts'
+  | 'connected-apps'
+  | 'settings';
 
 const VALID_TABS: ValidTab[] = [
   'dashboard',
   'names',
   'contexts',
-  'consents',
+  'connected-apps',
   'settings',
 ];
 

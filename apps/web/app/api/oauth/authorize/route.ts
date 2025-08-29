@@ -1,8 +1,3 @@
-// TrueNamePath: OAuth Authorization Endpoint Handler
-// POST /api/oauth/authorize - Generate OAuth session tokens with context assignment
-// Date: August 23, 2025
-// Academic project - Core OAuth authorization flow implementation
-
 import { NextRequest } from 'next/server';
 import {
   withRequiredAuth,
@@ -15,10 +10,6 @@ import { ErrorCodes, StandardResponse } from '@/utils/api/types';
 import { OAuthAuthorizeRequestSchema, OAuthAuthorizeRequest } from './schemas';
 import { OAuthAuthorizeResponseData, AuthorizeErrorCodes } from './types';
 import { createCORSOptionsResponse } from '@/utils/api/cors';
-
-// =============================================================================
-// Helper Function Types
-// =============================================================================
 
 interface ClientData {
   client_id: string;
@@ -33,13 +24,6 @@ interface ContextData {
   user_id: string;
 }
 
-// =============================================================================
-// Helper Functions
-// =============================================================================
-
-/**
- * Parse and validate authorization request body
- */
 async function validateAuthorizationRequest(
   request: NextRequest,
 ): Promise<
@@ -56,9 +40,6 @@ return { success: false, error: validation.error };
   return { success: true, data: validation.data };
 }
 
-/**
- * Verify client exists in OAuth client registry
- */
 async function verifyClientRegistry(
   supabase: AuthenticatedContext['supabase'],
   clientId: string,
@@ -78,9 +59,6 @@ return { success: false, error: 'OAuth client not found in registry' };
   return { success: true, client };
 }
 
-/**
- * Verify user owns the specified context
- */
 async function verifyUserContext(
   supabase: AuthenticatedContext['supabase'],
   contextId: string,
@@ -101,75 +79,6 @@ return { success: false, error: 'Context not found or access denied' };
 
   return { success: true, context };
 }
-
-/**
- * Assign default context to client
- */
-async function assignContextToClient(
-  supabase: AuthenticatedContext['supabase'],
-  userId: string,
-  clientId: string,
-): Promise<{ success: boolean; error?: string }> {
-  const { error } = await supabase.rpc('assign_default_context_to_app', {
-p_profile_id: userId,
-p_client_id: clientId,
-  });
-
-  if (error) {
-// Check if the error is due to missing default context
-if (
-  error.code === '23503' &&
-  error.message?.includes('No default context found')
-) {
-  // Try to create a default context for the user
-  const { error: createError } = await supabase
-.from('user_contexts')
-.insert({
-  user_id: userId,
-  context_name: 'Default',
-  description: 'Default identity context created for OAuth integration',
-  is_permanent: true,
-  visibility: 'public',
-});
-
-  if (createError) {
-console.error('Failed to create default context:', createError);
-return {
-  success: false,
-  error: 'Failed to create default context for OAuth integration',
-};
-  }
-
-  // Retry the context assignment with the newly created default context
-  const { error: retryError } = await supabase.rpc(
-'assign_default_context_to_app',
-{
-  p_profile_id: userId,
-  p_client_id: clientId,
-},
-  );
-
-  if (retryError) {
-console.error('Context assignment retry failed:', retryError);
-return {
-  success: false,
-  error:
-'Failed to assign context to client after creating default context',
-};
-  }
-
-  return { success: true };
-}
-
-return { success: false, error: 'Failed to assign context to client' };
-  }
-
-  return { success: true };
-}
-
-/**
- * Generate OAuth session token
- */
 async function generateSessionToken(
   supabase: AuthenticatedContext['supabase'],
 ): Promise<
@@ -187,9 +96,6 @@ return { success: false, error: 'Failed to generate session token' };
   return { success: true, token: tokenData };
 }
 
-/**
- * Create OAuth session database record
- */
 async function createSessionRecord(
   supabase: AuthenticatedContext['supabase'],
   userId: string,
@@ -218,22 +124,33 @@ return { success: false, error: 'Failed to create OAuth session' };
   return { success: true };
 }
 
-/**
- * Create complete OAuth authorization session
- */
 async function createAuthorizationSession(
   supabase: AuthenticatedContext['supabase'],
   userId: string,
   clientId: string,
+  contextId: string,
   returnUrl: string,
   state?: string,
 ): Promise<
   | { success: true; sessionToken: string; expiresAt: string }
   | { success: false; error: string }
 > {
-  const assignResult = await assignContextToClient(supabase, userId, clientId);
-  if (!assignResult.success)
-return { success: false, error: assignResult.error! };
+  const { error: assignError } = await supabase
+.from('app_context_assignments')
+.upsert(
+  {
+profile_id: userId,
+client_id: clientId,
+context_id: contextId,
+updated_at: new Date().toISOString(),
+  },
+  { onConflict: 'profile_id,client_id' },
+);
+
+  if (assignError) {
+console.error('Context assignment failed:', assignError);
+return { success: false, error: 'Failed to assign context to client' };
+  }
 
   const tokenResult = await generateSessionToken(supabase);
   if (!tokenResult.success) return { success: false, error: tokenResult.error };
@@ -254,9 +171,6 @@ return { success: false, error: recordResult.error! };
   return { success: true, sessionToken: tokenResult.token, expiresAt };
 }
 
-/**
- * Build final authorization response with redirect URL
- */
 function buildAuthorizationResponse(
   sessionToken: string,
   expiresAt: string,
@@ -285,48 +199,7 @@ context: {
 }
 
 /**
- * Create validation error response
- */
-function createValidationError(
-  validationError: {
-issues: Array<{
-  path?: (string | number)[];
-  message?: string;
-  code?: string;
-}>;
-  },
-  requestId: string,
-  timestamp: string,
-): StandardResponse<OAuthAuthorizeResponseData> {
-  return createErrorResponse(
-ErrorCodes.VALIDATION_ERROR,
-'Invalid authorization request parameters',
-requestId,
-validationError.issues.map((err) => ({
-  field: err.path?.join?.('.') || 'unknown',
-  message: err.message || 'Validation error',
-  code: err.code || 'invalid_input',
-})),
-timestamp,
-  );
-}
-
-/**
- * Determine appropriate error code for session creation failures
- */
-function getSessionErrorCode(error: string): string {
-  return error.includes('assign')
-? ErrorCodes.INTERNAL_ERROR
-: error.includes('generate')
-  ? AuthorizeErrorCodes.TOKEN_GENERATION_FAILED
-  : AuthorizeErrorCodes.SESSION_CREATION_FAILED;
-}
-
-/**
- * POST /api/oauth/authorize
- *
- * Generates OAuth session tokens with context assignment for external applications.
- * Orchestrates helper functions for academic-compliant code organization.
+ * POST /api/oauth/authorize - OAuth session token generation with context assignment
  */
 async function handleAuthorize(
   request: NextRequest,
@@ -343,25 +216,30 @@ return createErrorResponse(
   }
 
   try {
-// Step 1: Validate request
 const validationResult = await validateAuthorizationRequest(request);
 if (!validationResult.success) {
-  return createValidationError(
-validationResult.error as {
-  issues: Array<{
-path?: (string | number)[];
-message?: string;
-code?: string;
-  }>;
-},
+  const validationError = validationResult.error as {
+issues: Array<{
+  path?: (string | number)[];
+  message?: string;
+  code?: string;
+}>;
+  };
+  return createErrorResponse(
+ErrorCodes.VALIDATION_ERROR,
+'Invalid authorization request parameters',
 requestId,
+validationError.issues.map((err) => ({
+  field: err.path?.join?.('.') || 'unknown',
+  message: err.message || 'Validation error',
+  code: err.code || 'invalid_input',
+})),
 timestamp,
   );
 }
 
 const { client_id, context_id, return_url, state } = validationResult.data;
 
-// Step 2: Verify client
 const clientResult = await verifyClientRegistry(supabase, client_id);
 if (!clientResult.success) {
   return createErrorResponse(
@@ -373,7 +251,6 @@ timestamp,
   );
 }
 
-// Step 3: Verify context
 const contextResult = await verifyUserContext(
   supabase,
   context_id,
@@ -389,17 +266,17 @@ timestamp,
   );
 }
 
-// Step 4: Create session
 const sessionResult = await createAuthorizationSession(
   supabase,
   user.id,
   client_id,
+  context_id,
   return_url,
   state,
 );
 if (!sessionResult.success) {
   return createErrorResponse(
-getSessionErrorCode(sessionResult.error),
+ErrorCodes.INTERNAL_ERROR,
 sessionResult.error,
 requestId,
 undefined,
@@ -407,7 +284,6 @@ timestamp,
   );
 }
 
-// Step 5: Build response
 const responseData = buildAuthorizationResponse(
   sessionResult.sessionToken,
   sessionResult.expiresAt,

@@ -26,8 +26,8 @@ value={{
   // React StrictMode Prevention: 2-second deduplication window
   dedupingInterval: 2000,
 
-  // OAuth Token Configuration: Prevent automatic revalidation
-  revalidateOnFocus: false,
+  // OAuth Token Configuration: Enable focus-based revalidation
+  revalidateOnFocus: true,
   revalidateOnReconnect: false,
 
   // Academic Simplicity: No automatic retries for OAuth failures

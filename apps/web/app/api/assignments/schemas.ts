@@ -49,13 +49,6 @@ export const NameIdSchema = UuidSchema.refine((val) => val.length > 0, {
   message: 'Name ID is required',
 });
 
-/**
- * Assignment ID validation schema
- */
-export const AssignmentIdSchema = UuidSchema.refine((val) => val.length > 0, {
-  message: 'Assignment ID is required',
-});
-
 // =============================================================================
 // Query Parameter Schemas
 // =============================================================================
@@ -79,50 +72,6 @@ export const ListQueryParamsSchema = z.object({
 // =============================================================================
 // Request Body Schemas
 // =============================================================================
-
-/**
- * Schema for creating new context-name assignments
- */
-export const CreateAssignmentRequestSchema = z.object({
-  context_id: ContextIdSchema,
-  name_id: NameIdSchema,
-});
-
-/**
- * Schema for updating existing context-name assignments
- */
-export const UpdateAssignmentRequestSchema = z
-  .object({
-assignment_id: AssignmentIdSchema,
-context_id: ContextIdSchema.optional(),
-name_id: NameIdSchema.optional(),
-  })
-  .refine((data) => data.context_id || data.name_id, {
-message:
-  'At least one field (context_id or name_id) must be provided for update',
-  });
-
-/**
- * Schema for deleting context-name assignments
- */
-export const DeleteAssignmentRequestSchema = z.object({
-  assignment_id: AssignmentIdSchema,
-});
-
-/**
- * Schema for bulk assignment operations
- */
-export const BulkAssignmentRequestSchema = z.object({
-  assignments: z
-.array(
-  z.object({
-context_id: ContextIdSchema,
-name_id: NameIdSchema.nullable(), // null means delete assignment
-  }),
-)
-.min(1, 'At least one assignment is required')
-.max(50, 'Maximum 50 assignments per request'),
-});
 
 // =============================================================================
 // OIDC-Specific Schemas (Simplified)
@@ -167,24 +116,10 @@ name_id: NameIdSchema.nullable(), // null means delete/unassign
 // =============================================================================
 
 export type ListQueryParams = z.infer<typeof ListQueryParamsSchema>;
-export type CreateAssignmentRequest = z.infer<
-  typeof CreateAssignmentRequestSchema
->;
-export type UpdateAssignmentRequest = z.infer<
-  typeof UpdateAssignmentRequestSchema
->;
-export type DeleteAssignmentRequest = z.infer<
-  typeof DeleteAssignmentRequestSchema
->;
-export type BulkAssignmentRequest = z.infer<typeof BulkAssignmentRequestSchema>;
-export type OIDCAssignmentRequest = z.infer<typeof OIDCAssignmentRequestSchema>;
-export type OIDCQueryParams = z.infer<typeof OIDCQueryParamsSchema>;
+
 export type BatchOIDCAssignmentRequest = z.infer<
   typeof BatchOIDCAssignmentRequestSchema
 >;
-
-// Export types for reuse
-export type SupportedOIDCClaim = OIDCProperty;
 
 // =============================================================================
 // Shared Validation Helpers
@@ -220,32 +155,6 @@ result.error.issues.map((err: z.ZodIssue) => ({
   message: err.message || 'Validation error',
   code: err.code || 'invalid_input',
 })),
-timestamp,
-  );
-}
-
-/**
- * Creates a standardized bulk validation error response
- * Reduces boilerplate for bulk operations
- */
-export function createBulkValidationErrorResponse(
-  result: { error: z.ZodError },
-  request_id: string,
-  timestamp: string,
-  createErrorResponse: (
-code: string,
-message: string,
-requestId: string,
-data: unknown,
-timestamp: string,
-  ) => unknown,
-  ErrorCodes: Record<string, string>,
-) {
-  return createErrorResponse(
-ErrorCodes.VALIDATION_ERROR,
-'Invalid request body format',
-request_id,
-result.error.format(),
 timestamp,
   );
 }

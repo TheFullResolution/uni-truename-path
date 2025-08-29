@@ -10,6 +10,9 @@ export default defineConfig({
 // Test environment
 environment: 'jsdom',
 
+// Global test utilities
+globals: true,
+
 // Test file patterns
 include: [
   'utils/**/__tests__/**/*.test.ts',
@@ -20,12 +23,18 @@ include: [
   'app/**/*.test.ts',
   'app/**/__tests__/**/*.test.tsx',
   'app/**/*.test.tsx',
+  'components/**/__tests__/**/*.test.ts',
+  'components/**/*.test.ts',
+  'components/**/__tests__/**/*.test.tsx',
+  'components/**/*.test.tsx',
 ],
 exclude: [
   'utils/**/__tests__/**/*.e2e.test.ts', // E2E tests handled by Playwright
   'utils/**/*.e2e.test.ts',
   'app/**/__tests__/**/*.e2e.test.ts',
   'app/**/*.e2e.test.ts',
+  'components/**/__tests__/**/*.e2e.test.ts',
+  'components/**/*.e2e.test.ts',
 ],
 
 // Global test setup
@@ -47,7 +56,12 @@ outputFile: {
 coverage: {
   provider: 'v8',
   reporter: ['text', 'lcov', 'html'],
-  include: ['utils/**/*.ts', 'app/**/*.ts'],
+  include: [
+'utils/**/*.ts',
+'app/**/*.ts',
+'components/**/*.ts',
+'components/**/*.tsx',
+  ],
   exclude: [
 'utils/**/*.d.ts',
 'utils/**/__tests__/**',
@@ -58,6 +72,10 @@ coverage: {
 'app/**/__tests__/**',
 'app/**/__mocks__/**',
 'app/**/types.ts',
+'components/**/*.d.ts',
+'components/**/__tests__/**',
+'components/**/__mocks__/**',
+'components/**/types.ts',
   ],
   thresholds: {
 global: {
@@ -89,8 +107,9 @@ __dirname,
 },
   },
 
-  // ESBuild configuration for TypeScript
+  // ESBuild configuration for TypeScript and React
   esbuild: {
 target: 'node14',
+jsx: 'automatic',
   },
 });

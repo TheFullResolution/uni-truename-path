@@ -43,7 +43,7 @@ export const EmployeeProfileSection: React.FC<EmployeeProfileSectionProps> = ({
   Active
 </Badge>
 <Badge color='corporate' variant='outline'>
-  Professional Context
+  {userData.context_name}
 </Badge>
   </Group>
 </Group>
@@ -74,7 +74,7 @@ data-testid={`demo-hr-${field.key.replace('_', '-')}`}
 <Group gap='sm' align='center' mt='sm'>
   <IconBriefcase size={16} color='var(--mantine-color-gold-5)' />
   <Text size='sm' c='gray.6' fw={500}>
-Displaying professional identity data for workplace context
+Displaying identity data for {userData.context_name} context
   </Text>
 </Group>
   </Stack>

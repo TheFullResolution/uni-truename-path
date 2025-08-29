@@ -24,7 +24,7 @@ import {
   TextInput,
   Title,
 } from '@mantine/core';
-import { IconSend } from '@tabler/icons-react';
+import { IconSend, IconRefresh } from '@tabler/icons-react';
 import {
   type OIDCClaims,
   useOAuthToken,
@@ -49,6 +49,8 @@ if (!token) {
 data: userData,
 error,
 isLoading,
+isValidating,
+mutate,
   } = useOAuthToken({
 token,
 enabled: !!token,
@@ -222,7 +224,11 @@ return claims.name || 'User';
   ];
 
   return (
-<Box h='100vh' bg='var(--mantine-color-gray-0)'>
+<Box
+  h='100vh'
+  bg='var(--mantine-color-gray-0)'
+  data-testid='demo-chat-page'
+>
   {/* Header */}
   <Box
 bg='white'
@@ -260,15 +266,28 @@ Demo
 />
   </Box>
 </Group>
-<Button
-  variant='outline'
-  color='gray'
-  onClick={handleLogout}
-  size='md'
-  px='md'
->
-  Sign Out
-</Button>
+<Group gap='sm'>
+  <Button
+variant='light'
+color='violet'
+size='sm'
+onClick={() => mutate()}
+loading={isValidating}
+leftSection={<IconRefresh size={16} />}
+data-testid='demo-chat-refresh-button'
+  >
+Refresh
+  </Button>
+  <Button
+variant='outline'
+color='gray'
+onClick={handleLogout}
+size='md'
+px='md'
+  >
+Sign Out
+  </Button>
+</Group>
   </Group>
 </Container>
   </Box>
@@ -389,6 +408,7 @@ professional contexts.
   order={2}
   c='gray.8'
   fz={{ base: 'xl', sm: 'xxl', md: 'h1' }}
+  data-testid='demo-chat-user-name'
 >
   {displayName}
 </Title>
@@ -404,42 +424,124 @@ professional contexts.
 <Text size='sm' fw={500} c='gray.7'>
   Available Identity Fields
 </Text>
-{userData.nickname && (
-  <Group gap='xs' wrap='wrap'>
-<Badge size='xs' color='teal'>
-  nickname
-</Badge>
-<Text size='sm' c='gray.8'>
-  {userData.nickname}
+<Group gap='xs' wrap='wrap'>
+  <Badge size='xs' color='violet'>
+display_name
+  </Badge>
+  <Text
+size='sm'
+c='gray.8'
+data-testid='demo-chat-display-name'
+  >
+{userData.name || displayName}
+  </Text>
+</Group>
+<Group gap='xs' wrap='wrap'>
+  <Badge size='xs' color='gray'>
+given_name
+  </Badge>
+  <Text size='sm' c='gray.8' data-testid='demo-chat-given-name'>
+{userData.given_name || 'Not provided'}
+  </Text>
+</Group>
+<Group gap='xs' wrap='wrap'>
+  <Badge size='xs' color='indigo'>
+family_name
+  </Badge>
+  <Text
+size='sm'
+c='gray.8'
+data-testid='demo-chat-family-name'
+  >
+{userData.family_name || 'Not provided'}
+  </Text>
+</Group>
+<Group gap='xs' wrap='wrap'>
+  <Badge size='xs' color='teal'>
+nickname
+  </Badge>
+  <Text size='sm' c='gray.8' data-testid='demo-chat-nickname'>
+{userData.nickname || 'Not provided'}
+  </Text>
+</Group>
+<Group gap='xs' wrap='wrap'>
+  <Badge size='xs' color='blue'>
+preferred_username
+  </Badge>
+  <Text
+size='sm'
+c='gray.8'
+data-testid='demo-chat-preferred-username'
+  >
+{userData.preferred_username || 'Not provided'}
+  </Text>
+</Group>
+<Group gap='xs' wrap='wrap'>
+  <Badge size='xs' color='orange'>
+user_id
+  </Badge>
+  <Text size='sm' c='gray.8' data-testid='demo-chat-sub'>
+{userData.sub || 'Not provided'}
+  </Text>
+</Group>
+<Group gap='xs' wrap='wrap'>
+  <Badge size='xs' color='teal'>
+context
+  </Badge>
+  <Text
+size='sm'
+c='gray.8'
+data-testid='demo-chat-context-name'
+  >
+{userData.context_name || 'Default'}
+  </Text>
+</Group>
+<Group gap='xs' wrap='wrap'>
+  <Badge size='xs' color='purple'>
+application
+  </Badge>
+  <Text size='sm' c='gray.8' data-testid='demo-chat-app-name'>
+demo-chat
+  </Text>
+</Group>
+
+<Divider my='xs' />
+
+<Text size='xs' fw={500} c='gray.6' mb='xs'>
+  Technical Authentication Details
 </Text>
-  </Group>
-)}
-{userData.preferred_username && (
-  <Group gap='xs' wrap='wrap'>
-<Badge size='xs' color='blue'>
-  preferred_username
-</Badge>
-<Text size='sm' c='gray.8'>
-  {userData.preferred_username}
-</Text>
-  </Group>
-)}
-{userData.given_name && (
-  <Group gap='xs' wrap='wrap'>
-<Badge size='xs' color='gray'>
-  given_name
-</Badge>
-<Text size='sm' c='gray.8'>
-  {userData.given_name}
-</Text>
-  </Group>
-)}
+<Group gap='xs' wrap='wrap'>
+  <Badge size='xs' color='gray' variant='outline'>
+identity_provider
+  </Badge>
+  <Text size='sm' c='gray.8' data-testid='demo-chat-iss'>
+{userData.iss || 'Not provided'}
+  </Text>
+</Group>
+<Group gap='xs' wrap='wrap'>
+  <Badge size='xs' color='gray' variant='outline'>
+audience
+  </Badge>
+  <Text size='sm' c='gray.8' data-testid='demo-chat-aud'>
+{userData.aud || 'Not provided'}
+  </Text>
+</Group>
+<Group gap='xs' wrap='wrap'>
+  <Badge size='xs' color='gray' variant='outline'>
+auth_time
+  </Badge>
+  <Text size='sm' c='gray.8' data-testid='demo-chat-iat'>
+{userData.iat
+  ? new Date(userData.iat * 1000).toLocaleString()
+  : 'Not provided'}
+  </Text>
+</Group>
   </Stack>
 </Stack>
   </Paper>
 
   {/* OIDC Claims Details */}
-  <Paper shadow='sm' p='lg' radius='md' hiddenFrom='xs'>
+  <Paper shadow='sm' p='lg' radius='md'>
 <Stack gap='md'>
   <Title
 order={4}
@@ -451,6 +553,7 @@ Complete OIDC Claims (Technical View)
   <Text size='sm' c='gray.6'>
 Raw identity data from TrueNamePath OAuth integration
   </Text>
+
   <Box
 p='md'
 bg='var(--mantine-color-gray-0)'

@@ -23,15 +23,7 @@ import type {
   AuthorizeContextInfo,
   AuthorizeClientInfo,
 } from '../types';
-import type {
-  validateAppAccess,
-  validateContextOwnership,
-  createOAuthSession,
-  buildRedirectUrl,
-  assignDefaultContextToApp,
-  validateTokenFormat,
-  validateReturnUrl,
-} from '../helpers';
+// No helper imports needed - implementation is inline
 
 // Type declarations for DOM types used in test mocks
 type RequestCache =
@@ -139,6 +131,7 @@ const mockSupabaseQuery = {
   eq: vi.fn(),
   single: vi.fn(),
   insert: vi.fn(),
+  upsert: vi.fn(),
   maybeSingle: vi.fn(),
 };
 
@@ -182,16 +175,7 @@ createSuccessResponse: vi.fn((data, requestId, timestamp) => ({
   };
 });
 
-// Mock helper functions
-vi.mock('../helpers', () => ({
-  validateAppAccess: vi.fn(),
-  validateContextOwnership: vi.fn(),
-  createOAuthSession: vi.fn(),
-  buildRedirectUrl: vi.fn(),
-  assignDefaultContextToApp: vi.fn(),
-  validateTokenFormat: vi.fn(),
-  validateReturnUrl: vi.fn(),
-}));
+// No helper functions to mock - implementation is inline in route
 
 // Mock console.error to track error logging
 const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -312,6 +296,8 @@ mockSupabaseQuery.select.mockReturnValue(mockSupabaseQuery);
 mockSupabaseQuery.eq.mockReturnValue(mockSupabaseQuery);
 mockSupabaseQuery.single.mockReturnValue(mockSupabaseQuery);
 mockSupabaseQuery.insert.mockReturnValue(mockSupabaseQuery);
+mockSupabaseQuery.upsert.mockReturnValue(mockSupabaseQuery);
+mockSupabaseQuery.upsert.mockReturnValue(mockSupabaseQuery);
 
 // Reset mock implementations - context is handled by withRequiredAuth mock
 
@@ -334,6 +320,7 @@ return_url: VALID_RETURN_URL,
   mockSupabaseQuery.eq.mockReturnValue(mockSupabaseQuery);
   mockSupabaseQuery.single.mockReturnValue(mockSupabaseQuery);
   mockSupabaseQuery.insert.mockReturnValue(mockSupabaseQuery);
+  mockSupabaseQuery.upsert.mockReturnValue(mockSupabaseQuery);
 
   // Mock successful app lookup
   mockSupabaseQuery.single.mockResolvedValueOnce({
@@ -347,12 +334,13 @@ data: createMockContext(),
 error: null,
   });
 
-  // Mock successful context assignment (rpc call)
-  mockSupabaseClient.rpc.mockResolvedValueOnce({
+  // Mock successful context assignment (upsert call)
+  mockSupabaseQuery.upsert.mockResolvedValueOnce({
 error: null,
   });
 
   // Mock successful token generation (rpc call with single())
+  mockSupabaseClient.rpc.mockReturnValue(mockSupabaseQuery);
   mockSupabaseQuery.single.mockResolvedValueOnce({
 data: VALID_TOKEN,
 error: null,
@@ -408,6 +396,7 @@ return_url: returnUrlWithParams,
   mockSupabaseQuery.eq.mockReturnValue(mockSupabaseQuery);
   mockSupabaseQuery.single.mockReturnValue(mockSupabaseQuery);
   mockSupabaseQuery.insert.mockReturnValue(mockSupabaseQuery);
+  mockSupabaseQuery.upsert.mockReturnValue(mockSupabaseQuery);
 
   // Mock all successful database operations
   mockSupabaseQuery.single
@@ -415,7 +404,8 @@ return_url: returnUrlWithParams,
 .mockResolvedValueOnce({ data: createMockContext(), error: null })
 .mockResolvedValueOnce({ data: VALID_TOKEN, error: null }); // token generation
 
-  mockSupabaseClient.rpc.mockResolvedValueOnce({ error: null }); // context assignment
+  mockSupabaseQuery.upsert.mockResolvedValueOnce({ error: null }); // context assignment
+  mockSupabaseClient.rpc.mockReturnValue(mockSupabaseQuery); // token generation setup
 
   mockSupabaseQuery.insert.mockResolvedValueOnce({ error: null });
 
@@ -442,6 +432,7 @@ return_url: VALID_RETURN_URL,
   mockSupabaseQuery.eq.mockReturnValue(mockSupabaseQuery);
   mockSupabaseQuery.single.mockReturnValue(mockSupabaseQuery);
   mockSupabaseQuery.insert.mockReturnValue(mockSupabaseQuery);
+  mockSupabaseQuery.upsert.mockReturnValue(mockSupabaseQuery);
 
   // Mock fast database responses
   mockSupabaseQuery.single
@@ -449,7 +440,8 @@ return_url: VALID_RETURN_URL,
 .mockResolvedValueOnce({ data: createMockContext(), error: null })
 .mockResolvedValueOnce({ data: VALID_TOKEN, error: null }); // token generation
 
-  mockSupabaseClient.rpc.mockResolvedValueOnce({ error: null }); // context assignment
+  mockSupabaseQuery.upsert.mockResolvedValueOnce({ error: null }); // context assignment
+  mockSupabaseClient.rpc.mockReturnValue(mockSupabaseQuery); // token generation setup
 
   mockSupabaseQuery.insert.mockResolvedValueOnce({ error: null });
 
@@ -902,8 +894,8 @@ return_url: VALID_RETURN_URL,
 .mockResolvedValueOnce({ data: createMockContext(), error: null });
 
   // Mock context assignment failure
-  mockSupabaseClient.rpc.mockResolvedValueOnce({
-error: { message: 'Assignment failed', code: 'FUNCTION_ERROR' },
+  mockSupabaseQuery.upsert.mockResolvedValueOnce({
+error: { message: 'Assignment failed', code: 'UPSERT_ERROR' },
   });
 
   const request = createMockRequest(requestBody);
@@ -943,7 +935,8 @@ return_url: VALID_RETURN_URL,
   error: { message: 'Token generation failed', code: 'FUNCTION_ERROR' },
 }); // token generation failure
 
-  mockSupabaseClient.rpc.mockResolvedValueOnce({ error: null }); // context assignment success
+  mockSupabaseQuery.upsert.mockResolvedValueOnce({ error: null }); // context assignment success
+  mockSupabaseClient.rpc.mockReturnValue(mockSupabaseQuery); // token generation setup
 
   const request = createMockRequest(requestBody);
   const response = await POST(request);
@@ -953,7 +946,7 @@ return_url: VALID_RETURN_URL,
   expect(data).toMatchObject({
 success: false,
 error: {
-  code: AuthorizeErrorCodes.TOKEN_GENERATION_FAILED,
+  code: ErrorCodes.INTERNAL_ERROR,
   message: 'Failed to generate session token',
 },
   });
@@ -973,6 +966,7 @@ return_url: VALID_RETURN_URL,
   mockSupabaseQuery.eq.mockReturnValue(mockSupabaseQuery);
   mockSupabaseQuery.single.mockReturnValue(mockSupabaseQuery);
   mockSupabaseQuery.insert.mockReturnValue(mockSupabaseQuery);
+  mockSupabaseQuery.upsert.mockReturnValue(mockSupabaseQuery);
 
   // Mock successful operations up to session creation
   mockSupabaseQuery.single
@@ -980,7 +974,8 @@ return_url: VALID_RETURN_URL,
 .mockResolvedValueOnce({ data: createMockContext(), error: null })
 .mockResolvedValueOnce({ data: VALID_TOKEN, error: null }); // token generation
 
-  mockSupabaseClient.rpc.mockResolvedValueOnce({ error: null }); // context assignment
+  mockSupabaseQuery.upsert.mockResolvedValueOnce({ error: null }); // context assignment
+  mockSupabaseClient.rpc.mockReturnValue(mockSupabaseQuery); // token generation setup
 
   // Mock session creation failure
   mockSupabaseQuery.insert.mockResolvedValueOnce({
@@ -995,7 +990,7 @@ error: { message: 'Insert failed', code: 'INSERT_ERROR' },
   expect(data).toMatchObject({
 success: false,
 error: {
-  code: AuthorizeErrorCodes.SESSION_CREATION_FAILED,
+  code: ErrorCodes.INTERNAL_ERROR,
   message: 'Failed to create OAuth session',
 },
   });
@@ -1052,6 +1047,7 @@ return_url: VALID_RETURN_URL,
   mockSupabaseQuery.eq.mockReturnValue(mockSupabaseQuery);
   mockSupabaseQuery.single.mockReturnValue(mockSupabaseQuery);
   mockSupabaseQuery.insert.mockReturnValue(mockSupabaseQuery);
+  mockSupabaseQuery.upsert.mockReturnValue(mockSupabaseQuery);
 
   // Mock all successful operations
   mockSupabaseQuery.single
@@ -1059,7 +1055,8 @@ return_url: VALID_RETURN_URL,
 .mockResolvedValueOnce({ data: createMockContext(), error: null })
 .mockResolvedValueOnce({ data: VALID_TOKEN, error: null }); // token generation
 
-  mockSupabaseClient.rpc.mockResolvedValueOnce({ error: null }); // context assignment
+  mockSupabaseQuery.upsert.mockResolvedValueOnce({ error: null }); // context assignment
+  mockSupabaseClient.rpc.mockReturnValue(mockSupabaseQuery); // token generation setup
 
   mockSupabaseQuery.insert.mockResolvedValueOnce({ error: null });
 
@@ -1119,6 +1116,7 @@ return_url: VALID_RETURN_URL,
   mockSupabaseQuery.eq.mockReturnValue(mockSupabaseQuery);
   mockSupabaseQuery.single.mockReturnValue(mockSupabaseQuery);
   mockSupabaseQuery.insert.mockReturnValue(mockSupabaseQuery);
+  mockSupabaseQuery.upsert.mockReturnValue(mockSupabaseQuery);
 
   // Mock successful response
   mockSupabaseQuery.single
@@ -1126,7 +1124,8 @@ return_url: VALID_RETURN_URL,
 .mockResolvedValueOnce({ data: createMockContext(), error: null })
 .mockResolvedValueOnce({ data: VALID_TOKEN, error: null }); // token generation
 
-  mockSupabaseClient.rpc.mockResolvedValueOnce({ error: null }); // context assignment
+  mockSupabaseQuery.upsert.mockResolvedValueOnce({ error: null }); // context assignment
+  mockSupabaseClient.rpc.mockReturnValue(mockSupabaseQuery); // token generation setup
 
   mockSupabaseQuery.insert.mockResolvedValueOnce({ error: null });
 
@@ -1176,6 +1175,7 @@ return_url: VALID_RETURN_URL,
   mockSupabaseQuery.eq.mockReturnValue(mockSupabaseQuery);
   mockSupabaseQuery.single.mockReturnValue(mockSupabaseQuery);
   mockSupabaseQuery.insert.mockReturnValue(mockSupabaseQuery);
+  mockSupabaseQuery.upsert.mockReturnValue(mockSupabaseQuery);
 
   // Mock all successful operations
   mockSupabaseQuery.single
@@ -1183,7 +1183,8 @@ return_url: VALID_RETURN_URL,
 .mockResolvedValueOnce({ data: createMockContext(), error: null })
 .mockResolvedValueOnce({ data: VALID_TOKEN, error: null }); // token generation
 
-  mockSupabaseClient.rpc.mockResolvedValueOnce({ error: null }); // context assignment
+  mockSupabaseQuery.upsert.mockResolvedValueOnce({ error: null }); // context assignment
+  mockSupabaseClient.rpc.mockReturnValue(mockSupabaseQuery); // token generation setup
 
   mockSupabaseQuery.insert.mockResolvedValueOnce({ error: null });
 
@@ -1217,6 +1218,7 @@ return_url: VALID_RETURN_URL,
   mockSupabaseQuery.eq.mockReturnValue(mockSupabaseQuery);
   mockSupabaseQuery.single.mockReturnValue(mockSupabaseQuery);
   mockSupabaseQuery.insert.mockReturnValue(mockSupabaseQuery);
+  mockSupabaseQuery.upsert.mockReturnValue(mockSupabaseQuery);
 
   // Mock all successful operations
   mockSupabaseQuery.single
@@ -1224,7 +1226,8 @@ return_url: VALID_RETURN_URL,
 .mockResolvedValueOnce({ data: createMockContext(), error: null })
 .mockResolvedValueOnce({ data: VALID_TOKEN, error: null }); // token generation
 
-  mockSupabaseClient.rpc.mockResolvedValueOnce({ error: null }); // context assignment
+  mockSupabaseQuery.upsert.mockResolvedValueOnce({ error: null }); // context assignment
+  mockSupabaseClient.rpc.mockReturnValue(mockSupabaseQuery); // token generation setup
 
   mockSupabaseQuery.insert.mockResolvedValueOnce({ error: null });
 
@@ -1292,6 +1295,8 @@ return_url: VALID_RETURN_URL,
   mockSupabaseQuery.eq.mockReturnValue(mockSupabaseQuery);
   mockSupabaseQuery.single.mockReturnValue(mockSupabaseQuery);
   mockSupabaseQuery.insert.mockReturnValue(mockSupabaseQuery);
+  mockSupabaseQuery.upsert.mockReturnValue(mockSupabaseQuery);
+  mockSupabaseQuery.upsert.mockReturnValue(mockSupabaseQuery);
 
   // Mock successful operations for all requests
   for (let i = 0; i < 10; i++) {
@@ -1300,7 +1305,8 @@ mockSupabaseQuery.single
   .mockResolvedValueOnce({ data: createMockContext(), error: null })
   .mockResolvedValueOnce({ data: `${VALID_TOKEN}_${i}`, error: null }); // token generation
 
-mockSupabaseClient.rpc.mockResolvedValueOnce({ error: null }); // context assignment
+mockSupabaseQuery.upsert.mockResolvedValueOnce({ error: null }); // context assignment
+mockSupabaseClient.rpc.mockReturnValue(mockSupabaseQuery); // token generation setup
 
 mockSupabaseQuery.insert.mockResolvedValueOnce({ error: null });
   }

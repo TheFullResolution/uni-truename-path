@@ -1,7 +1,7 @@
 'use client';
 
 import type { DashboardStatsResponse } from '@/app/api/dashboard/stats/types';
-import { ConsentsTabSkeleton } from '@/components/skeletons/ConsentsTabSkeleton';
+import { ConnectedAppsTabSkeleton } from '@/components/skeletons/ConnectedAppsTabSkeleton';
 import { ContextsTabSkeleton } from '@/components/skeletons/ContextsTabSkeleton';
 import { NamesTabSkeleton } from '@/components/skeletons/NamesTabSkeleton';
 import { SettingsTabSkeleton } from '@/components/skeletons/SettingsTabSkeleton';
@@ -27,6 +27,17 @@ ssr: false, // Disable SSR for heavy interactive components
   },
 );
 
+const ConnectedAppsTab = dynamic(
+  () =>
+import('@/components/tabs/ConnectedAppsTab').then((mod) => ({
+  default: mod.ConnectedAppsTab,
+})),
+  {
+loading: () => <ConnectedAppsTabSkeleton />,
+ssr: false,
+  },
+);
+
 const NamesTab = dynamic(
   () =>
 import('@/components/tabs/NamesTab').then((mod) => ({
@@ -34,17 +45,6 @@ import('@/components/tabs/NamesTab').then((mod) => ({
 })),
   {
 loading: () => <NamesTabSkeleton />,
-ssr: false,
-  },
-);
-
-const ConsentsTab = dynamic(
-  () =>
-import('@/components/tabs/ConsentsTab').then((mod) => ({
-  default: mod.ConsentsTab,
-})),
-  {
-loading: () => <ConsentsTabSkeleton />,
 ssr: false,
   },
 );
@@ -86,12 +86,12 @@ export function DashboardTabs({
   <ContextsTab user={user} />
 </Suspense>
 
-<Suspense fallback={<NamesTabSkeleton />}>
-  <NamesTab user={user} />
+<Suspense fallback={<ConnectedAppsTabSkeleton />}>
+  <ConnectedAppsTab />
 </Suspense>
 
-<Suspense fallback={<ConsentsTabSkeleton />}>
-  <ConsentsTab />
+<Suspense fallback={<NamesTabSkeleton />}>
+  <NamesTab user={user} />
 </Suspense>
 
 <Suspense fallback={<SettingsTabSkeleton />}>

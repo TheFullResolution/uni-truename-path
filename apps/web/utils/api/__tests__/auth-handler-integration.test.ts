@@ -186,7 +186,6 @@ it('should handle internal route classification dynamically', () => {
 '/api/assignments/oidc',
 '/api/consents',
 '/api/dashboard/stats',
-'/api/audit',
   ];
 
   routes.forEach((route) => {

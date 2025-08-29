@@ -40,6 +40,14 @@ export {
   clearOAuthCache,
 } from './utils/oauth-cache-provider.js';
 
+// SWR Focus-Based Configuration utilities
+export {
+  swrFocusConfig,
+  createFocusConfig,
+  swrHighFrequencyFocusConfig,
+  swrLowFrequencyFocusConfig,
+} from './utils/swr-focus-config.js';
+
 // Type definitions - Core types
 export type {
   OAuthConfig,

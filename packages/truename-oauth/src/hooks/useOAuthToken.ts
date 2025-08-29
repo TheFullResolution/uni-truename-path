@@ -14,6 +14,7 @@ import {
   createOAuthTokenFetcher,
   type OAuthTokenFetcherConfig,
 } from '../utils/oauth-token-fetcher.js';
+import { swrFocusConfig } from '../utils/swr-focus-config.js';
 
 /**
  * Configuration options for OAuth token resolution
@@ -22,6 +23,8 @@ interface UseOAuthTokenOptions extends OAuthTokenFetcherConfig {
   token: string | null;
   enabled?: boolean;
   revalidateOnMount?: boolean; // Allow controlling mount behavior
+  revalidateOnFocus?: boolean; // Allow controlling focus behavior
+  revalidateOnReconnect?: boolean; // Allow controlling reconnect behavior
 }
 
 /**
@@ -31,17 +34,18 @@ interface UseOAuthTokenReturn {
   data: OIDCClaims | undefined;
   error: Error | undefined;
   isLoading: boolean;
+  isValidating: boolean;
   mutate: () => void;
 }
 
 /**
- * SWR hook for OAuth token resolution with request deduplication
+ * SWR hook for OAuth token resolution with focus-based revalidation
  *
  * Uses SWR's built-in deduplication to prevent duplicate requests when
- * React StrictMode causes components to render twice. This is the primary
- * solution for avoiding OAuth session collision errors.
+ * React StrictMode causes components to render twice. Now includes focus-based
+ * revalidation by default for real-time updates in demo scenarios.
  *
- * @param options - Token, API configuration, and optional enabled flag
+ * @param options - Token, API configuration, and revalidation settings
  * @returns SWR hook results with OAuth claims data
  */
 export function useOAuthToken({
@@ -50,6 +54,8 @@ export function useOAuthToken({
   isDevelopment = false,
   enabled = true,
   revalidateOnMount = false,
+  revalidateOnFocus = true, // Enable focus updates by default
+  revalidateOnReconnect = true, // Enable reconnect updates by default
 }: UseOAuthTokenOptions): UseOAuthTokenReturn {
   // Generate cache key for proper SWR deduplication
   const cacheKey = token && enabled ? generateOAuthCacheKey(token) : null;
@@ -60,21 +66,20 @@ apiBaseUrl,
 isDevelopment,
   });
 
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading, isValidating, mutate } = useSWR(
 cacheKey,
 () => fetchOAuthToken(token!),
 {
-  // Prevent automatic revalidation for OAuth tokens
-  revalidateOnFocus: false,
-  revalidateOnMount, // Configurable based on use case
-  revalidateOnReconnect: false,
+  // Use focus-based configuration with parameter overrides
+  ...swrFocusConfig,
+  revalidateOnMount, // Allow mount behavior override
+  revalidateOnFocus, // Allow focus behavior override
+  revalidateOnReconnect, // Allow reconnect behavior override
+
+  // Always disable stale revalidation for OAuth tokens
   revalidateIfStale: false,
 
-  // No retries for failed OAuth requests (academic simplicity)
-  shouldRetryOnError: false,
-  errorRetryCount: 0,
-
-  // Key setting: Prevent React StrictMode double calls
+  // Keep OAuth-specific deduplication interval (longer than default)
   dedupingInterval: 5000,
 },
   );
@@ -83,6 +88,7 @@ cacheKey,
 data,
 error,
 isLoading,
+isValidating,
 mutate,
   };
 }

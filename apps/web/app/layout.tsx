@@ -7,6 +7,7 @@ import {
   mantineHtmlProps,
 } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
+import { ModalsProvider } from '@mantine/modals';
 import { theme } from '../utils/theme';
 import { AuthProvider } from '../utils/context';
 
@@ -53,8 +54,10 @@ export default function RootLayout({
   </head>
   <body>
 <MantineProvider theme={theme}>
-  <Notifications />
-  <AuthProvider>{children}</AuthProvider>
+  <ModalsProvider>
+<Notifications />
+<AuthProvider>{children}</AuthProvider>
+  </ModalsProvider>
 </MantineProvider>
   </body>
 </html>

@@ -71,7 +71,7 @@ mutate(
   (key) =>
 typeof key === 'string' && key.startsWith(CACHE_KEYS.OIDC_ASSIGNMENTS),
 ),
-mutate(CACHE_KEYS.ASSIGNMENTS),
+mutate(CACHE_KEYS.OIDC_ASSIGNMENTS),
 mutate(CACHE_KEYS.STATS), // Dashboard stats may change after assignment updates
   ]);
 }

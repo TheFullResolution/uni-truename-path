@@ -35,71 +35,7 @@ export const OAuthAuthorizeRequestSchema = z.object({
 });
 
 // =============================================================================
-// Response Body Schemas
-// =============================================================================
-
-/**
- * Schema for successful authorization response
- * Contains session token, expiry information, redirect URL, and client/context details
- */
-export const OAuthAuthorizeResponseSchema = z.object({
-  session_token: z.string(),
-  expires_at: z.string(),
-  redirect_url: z.string(),
-  client: z.object({
-client_id: z.string(),
-display_name: z.string(),
-publisher_domain: z.string(),
-  }),
-  context: z.object({
-id: z.string(),
-context_name: z.string(),
-  }),
-});
-
-// =============================================================================
 // Type Exports for Schema Inference
 // =============================================================================
 
 export type OAuthAuthorizeRequest = z.infer<typeof OAuthAuthorizeRequestSchema>;
-export type OAuthAuthorizeResponse = z.infer<
-  typeof OAuthAuthorizeResponseSchema
->;
-
-// =============================================================================
-// Shared Validation Helpers
-// =============================================================================
-
-/**
- * Creates a standardized OAuth authorization validation error response
- * Follows established patterns from oauth/schemas.ts
- */
-export function createOAuthAuthorizeValidationErrorResponse(
-  result: z.ZodSafeParseResult<unknown>,
-  request_id: string,
-  timestamp: string,
-  createErrorResponse: (
-code: string,
-message: string,
-requestId: string,
-data: unknown,
-timestamp: string,
-  ) => unknown,
-  ErrorCodes: Record<string, string>,
-) {
-  if (result.success) {
-throw new Error('Cannot create error response for successful validation');
-  }
-
-  return createErrorResponse(
-ErrorCodes.VALIDATION_ERROR,
-'Invalid authorization request parameters',
-request_id,
-result.error.issues.map((err: z.ZodIssue) => ({
-  field: err.path?.join?.('.') || 'unknown',
-  message: err.message || 'Validation error',
-  code: err.code || 'invalid_input',
-})),
-timestamp,
-  );
-}

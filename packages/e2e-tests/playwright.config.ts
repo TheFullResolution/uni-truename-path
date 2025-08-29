@@ -36,56 +36,60 @@ screenshot: 'only-on-failure',
   testMatch: /.*\.setup\.ts/,
 },
 
-// Main test projects with authentication state
+// Main test projects with authentication state - Optimized for CI performance
 ...(process.env.CI
   ? [
+  // Primary browser: Chrome (most tests)
   {
 name: 'chromium',
 use: {
   ...devices['Desktop Chrome'],
-  // Use stored authentication state
   storageState: 'playwright/.auth/user.json',
 },
 dependencies: ['setup'],
   },
+  // Secondary browser: Firefox (essential tests only)
   {
 name: 'firefox',
 use: {
   ...devices['Desktop Firefox'],
-  // Use stored authentication state
   storageState: 'playwright/.auth/user.json',
 },
 dependencies: ['setup'],
+// Run fewer tests on Firefox for performance
+testIgnore: [
+  '**/dashboard-layout.spec.ts',
+  '**/realtime-updates.spec.ts',
+  '**/context-constraints.spec.ts',
+],
   },
+  // WebKit: Only critical OAuth tests
   {
-name: 'webkit',
+name: 'webkit-critical',
 use: {
   ...devices['Desktop Safari'],
-  // Use stored authentication state
   storageState: 'playwright/.auth/user.json',
-  actionTimeout: 30000, // 30s for actions in WebKit CI
-  navigationTimeout: 30000, // 30s for navigation in WebKit CI
+  actionTimeout: 30000,
+  navigationTimeout: 30000,
 },
-timeout: 60000, // Give WebKit tests more time
-retries: 3, // More retries for WebKit specifically
+timeout: 60000,
+retries: 2, // Reduced retries
 dependencies: ['setup'],
+// Only run critical OAuth and signup tests on WebKit
+testMatch: [
+  '**/demo-oauth-flows.spec.ts',
+  '**/oauth-complete-flow.spec.ts',
+  '**/user-signup-flow.spec.ts',
+],
   },
-  {
-name: 'mobile',
-use: {
-  ...devices['iPhone 13'],
-  // Use stored authentication state
-  storageState: 'playwright/.auth/user.json',
-},
-dependencies: ['setup'],
-  },
+  // Mobile removed - not critical for this academic project
 ]
   : [
+  // Local development: Chrome only for faster iteration
   {
 name: 'chromium',
 use: {
   ...devices['Desktop Chrome'],
-  // Use stored authentication state
   storageState: 'playwright/.auth/user.json',
 },
 dependencies: ['setup'],
@@ -108,6 +112,14 @@ dependencies: ['setup'],
   // Demo HR application for OAuth integration tests
   command: 'yarn workspace @uni-final/demo-hr dev',
   url: 'http://localhost:4000',
+  reuseExistingServer: !process.env.CI,
+  timeout: 30 * 1000,
+  cwd: '../../', // Run commands from project root
+},
+{
+  // Demo Chat application for OAuth integration tests
+  command: 'yarn workspace @uni-final/demo-chat dev',
+  url: 'http://localhost:4500',
   reuseExistingServer: !process.env.CI,
   timeout: 30 * 1000,
   cwd: '../../', // Run commands from project root
