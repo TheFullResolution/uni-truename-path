@@ -1,6 +1,7 @@
 'use client';
 
 import type { DashboardStatsResponse } from '@/app/api/dashboard/stats/types';
+import { AuditLogTabSkeleton } from '@/components/skeletons/AuditLogTabSkeleton';
 import { ConnectedAppsTabSkeleton } from '@/components/skeletons/ConnectedAppsTabSkeleton';
 import { ContextsTabSkeleton } from '@/components/skeletons/ContextsTabSkeleton';
 import { NamesTabSkeleton } from '@/components/skeletons/NamesTabSkeleton';
@@ -60,6 +61,17 @@ ssr: false,
   },
 );
 
+const AuditLogTab = dynamic(
+  () =>
+import('@/components/tabs/AuditLogTab').then((mod) => ({
+  default: mod.AuditLogTab,
+})),
+  {
+loading: () => <AuditLogTabSkeleton />,
+ssr: false,
+  },
+);
+
 interface DashboardTabsProps {
   user: AuthenticatedUser | null;
   dashboardStats: DashboardStatsResponse | undefined;
@@ -96,6 +108,10 @@ export function DashboardTabs({
 
 <Suspense fallback={<SettingsTabSkeleton />}>
   <SettingsTab />
+</Suspense>
+
+<Suspense fallback={<AuditLogTabSkeleton />}>
+  <AuditLogTab user={user} />
 </Suspense>
 
 {/* Footer */}

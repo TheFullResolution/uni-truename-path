@@ -21,6 +21,7 @@ import {
 import { notifications } from '@mantine/notifications';
 import {
   IconDashboard,
+  IconHistory,
   IconLogout,
   IconPlug,
   IconSettings,
@@ -37,7 +38,8 @@ type ValidTab =
   | 'names'
   | 'contexts'
   | 'connected-apps'
-  | 'settings';
+  | 'settings'
+  | 'audit-log';
 
 interface DashboardContentProps {
   initialTab: ValidTab;
@@ -95,6 +97,7 @@ value &&
   'connected-apps',
   'oidc-preview',
   'settings',
+  'audit-log',
 ].includes(value)
   ) {
 const newTab = value as ValidTab;
@@ -192,6 +195,13 @@ Sign Out
   data-testid='tab-settings'
 >
   Settings
+</Tabs.Tab>
+<Tabs.Tab
+  value='audit-log'
+  leftSection={<IconHistory size={16} />}
+  data-testid='tab-audit-log'
+>
+  Audit Log
 </Tabs.Tab>
   </Tabs.List>
 

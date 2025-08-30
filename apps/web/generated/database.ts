@@ -136,70 +136,44 @@ referencedColumns: ["id"]
   },
 ]
   }
-  audit_log_entries: {
+  audit_log_entries_backup_cleanup: {
 Row: {
-  accessed_at: string
-  action: Database["public"]["Enums"]["audit_action"]
+  accessed_at: string | null
+  action: Database["public"]["Enums"]["audit_action"] | null
+  backup_created_at: string | null
   context_id: string | null
   details: Json | null
-  id: number
+  id: number | null
   requester_user_id: string | null
   resolved_name_id: string | null
   source_ip: unknown | null
-  target_user_id: string
+  target_user_id: string | null
 }
 Insert: {
-  accessed_at?: string
-  action: Database["public"]["Enums"]["audit_action"]
+  accessed_at?: string | null
+  action?: Database["public"]["Enums"]["audit_action"] | null
+  backup_created_at?: string | null
   context_id?: string | null
   details?: Json | null
-  id?: number
+  id?: number | null
   requester_user_id?: string | null
   resolved_name_id?: string | null
   source_ip?: unknown | null
-  target_user_id: string
+  target_user_id?: string | null
 }
 Update: {
-  accessed_at?: string
-  action?: Database["public"]["Enums"]["audit_action"]
+  accessed_at?: string | null
+  action?: Database["public"]["Enums"]["audit_action"] | null
+  backup_created_at?: string | null
   context_id?: string | null
   details?: Json | null
-  id?: number
+  id?: number | null
   requester_user_id?: string | null
   resolved_name_id?: string | null
   source_ip?: unknown | null
-  target_user_id?: string
+  target_user_id?: string | null
 }
-Relationships: [
-  {
-foreignKeyName: "audit_log_entries_context_id_fkey"
-columns: ["context_id"]
-isOneToOne: false
-referencedRelation: "user_contexts"
-referencedColumns: ["id"]
-  },
-  {
-foreignKeyName: "audit_log_entries_requester_user_id_fkey"
-columns: ["requester_user_id"]
-isOneToOne: false
-referencedRelation: "profiles"
-referencedColumns: ["id"]
-  },
-  {
-foreignKeyName: "audit_log_entries_resolved_name_id_fkey"
-columns: ["resolved_name_id"]
-isOneToOne: false
-referencedRelation: "names"
-referencedColumns: ["id"]
-  },
-  {
-foreignKeyName: "audit_log_entries_target_user_id_fkey"
-columns: ["target_user_id"]
-isOneToOne: false
-referencedRelation: "profiles"
-referencedColumns: ["id"]
-  },
-]
+Relationships: []
   }
   consents: {
 Row: {
