@@ -1,6 +1,6 @@
--- =====================================================
+-- ===
 -- MIGRATION 045: Database Cleanup - Drop Backup Tables
--- =====================================================
+-- ===
 --
 -- Description: Remove obsolete backup tables that were created during 
 -- previous migrations but are no longer needed
@@ -10,7 +10,7 @@
 --   • app_usage_log_backup_040 (from migration 040)
 --
 -- Safety: Both tables are empty and no longer referenced
--- =====================================================
+-- ===
 
 -- Log migration start
 DO $$
@@ -19,9 +19,9 @@ RAISE LOG 'Starting Migration 045: Database Cleanup - Drop Backup Tables';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 1: VERIFY BACKUP TABLES ARE EMPTY
--- =====================================================
+-- ===
 
 DO $$
 DECLARE 
@@ -46,9 +46,9 @@ END IF;
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 2: DROP BACKUP TABLES
--- =====================================================
+-- ===
 
 -- Drop app_context_assignments backup table from migration 037
 DROP TABLE IF EXISTS public.app_context_assignments_backup_037;
@@ -56,9 +56,9 @@ DROP TABLE IF EXISTS public.app_context_assignments_backup_037;
 -- Drop app_usage_log backup table from migration 040  
 DROP TABLE IF EXISTS public.app_usage_log_backup_040;
 
--- =====================================================
+-- ===
 -- SECTION 3: LOG COMPLETION
--- =====================================================
+-- ===
 
 DO $$
 BEGIN

@@ -1,5 +1,4 @@
 -- TrueNamePath: Fix resolve_name() variable scoping issue
--- Date: August 10, 2025
 -- Issue: v_fallback_reason variable declared in nested block but used outside
 
 BEGIN;

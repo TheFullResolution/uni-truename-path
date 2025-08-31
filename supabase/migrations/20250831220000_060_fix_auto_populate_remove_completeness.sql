@@ -1,16 +1,15 @@
--- =====================================================
--- Migration: 060_fix_auto_populate_remove_completeness
+-- ===
 -- Description: Fix auto_populate_context after removing SQL completeness functions
 -- Author: truename-team
 -- Date: 2025-08-31
--- =====================================================
+-- ===
 
 -- The auto_populate_context function references is_context_complete() which was removed
 -- This migration updates the function to work without SQL-based completeness checks
 
--- =====================================================
+-- ===
 -- SECTION 1: UPDATE AUTO-POPULATE CONTEXT FUNCTION
--- =====================================================
+-- ===
 
 CREATE OR REPLACE FUNCTION public.auto_populate_context(p_new_context_id UUID, p_user_id UUID)
 RETURNS JSONB
@@ -171,9 +170,9 @@ Completeness validation is now handled in application code, not SQL.
 Performance: <10ms atomic operation with comprehensive error handling.
 Used by auto_populate_new_context_trigger on context creation.';
 
--- =====================================================
+-- ===
 -- SECTION 2: MIGRATION COMPLETION
--- =====================================================
+-- ===
 
 DO $$
 BEGIN

@@ -1,16 +1,9 @@
-/**
- * Browser-specific helper utilities for E2E tests
- * Addresses timing and compatibility issues across different browsers
- */
+// Browser-specific helper utilities
 
 import { Page, expect } from '@playwright/test';
 
 /**
- * Browser-aware wait for element visibility with retry logic
- * @param page - Playwright page instance
- * @param selector - Element selector or locator
- * @param browserName - Browser name (webkit, firefox, chromium)
- * @param options - Wait options
+ * Browser-aware wait for element visibility
  */
 export async function waitForElementWithBrowserSupport(
   page: Page,
@@ -28,7 +21,6 @@ stabilityWait?: number;
 typeof selector === 'string' ? page.locator(selector) : selector;
 
   if (browserName === 'webkit') {
-// WebKit-specific handling with retries
 let attempts = 0;
 const maxAttempts = retries + 1;
 
@@ -54,14 +46,12 @@ await page.waitForTimeout(1000);
   }
 }
   } else if (browserName === 'firefox') {
-// Firefox-specific handling with longer timeout
-await page.waitForTimeout(500); // Small delay for Firefox DOM updates
+await page.waitForTimeout(500);
 await expect(locator).toBeVisible({ timeout: timeout * 1.2 });
 if (stabilityWait > 0) {
   await page.waitForTimeout(stabilityWait);
 }
   } else {
-// Standard handling for Chromium
 await expect(locator).toBeVisible({ timeout });
 if (stabilityWait > 0) {
   await page.waitForTimeout(stabilityWait);
@@ -70,11 +60,7 @@ if (stabilityWait > 0) {
 }
 
 /**
- * Browser-aware navigation with appropriate wait strategies
- * @param page - Playwright page instance
- * @param url - URL to navigate to
- * @param browserName - Browser name
- * @param options - Navigation options
+ * Browser-aware navigation
  */
 export async function navigateWithBrowserSupport(
   page: Page,
@@ -92,10 +78,10 @@ additionalWait?: number;
   if (waitForNetworkIdle) {
 if (browserName === 'webkit') {
   await page.waitForLoadState('networkidle', { timeout: 45000 });
-  await page.waitForTimeout(2000); // Extra stability for WebKit
+  await page.waitForTimeout(2000);
 } else if (browserName === 'firefox') {
   await page.waitForLoadState('networkidle', { timeout: 30000 });
-  await page.waitForTimeout(1000); // Extra time for Firefox DOM updates
+  await page.waitForTimeout(1000);
 } else {
   await page.waitForLoadState('networkidle');
 }
@@ -107,11 +93,7 @@ await page.waitForTimeout(additionalWait);
 }
 
 /**
- * Browser-aware button click with retry logic
- * @param page - Playwright page instance
- * @param selector - Button selector or locator
- * @param browserName - Browser name
- * @param options - Click options
+ * Browser-aware button click
  */
 export async function clickButtonWithBrowserSupport(
   page: Page,
@@ -127,7 +109,6 @@ retries?: number;
   const locator =
 typeof selector === 'string' ? page.locator(selector) : selector;
 
-  // Wait for button to be visible and enabled
   await waitForElementWithBrowserSupport(page, locator, browserName);
   await expect(locator).toBeEnabled({ timeout: 10000 });
 
@@ -136,7 +117,6 @@ await page.waitForTimeout(waitBeforeClick);
   }
 
   if (browserName === 'webkit' && retries > 0) {
-// WebKit sometimes needs retry for clicks
 let attempts = 0;
 const maxAttempts = retries + 1;
 
@@ -159,10 +139,7 @@ await locator.click();
 }
 
 /**
- * Enhanced form filling with browser-specific handling
- * @param page - Playwright page instance
- * @param inputs - Array of input configurations
- * @param browserName - Browser name
+ * Form filling with browser-specific handling
  */
 export async function fillFormWithBrowserSupport(
   page: Page,
@@ -186,7 +163,6 @@ const inputField = page.locator(selector);
 await inputField.clear();
 await inputField.fill(value);
 
-// Firefox sometimes needs extra time for form updates
 if (browserName === 'firefox') {
   await page.waitForTimeout(200);
 }

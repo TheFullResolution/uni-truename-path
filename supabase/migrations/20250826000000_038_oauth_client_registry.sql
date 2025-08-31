@@ -1,6 +1,6 @@
--- =====================================================
+-- ===
 -- MIGRATION 038: OAUTH CLIENT REGISTRY SYSTEM
--- =====================================================
+-- ===
 --
 -- This migration implements a secure OAuth client ID system with domain-based
 -- app identity to prevent collisions and impersonation attacks for Step 16.3.5:
@@ -10,28 +10,27 @@
 -- 4. Implements RLS policies following existing security patterns
 -- 5. Includes domain-based uniqueness constraints to prevent impersonation
 --
--- Academic constraint: Keep functions under 80 lines maximum
 -- Performance requirement: <3ms response times maintained
 -- Security: Domain tracking prevents same app from same domain registering twice
 --
 -- Created: 2025-08-26
 -- Author: TrueNamePath Migration System
 
--- =====================================================
+-- ===
 -- SECTION 1: BACKUP & PREPARATION
--- =====================================================
+-- ===
 
 DO $$
 BEGIN
 RAISE LOG 'OAuth Client Registry: Starting migration 038';
 RAISE LOG 'Implementing secure client ID system with domain-based app identity';
-RAISE LOG 'Academic constraint: Simple implementation for concept demonstration';
+RAISE LOG 'Note: Simple implementation for concept demonstration';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 2: CREATE OAUTH CLIENT REGISTRY TABLE
--- =====================================================
+-- ===
 
 -- Create oauth_client_registry table for secure client ID management
 -- Format: 'tnp_' + 16 hex characters (total 20 chars) for collision resistance
@@ -77,7 +76,7 @@ COMMENT ON TABLE public.oauth_client_registry IS
 'OAuth client registry for TrueNamePath secure app identity management. 
 Maps application names and publisher domains to unique client_id values. 
 Prevents collision and impersonation attacks through domain-based uniqueness constraints. 
-Designed for academic demonstration of secure OAuth client ID generation.';
+Designed for demonstration of secure OAuth client ID generation.';
 
 -- Add detailed column comments for maintenance and understanding
 COMMENT ON COLUMN public.oauth_client_registry.client_id IS 
@@ -105,14 +104,14 @@ Supports client lifecycle analytics and cleanup of unused registrations.';
 DO $$
 BEGIN
 RAISE LOG 'OAuth Client Registry: Created table with domain-based security constraints';
-RAISE LOG 'Unique constraint: (publisher_domain, app_name) prevents impersonation';
+RAISE LOG 'Unique Note: (publisher_domain, app_name) prevents impersonation';
 RAISE LOG 'Client ID format: tnp_[16 hex chars] for collision resistance';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 3: ADD STATE COLUMN TO OAUTH_SESSIONS
--- =====================================================
+-- ===
 
 -- Add state column to oauth_sessions for CSRF protection
 -- OAuth 2.0 state parameter prevents cross-site request forgery attacks
@@ -132,9 +131,9 @@ RAISE LOG 'OAuth 2.0 compliance: state parameter prevents request forgery attack
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 4: PERFORMANCE INDEXES
--- =====================================================
+-- ===
 
 -- Primary lookup index for domain + app_name queries (<3ms requirement)
 -- Critical query: SELECT client_id FROM oauth_client_registry WHERE publisher_domain = ? AND app_name = ?
@@ -164,9 +163,9 @@ RAISE LOG 'Secondary indexes: client_id, last_used_at, publisher_domain for anal
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 5: ROW LEVEL SECURITY POLICIES
--- =====================================================
+-- ===
 
 -- Enable RLS on the oauth_client_registry table
 ALTER TABLE public.oauth_client_registry ENABLE ROW LEVEL SECURITY;
@@ -202,9 +201,9 @@ RAISE LOG 'No public access - registry contains sensitive application metadata';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 6: PERMISSIONS & GRANTS
--- =====================================================
+-- ===
 
 -- Grant read access to authenticated users for dashboard integration
 GRANT SELECT ON public.oauth_client_registry TO authenticated;
@@ -224,9 +223,9 @@ RAISE LOG 'Service role: ALL operations for OAuth system management';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 7: MIGRATION VALIDATION
--- =====================================================
+-- ===
 
 -- Validate the migration results
 DO $$
@@ -286,9 +285,9 @@ RAISE LOG 'RLS policies: % policies created for secure access', policy_count;
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 8: MIGRATION COMPLETION
--- =====================================================
+-- ===
 
 -- Final migration completion log
 DO $$
@@ -298,7 +297,7 @@ RAISE LOG '';
 RAISE LOG '✅ OAUTH CLIENT REGISTRY SYSTEM:';
 RAISE LOG '  • Table created with domain-based security constraints';
 RAISE LOG '  • Client ID format: tnp_[16 hex chars] for collision resistance';
-RAISE LOG '  • Unique constraint: (publisher_domain, app_name) prevents impersonation';
+RAISE LOG '  • Unique Note: (publisher_domain, app_name) prevents impersonation';
 RAISE LOG '  • Format validation for client_id and domain patterns';
 RAISE LOG '';
 RAISE LOG '✅ CSRF PROTECTION ENHANCEMENT:';
@@ -315,7 +314,7 @@ RAISE LOG '✅ SECURITY & PRIVACY:';
 RAISE LOG '  • RLS policies: service role and authenticated read access';
 RAISE LOG '  • Domain-based uniqueness prevents application impersonation';
 RAISE LOG '  • No public access to sensitive application metadata';
-RAISE LOG '  • Academic security model with practical constraints';
+RAISE LOG '  • security model with practical constraints';
 RAISE LOG '';
 RAISE LOG '🔧 NEXT STEPS:';
 RAISE LOG '  • Implement client registration API endpoints';

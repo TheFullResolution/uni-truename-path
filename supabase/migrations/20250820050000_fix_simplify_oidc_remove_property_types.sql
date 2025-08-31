@@ -1,6 +1,6 @@
--- =============================================================================
+-- ===
 -- Step 15.2: OIDC Simplification - Phase 1: Remove Property Types (FIXED)
--- =============================================================================
+-- ===
 -- This migration implements Phase 1 of the OIDC simplification plan.
 -- Removes the forced OIDC property type selection during name creation
 -- while preserving all existing data and functionality.
@@ -12,7 +12,7 @@
 -- 2. Set default value to 'name' for new entries
 -- 3. Update existing names to have generic 'name' type
 -- 4. No changes to assignments table (doesn't exist yet in current schema)
--- =============================================================================
+-- ===
 
 -- Step 1: Remove NOT NULL constraint and set default for oidc_property_type
 ALTER TABLE names 
@@ -34,9 +34,9 @@ SET oidc_properties = COALESCE(oidc_properties, '{}'::jsonb) || jsonb_build_obje
 )
 WHERE oidc_properties IS NOT NULL;
 
--- =============================================================================
+-- ===
 -- Migration Validation and Logging
--- =============================================================================
+-- ===
 
 -- Validate the migration was successful
 DO $$
@@ -77,9 +77,9 @@ END IF;
 RAISE NOTICE '  ✅ Migration validation passed';
 END $$;
 
--- =============================================================================
+-- ===
 -- Documentation and Comments
--- =============================================================================
+-- ===
 
 COMMENT ON COLUMN names.oidc_property_type IS 
 'OIDC property type - now optional with default ''name''. Used for storage consistency but not enforced during creation.';

@@ -1,6 +1,6 @@
--- =====================================================
+-- ===
 -- MIGRATION 039: CLIENT ID CONVERSION SYSTEM
--- =====================================================
+-- ===
 --
 -- This migration converts existing tables to use the client_id system from the 
 -- oauth_client_registry table created in migration 038 for Step 16.3.5:
@@ -9,28 +9,27 @@
 -- 3. Updates all database functions to use client_id lookups
 -- 4. Creates performance indexes for <3ms response times
 --
--- Academic constraint: Keep functions under 80 lines maximum
 -- Performance requirement: <3ms response times maintained
 -- Clean slate approach: No backwards compatibility required
 --
 -- Created: 2025-08-26
 -- Author: TrueNamePath Migration System
 
--- =====================================================
+-- ===
 -- SECTION 1: BACKUP & PREPARATION
--- =====================================================
+-- ===
 
 DO $$
 BEGIN
 RAISE LOG 'Client ID Conversion: Starting migration 039';
 RAISE LOG 'Converting app_context_assignments and oauth_sessions to client_id system';
-RAISE LOG 'Academic constraint: Clean implementation for concept demonstration';
+RAISE LOG 'Note: Clean implementation for concept demonstration';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 2: UPDATE APP_CONTEXT_ASSIGNMENTS TABLE
--- =====================================================
+-- ===
 
 -- Drop existing constraints and indexes on app_name
 ALTER TABLE public.app_context_assignments 
@@ -69,9 +68,9 @@ RAISE LOG 'Client ID Conversion: Updated app_context_assignments to use client_i
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 3: UPDATE OAUTH_SESSIONS TABLE
--- =====================================================
+-- ===
 
 -- Drop existing foreign key constraint to oauth_applications
 ALTER TABLE public.oauth_sessions 
@@ -100,9 +99,9 @@ RAISE LOG 'Client ID Conversion: Updated oauth_sessions to use client_id';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 4: PERFORMANCE INDEXES
--- =====================================================
+-- ===
 
 -- Primary lookup index for app_context_assignments (< 3ms requirement)
 CREATE INDEX idx_app_context_assignments_profile_client 
@@ -135,9 +134,9 @@ RAISE LOG 'Secondary indexes: client_id for analytics and session resolution';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 5: UPDATE DATABASE FUNCTIONS
--- =====================================================
+-- ===
 
 -- Drop old function first, then create new one with client_id parameter
 DROP FUNCTION IF EXISTS public.assign_default_context_to_app(uuid, varchar);
@@ -229,9 +228,9 @@ RAISE LOG 'Client ID Conversion: Updated assign_default_context_to_app function 
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 6: UPDATE OAUTH RESOLUTION FUNCTION
--- =====================================================
+-- ===
 
 -- Update resolve_oauth_oidc_claims to work with client_id registry lookups
 CREATE OR REPLACE FUNCTION public.resolve_oauth_oidc_claims(p_session_token text)
@@ -336,9 +335,9 @@ RAISE LOG 'Client ID Conversion: Updated resolve_oauth_oidc_claims function for 
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 7: MIGRATION VALIDATION
--- =====================================================
+-- ===
 
 -- Validate the migration results
 DO $$
@@ -402,9 +401,9 @@ RAISE LOG 'Indexes created: % client_id indexes for performance', index_count;
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 8: MIGRATION COMPLETION
--- =====================================================
+-- ===
 
 -- Final migration completion log
 DO $$
@@ -430,7 +429,7 @@ RAISE LOG '';
 RAISE LOG '✅ SECURITY & ARCHITECTURE:';
 RAISE LOG '  • Clean slate conversion: No backwards compatibility dependencies';
 RAISE LOG '  • Registry-based validation: All clients must be registered';
-RAISE LOG '  • Academic constraints: Simple implementation for demonstration';
+RAISE LOG '  • constraints: Simple implementation for demonstration';
 RAISE LOG '';
 RAISE LOG '🔧 NEXT STEPS:';
 RAISE LOG '  • Implement client registration API endpoints';

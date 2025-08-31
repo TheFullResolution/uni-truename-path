@@ -3,9 +3,9 @@
 -- This replaces internal name resolution tracking with external context usage metrics
 -- Part of Step 15: Reimagining Dashboard Statistics for Commercial Value
 
--- =============================================================================
+-- ===
 -- STEP 1: Create context_usage_analytics table
--- =============================================================================
+-- ===
 
 CREATE TABLE public.context_usage_analytics (
   id bigserial PRIMARY KEY,
@@ -34,9 +34,9 @@ COMMENT ON COLUMN public.context_usage_analytics.scopes_requested IS 'OAuth scop
 COMMENT ON COLUMN public.context_usage_analytics.properties_disclosed IS 'Actual user data disclosed to the application';
 COMMENT ON COLUMN public.context_usage_analytics.response_time_ms IS 'API response time in milliseconds for performance tracking';
 
--- =============================================================================
+-- ===
 -- STEP 2: Create performance indexes
--- =============================================================================
+-- ===
 
 -- Primary query indexes for dashboard analytics
 CREATE INDEX IF NOT EXISTS idx_context_usage_user_time 
@@ -60,9 +60,9 @@ CREATE INDEX IF NOT EXISTS idx_context_usage_response_time
 -- CREATE INDEX IF NOT EXISTS idx_context_usage_daily 
 --   ON public.context_usage_analytics (target_user_id, (accessed_at::date));
 
--- =============================================================================
+-- ===
 -- STEP 3: Enable Row Level Security
--- =============================================================================
+-- ===
 
 ALTER TABLE public.context_usage_analytics ENABLE ROW LEVEL SECURITY;
 
@@ -76,9 +76,9 @@ CREATE POLICY "service_role_context_usage" ON public.context_usage_analytics
   FOR ALL 
   USING (auth.role() = 'service_role');
 
--- =============================================================================
+-- ===
 -- STEP 4: Grant permissions
--- =============================================================================
+-- ===
 
 GRANT SELECT ON public.context_usage_analytics TO authenticated;
 GRANT ALL ON public.context_usage_analytics TO service_role;
@@ -87,9 +87,9 @@ GRANT ALL ON public.context_usage_analytics TO service_role;
 GRANT USAGE ON SEQUENCE public.context_usage_analytics_id_seq TO authenticated;
 GRANT USAGE ON SEQUENCE public.context_usage_analytics_id_seq TO service_role;
 
--- =============================================================================
+-- ===
 -- STEP 5: Create helper function for context usage logging
--- =============================================================================
+-- ===
 
 CREATE OR REPLACE FUNCTION public.log_context_usage(
   p_target_user_id uuid,
@@ -154,9 +154,9 @@ GRANT EXECUTE ON FUNCTION public.log_context_usage TO service_role;
 COMMENT ON FUNCTION public.log_context_usage IS 
 'Helper function to log external OAuth/OIDC context usage for analytics and performance monitoring';
 
--- =============================================================================
+-- ===
 -- STEP 6: Log migration completion
--- =============================================================================
+-- ===
 
 DO $$
 BEGIN

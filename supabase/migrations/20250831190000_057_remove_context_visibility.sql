@@ -1,12 +1,10 @@
--- Migration: 20250831190000_057_remove_context_visibility.sql
 -- Purpose: Remove Context Visibility Concept - Simplify to Public/Other Contexts
 -- Description: Remove visibility column and enum, rename default context to "Public"
--- Date: August 31, 2025
 -- Impact: Simplifies context model - only one public context, others are just contexts
 
--- =====================================================
+-- ===
 -- OVERVIEW & REQUIREMENTS
--- =====================================================
+-- ===
 
 -- CONTEXT VISIBILITY REMOVAL:
 -- This migration removes the visibility concept entirely from contexts.
@@ -28,9 +26,9 @@
 -- 4. Rename default context to "Public"
 -- 5. Update validation functions to ignore visibility
 
--- =====================================================
+-- ===
 -- SECTION 1: MIGRATION HEADER AND LOGGING
--- =====================================================
+-- ===
 
 DO $$
 BEGIN
@@ -41,9 +39,9 @@ RAISE LOG 'Performance: No performance impact - removing complexity';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 2: RENAME DEFAULT CONTEXT TO PUBLIC
--- =====================================================
+-- ===
 
 -- Update the permanent context name from "Default" to "Public" 
 -- This makes it clear that this is the public identity context
@@ -67,9 +65,9 @@ RAISE LOG 'Context Visibility Removal: Renamed % default contexts to "Public"', 
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 3: REMOVE VISIBILITY CONSTRAINTS
--- =====================================================
+-- ===
 
 -- Drop the constraint that enforces permanent contexts to be public
 -- This constraint will no longer be needed since we're removing visibility
@@ -80,9 +78,9 @@ DO $$ BEGIN
 RAISE LOG 'Context Visibility Removal: Dropped default_context_visibility_check constraint';
 END $$;
 
--- =====================================================
+-- ===
 -- SECTION 4: REMOVE VISIBILITY COLUMN
--- =====================================================
+-- ===
 
 -- Remove the visibility column from user_contexts table
 -- This is the main change - removes all visibility logic
@@ -93,9 +91,9 @@ DO $$ BEGIN
 RAISE LOG 'Context Visibility Removal: Dropped visibility column from user_contexts';
 END $$;
 
--- =====================================================
+-- ===
 -- SECTION 5: DROP CONTEXT_VISIBILITY ENUM
--- =====================================================
+-- ===
 
 -- Drop the context_visibility enum type as it's no longer needed
 -- CASCADE will handle any remaining dependencies
@@ -105,9 +103,9 @@ DO $$ BEGIN
 RAISE LOG 'Context Visibility Removal: Dropped context_visibility enum type';
 END $$;
 
--- =====================================================
+-- ===
 -- SECTION 6: UPDATE VALIDATION FUNCTIONS (OPTIONAL CLEANUP)
--- =====================================================
+-- ===
 
 -- Note: The existing completeness validation functions (is_context_complete, 
 -- get_context_completeness_status) already work without visibility checks.
@@ -118,9 +116,9 @@ DO $$ BEGIN
 RAISE LOG 'Context Visibility Removal: Validation functions unchanged - already completeness-based';
 END $$;
 
--- =====================================================
+-- ===
 -- SECTION 7: VERIFY MIGRATION SUCCESS
--- =====================================================
+-- ===
 
 DO $$
 DECLARE
@@ -167,9 +165,9 @@ RAISE LOG '  - Public contexts found: %', public_context_count;
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 8: MIGRATION COMPLETION SUMMARY
--- =====================================================
+-- ===
 
 DO $$
 BEGIN

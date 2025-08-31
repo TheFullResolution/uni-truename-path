@@ -3,9 +3,9 @@
 -- Purpose: Fix OAuth authorization flow by allowing authenticated users to create their own sessions
 -- Issue: Users could not create OAuth sessions due to missing INSERT RLS policy
 
--- =============================================================================
+-- ===
 -- OAuth Sessions INSERT Policy
--- =============================================================================
+-- ===
 
 /**
  * Allow authenticated users to create their own OAuth sessions
@@ -17,9 +17,9 @@ CREATE POLICY "oauth_sessions_own_insert" ON oauth_sessions
   TO authenticated 
   WITH CHECK (profile_id = auth.uid());
 
--- =============================================================================
+-- ===
 -- Verification
--- =============================================================================
+-- ===
 
 -- The oauth_sessions table should now have 4 policies:
 -- 1. oauth_sessions_own_sessions (SELECT) - existing

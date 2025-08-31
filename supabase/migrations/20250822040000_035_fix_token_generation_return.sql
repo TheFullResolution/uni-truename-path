@@ -1,12 +1,10 @@
 -- Step 16.1.6: Fix Token Generation Function - Add explicit RETURN
--- Migration: 20250822040000_035_fix_token_generation_return.sql
 -- Purpose: Fix linting warning about missing RETURN statement
--- Date: August 22, 2025  
 -- Context: PostgreSQL linter warning fix for generate_oauth_token function
 
--- =====================================================
+-- ===
 -- SECTION 1: MIGRATION INITIALIZATION & LOGGING
--- =====================================================
+-- ===
 
 -- Log migration start
 DO $$
@@ -18,9 +16,9 @@ RAISE LOG 'Solution: Add explicit RETURN statement after loop for safety';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 2: FIX TOKEN GENERATION FUNCTION
--- =====================================================
+-- ===
 
 -- Fix the generate_oauth_token function to address linting warning
 CREATE OR REPLACE FUNCTION public.generate_oauth_token()
@@ -78,9 +76,9 @@ Added explicit RETURN statement to satisfy PostgreSQL linter requirements.';
 -- Grant execute permission to service role for token generation
 GRANT EXECUTE ON FUNCTION public.generate_oauth_token() TO service_role;
 
--- =====================================================
+-- ===
 -- SECTION 3: VALIDATION & TESTING
--- =====================================================
+-- ===
 
 -- Test the fixed function
 DO $$
@@ -101,9 +99,9 @@ RAISE EXCEPTION 'Token Generation Linting Fix: Validation failed - invalid forma
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 4: MIGRATION COMPLETION
--- =====================================================
+-- ===
 
 -- Final migration completion log
 DO $$

@@ -1,18 +1,10 @@
--- Step 16.2.0.1: Academic OAuth OIDC Claims Resolution Function (Simplified)
--- Migration: 20250823100000_035_academic_oauth_oidc_resolution.sql
--- Purpose: Academic-appropriate implementation of OIDC claims resolution
--- Date: August 23, 2025
--- Complexity: 80 lines maximum (academic requirement)
-
--- =====================================================
--- REPLACE OVER-ENGINEERED FUNCTION WITH ACADEMIC VERSION
--- =====================================================
+-- OAuth OIDC Claims Resolution Function
+-- Replaces complex function with simplified version
 
 -- Drop the complex production-level function
 DROP FUNCTION IF EXISTS public.resolve_oauth_oidc_claims(uuid, uuid, text);
 
--- Create simplified academic-appropriate version
--- Focus: Demonstrate OAuth -> Context -> OIDC concept clearly
+-- Create simplified version for OAuth -> Context -> OIDC resolution
 CREATE OR REPLACE FUNCTION public.resolve_oauth_oidc_claims(p_session_token text)
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -93,30 +85,21 @@ RETURN jsonb_build_object(
 );
 END $$;
 
--- =====================================================
--- FUNCTION DOCUMENTATION & PERMISSIONS
--- =====================================================
+-- Function documentation and permissions
 
 COMMENT ON FUNCTION public.resolve_oauth_oidc_claims(text) IS 
-'Academic implementation: Resolves OAuth session token to OIDC claims via context assignments.
-Core algorithm: OAuth Session -> App Context Assignment -> OIDC Properties -> Claims Object.
-Simplified for academic demonstration - 80 lines, single input mode, basic error handling.';
+'Resolves OAuth session token to OIDC claims via context assignments.
+Core algorithm: OAuth Session -> App Context Assignment -> OIDC Properties -> Claims Object.';
 
 -- Grant permissions
 GRANT EXECUTE ON FUNCTION public.resolve_oauth_oidc_claims(text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.resolve_oauth_oidc_claims(text) TO service_role;
 
--- =====================================================
--- MIGRATION COMPLETION LOG
--- =====================================================
-
 DO $$
 BEGIN
-RAISE LOG 'Academic OAuth OIDC Resolution Migration Complete:';
-RAISE LOG '  • Replaced 259-line production function with 80-line academic version';
+RAISE LOG 'OAuth OIDC Resolution Migration Complete';
+RAISE LOG '  • Replaced complex function with simplified version';
 RAISE LOG '  • Single input mode (session token only)'; 
-RAISE LOG '  • Basic error handling (success/failure pattern)';
-RAISE LOG '  • Minimal logging (concept demonstration focus)';
-RAISE LOG '  • Core algorithm: OAuth -> Context -> OIDC clearly visible';
-RAISE LOG '  • Academic-appropriate complexity for university evaluation';
+RAISE LOG '  • Basic error handling';
+RAISE LOG '  • Core algorithm: OAuth -> Context -> OIDC';
 END $$;

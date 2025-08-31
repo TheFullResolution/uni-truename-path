@@ -1,12 +1,10 @@
--- Migration: 20250831000000_053_context_completeness_validation.sql
 -- Purpose: Step 18 Session 2 - Context Completeness Database Functions
 -- Description: Implement database-level validation to ensure contexts have all required OIDC properties
--- Date: August 31, 2025
 -- Performance: <3ms validation functions with indexed queries
 
--- =====================================================
+-- ===
 -- OVERVIEW & REQUIREMENTS
--- =====================================================
+-- ===
 
 -- CONTEXT COMPLETENESS VALIDATION:
 -- This migration implements database-level validation to ensure contexts have all required
@@ -29,11 +27,11 @@
 -- - Clear error messages identify missing properties
 -- - Performance-optimized with indexed queries
 -- - Follows existing function patterns (can_delete_name, etc.)
--- - Academic constraint: Simple, maintainable validation logic
+-- - Note: Simple, maintainable validation logic
 
--- =====================================================
+-- ===
 -- SECTION 1: MIGRATION HEADER AND LOGGING
--- =====================================================
+-- ===
 
 DO $$
 BEGIN
@@ -44,9 +42,9 @@ RAISE LOG 'Performance: <3ms validation with indexed queries on context_oidc_ass
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 2: CONTEXT COMPLETENESS VALIDATION FUNCTIONS
--- =====================================================
+-- ===
 
 -- Simple completeness check function for triggers and internal use
 -- Returns boolean - optimized for trigger performance
@@ -216,9 +214,9 @@ Returns comprehensive JSONB with completion status, missing properties, and vali
 Used by frontend to display context completion status and guide users to complete contexts.
 Performance: <3ms with indexed queries on context_oidc_assignments table.';
 
--- =====================================================
+-- ===
 -- SECTION 3: CONTEXT COMPLETENESS VALIDATION TRIGGER
--- =====================================================
+-- ===
 
 -- Trigger function to enforce context completeness before visibility updates
 CREATE OR REPLACE FUNCTION public.check_context_completeness_before_update()
@@ -290,9 +288,9 @@ Prevents contexts from becoming public or private unless they have all required 
 Allows restricted visibility regardless of completeness (user-controlled access).
 Provides clear error messages listing missing properties for user guidance.';
 
--- =====================================================
+-- ===
 -- SECTION 4: GRANT PERMISSIONS
--- =====================================================
+-- ===
 
 -- Grant execute permissions to authenticated users for API access
 GRANT EXECUTE ON FUNCTION public.is_context_complete(UUID) TO authenticated;
@@ -311,9 +309,9 @@ RAISE LOG '  • get_context_completeness_status() - detailed analysis';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 5: VALIDATE IMPLEMENTATION
--- =====================================================
+-- ===
 
 -- Comprehensive validation of the context completeness system
 DO $$
@@ -415,9 +413,9 @@ RAISE LOG '  • Error handling validated for edge cases';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 6: MIGRATION COMPLETION
--- =====================================================
+-- ===
 
 -- Final migration completion log with detailed summary
 DO $$
@@ -436,7 +434,7 @@ RAISE LOG '  • INCOMPLETE: Missing any of the 3 required properties';
 RAISE LOG '  • RESTRICTED contexts: Can be incomplete (user approval required)';
 RAISE LOG '  • PUBLIC/PRIVATE contexts: Must be complete (automatic resolution)';
 RAISE LOG '';
-RAISE LOG '🔧 TECHNICAL IMPLEMENTATION:';
+RAISE LOG 'TECHNICAL IMPLEMENTATION:';
 RAISE LOG '  • Database trigger enforces completeness before visibility changes';
 RAISE LOG '  • Clear error messages identify missing properties for users';
 RAISE LOG '  • Performance optimized with indexed queries (<3ms validation)';
@@ -449,8 +447,8 @@ RAISE LOG '  • Input validation prevents injection and edge cases';
 RAISE LOG '  • Graceful degradation for missing contexts or assignments';
 RAISE LOG '  • Audit logging for validation errors and completeness checks';
 RAISE LOG '';
-RAISE LOG '🎓 ACADEMIC COMPLIANCE:';
-RAISE LOG '  • Simple, maintainable validation logic within academic constraints';
+RAISE LOG 'ACADEMIC COMPLIANCE:';
+RAISE LOG '  • Simple, maintainable validation logic within constraints';
 RAISE LOG '  • Clear separation between fast (trigger) and detailed (API) functions';
 RAISE LOG '  • Database-level enforcement ensures data integrity';
 RAISE LOG '  • Educational demonstration of trigger-based validation patterns';

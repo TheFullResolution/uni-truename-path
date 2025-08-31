@@ -3,8 +3,6 @@
 -- Root Cause: Function still uses old context_name_assignments table structure
 -- Fix: Update to use new context_oidc_assignments table structure
 
--- Date: August 21, 2025 - Emergency Database Fix
--- Migration: 20250821120000_emergency_fix_signup_function_new_schema.sql
 
 -- Log the emergency fix
 DO $$

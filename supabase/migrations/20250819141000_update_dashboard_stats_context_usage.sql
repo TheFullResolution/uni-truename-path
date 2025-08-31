@@ -3,9 +3,9 @@
 -- Demonstrates commercial value by tracking context usage by external applications
 -- Part of Step 15: Reimagining Dashboard Statistics for Commercial Value
 
--- =============================================================================
+-- ===
 -- STEP 1: Update get_dashboard_stats function for context usage focus
--- =============================================================================
+-- ===
 
 CREATE OR REPLACE FUNCTION get_dashboard_stats(p_profile_id uuid)
 RETURNS json
@@ -79,7 +79,7 @@ NULLIF(count(*) filter (where accessed_at >= today_start), 0) * 100 as success_r
  ORDER BY count(*) DESC 
  LIMIT 1) as top_context_today,
 -- Data disclosure tracking
-0 as unique_properties_disclosed_week  -- Simplified for academic project (removes PostgreSQL set-returning function in aggregate error)
+0 as unique_properties_disclosed_week  -- Simplified for project (removes PostgreSQL set-returning function in aggregate error)
 FROM context_usage_analytics 
 WHERE target_user_id = p_profile_id
 ),
@@ -191,9 +191,9 @@ and privacy compliance. Demonstrates commercial viability by tracking real appli
 metrics instead of internal system events. Optimized for sub-3ms response times.
 Used by the /api/dashboard/stats endpoint for commercial OAuth provider demonstration.';
 
--- =============================================================================
+-- ===
 -- STEP 2: Log migration completion
--- =============================================================================
+-- ===
 
 DO $$
 BEGIN

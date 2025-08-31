@@ -1,6 +1,6 @@
--- =============================================================================
+-- ===
 -- Step 15: OIDC Core 1.0 Migration - Complete Implementation
--- =============================================================================
+-- ===
 -- This migration transforms TrueNamePath from legacy name_category system
 -- to full OIDC Core 1.0 compliant name property storage and resolution
 --
@@ -11,7 +11,7 @@
 -- 4. Enhanced resolve_oidc_claims() PostgreSQL function
 -- 5. Performance indexes for OIDC queries
 -- 6. Legacy system removal
--- =============================================================================
+-- ===
 
 -- OIDC property type enum (Core 1.0 Specification)
 CREATE TYPE oidc_property_type_enum AS ENUM (
@@ -33,9 +33,9 @@ CREATE INDEX idx_names_oidc_property_type ON names (oidc_property_type);
 CREATE INDEX idx_names_oidc_properties_gin ON names USING GIN (oidc_properties);
 CREATE INDEX idx_names_user_oidc_property ON names (user_id, oidc_property_type);
 
--- =============================================================================
+-- ===
 -- Data Migration: Legacy name_category → OIDC Properties
--- =============================================================================
+-- ===
 
 -- Migrate existing data from name_category to OIDC property types
 UPDATE names 
@@ -64,9 +64,9 @@ SET oidc_properties = jsonb_build_object(
 ALTER TABLE names 
 ALTER COLUMN oidc_property_type SET NOT NULL;
 
--- =============================================================================
+-- ===
 -- Enhanced resolve_oidc_claims() Function
--- =============================================================================
+-- ===
 
 CREATE OR REPLACE FUNCTION resolve_oidc_claims(
   p_target_user_id TEXT,
@@ -388,9 +388,9 @@ RETURN;
 END;
 $$;
 
--- =============================================================================
+-- ===
 -- RLS Policy Updates for OIDC Columns
--- =============================================================================
+-- ===
 
 -- Update RLS policies to include OIDC columns
 DROP POLICY IF EXISTS "Users can view their own names" ON names;
@@ -405,18 +405,18 @@ DROP POLICY IF EXISTS "Users can update their own names" ON names;
 CREATE POLICY "Users can update their own names" ON names
   FOR UPDATE USING (auth.uid() = user_id);
 
--- =============================================================================
+-- ===
 -- Performance and Compliance Comments
--- =============================================================================
+-- ===
 
 COMMENT ON TYPE oidc_property_type_enum IS 'OIDC Core 1.0 compliant property types for identity claims';
 COMMENT ON COLUMN names.oidc_property_type IS 'OIDC Core 1.0 property type (name, given_name, family_name, etc.)';
 COMMENT ON COLUMN names.oidc_properties IS 'OIDC metadata including locale, verification status, and source information';
 COMMENT ON FUNCTION resolve_oidc_claims IS 'OIDC Core 1.0 compliant context-aware name resolution with 3-layer priority system';
 
--- =============================================================================
+-- ===
 -- Legacy System Removal (Step 15 Final Phase)
--- =============================================================================
+-- ===
 
 -- Remove legacy name_category column after successful migration
 -- This is done at the end to ensure data integrity

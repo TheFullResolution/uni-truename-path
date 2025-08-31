@@ -1,9 +1,8 @@
--- =====================================================
--- Migration: 059_remove_sql_completeness_functions
+-- ===
 -- Description: Remove SQL-based context completeness functions
 -- Author: truename-team
 -- Date: 2025-08-31
--- =====================================================
+-- ===
 
 -- Drop the trigger first
 DROP TRIGGER IF EXISTS check_context_completeness_before_update ON user_contexts;

@@ -1,15 +1,14 @@
 -- TrueNamePath: Step 2 - Simplified Demo Data Seeding
 -- Phase 2: Simple demo data compatible with existing database state
--- Date: August 10, 2025
 
 -- This migration creates basic demo data using existing profiles
 -- and focuses on demonstrating the user-defined context architecture
 
 BEGIN;
 
--- =============================================================================
+-- ===
 -- STEP 1: Create basic demo data using existing profiles
--- =============================================================================
+-- ===
 
 DO $$
 DECLARE
@@ -67,9 +66,9 @@ RAISE LOG 'TrueNamePath Step 2 Simple: No existing profiles found, skipping demo
   RAISE LOG 'TrueNamePath Step 2 Simple: Demo data seeding completed for % profiles', profile_count;
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 2: Validate basic functionality
--- =============================================================================
+-- ===
 
 DO $$
 DECLARE
@@ -87,9 +86,9 @@ END $$;
 
 COMMIT;
 
--- =============================================================================
+-- ===
 -- POST-MIGRATION NOTES
--- =============================================================================
+-- ===
 
 -- This simplified migration creates basic demo data to validate the Step 2 architecture:
 -- 

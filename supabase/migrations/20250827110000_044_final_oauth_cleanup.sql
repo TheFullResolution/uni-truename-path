@@ -1,12 +1,10 @@
 -- Final OAuth Functions Cleanup Migration
--- Migration: 20250827110000_044_final_oauth_cleanup.sql
 -- Purpose: Remove unused OAuth and utility functions while preserving core functionality
--- Date: August 27, 2025
--- Security: Academic simplification - remove development/test functions
+-- Security: simplification - remove development/test functions
 
--- =====================================================
+-- ===
 -- OVERVIEW & CLEANUP RATIONALE
--- =====================================================
+-- ===
 
 -- This migration removes unused functions identified through codebase analysis:
 -- 
@@ -33,9 +31,9 @@
 -- Analysis Method: Searched entire codebase for function references in TS/JS/SQL files
 -- Safety: Core OAuth functionality preserved, only removing confirmed unused functions
 
--- =====================================================
+-- ===
 -- SECTION 1: VALIDATE CORE SYSTEM BEFORE CLEANUP
--- =====================================================
+-- ===
 
 DO $$
 DECLARE
@@ -80,9 +78,9 @@ RAISE LOG 'OAuth Cleanup: All core functions validated - safe to proceed';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 2: REMOVE UNUSED UTILITY FUNCTIONS
--- =====================================================
+-- ===
 
 -- Drop cleanup utility functions (no longer needed)
 DROP FUNCTION IF EXISTS public.cleanup_expired_oauth_sessions();
@@ -94,9 +92,9 @@ RAISE LOG 'OAuth Cleanup: Removed utility functions - cleanup_expired_oauth_sess
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 3: REMOVE UNUSED QUERY FUNCTIONS
--- =====================================================
+-- ===
 
 -- Drop unused query functions (not referenced in codebase)
 DROP FUNCTION IF EXISTS public.get_active_consent(uuid, uuid);
@@ -109,9 +107,9 @@ RAISE LOG 'OAuth Cleanup: Removed unused query functions - get_active_consent, g
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 4: REMOVE TEMPORARY MIGRATION FUNCTIONS
--- =====================================================
+-- ===
 
 -- Drop temporary functions from previous cleanup migrations
 DROP FUNCTION IF EXISTS public.get_cleanup_rollback_info();
@@ -125,9 +123,9 @@ RAISE LOG 'OAuth Cleanup: Removed temporary migration functions - get_cleanup_ro
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 5: VALIDATE CORE SYSTEM AFTER CLEANUP
--- =====================================================
+-- ===
 
 DO $$
 DECLARE
@@ -216,9 +214,9 @@ RAISE LOG '✓ OAuth logging trigger confirmed active';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 6: SYSTEM STATUS REPORT
--- =====================================================
+-- ===
 
 DO $$
 DECLARE
@@ -248,9 +246,9 @@ RAISE LOG '  • App usage log entries: %', v_app_usage_log_count;
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 7: MIGRATION COMPLETION
--- =====================================================
+-- ===
 
 DO $$
 BEGIN
@@ -260,7 +258,7 @@ RAISE LOG '✅ FINAL OAUTH CLEANUP COMPLETE:';
 RAISE LOG '  • Removed 9 unused functions (utilities, queries, migration helpers)';  
 RAISE LOG '  • Preserved 12 core functions (OAuth, consent, utilities)';
 RAISE LOG '  • Maintained OAuth logging trigger system';
-RAISE LOG '  • Academic simplification: database focused on essential functionality';
+RAISE LOG '  • simplification: database focused on essential functionality';
 RAISE LOG '';
 RAISE LOG '✅ PRESERVED CORE OAUTH SYSTEM:';
 RAISE LOG '  • resolve_oauth_oidc_claims: Main OAuth resolution with trigger-based logging';
@@ -277,7 +275,7 @@ RAISE LOG '';
 RAISE LOG '⚡ OAUTH SYSTEM STATUS: Fully operational and simplified';
 RAISE LOG 'Architecture: Core functions + trigger-based logging + manual analytics';
 RAISE LOG 'Performance: <3ms resolution maintained with reduced function overhead';
-RAISE LOG 'Security: Academic focus - essential functionality only';
+RAISE LOG 'Security: focus - essential functionality only';
 RAISE LOG '';
 RAISE LOG 'Database cleanup complete - TrueNamePath OAuth ready for demo applications';
 END

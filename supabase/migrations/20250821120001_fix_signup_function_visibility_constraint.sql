@@ -3,8 +3,6 @@
 -- Constraint: Permanent contexts must have visibility = 'public'
 -- Fix: Add visibility field to user_contexts INSERT
 
--- Date: August 21, 2025 - Critical Database Fix Part 2
--- Migration: 20250821120001_fix_signup_function_visibility_constraint.sql
 
 -- Log the critical fix
 DO $$

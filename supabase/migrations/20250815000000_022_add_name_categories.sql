@@ -1,5 +1,4 @@
 -- Migration: Add PROFESSIONAL and CULTURAL name categories
--- Date: August 15, 2025
 -- Purpose: Support expanded name categorization for Step 12 context assignments
 -- Status: Documenting existing enum values (already present in database)
 
@@ -69,9 +68,9 @@ RAISE LOG '✅ All name_category enum values: LEGAL, PREFERRED, NICKNAME, ALIAS,
 RAISE LOG '🚀 Ready for Step 12 context assignment implementation';
 END $$;
 
--- =============================================================================
+-- ===
 -- POST-MIGRATION VALIDATION
--- =============================================================================
+-- ===
 
 -- Final verification: Test that we can reference all enum values
 -- Note: Skip validation in single transaction due to PostgreSQL enum safety restrictions

@@ -1,13 +1,12 @@
 -- TrueNamePath: Migration to Fix OIDC Constraint Conflicts
--- Date: August 21, 2025
 -- Purpose: Remove conflicting constraint and ensure proper OIDC constraint exists
 -- Status: Production-ready
 
 BEGIN;
 
--- =============================================================================
+-- ===
 -- Remove conflicting constraints
--- =============================================================================
+-- ===
 
 -- The constraint `context_name_assignments_user_id_name_id_context_id_key` prevents
 -- the same name from being assigned to the same context multiple times.
@@ -29,9 +28,9 @@ BEGIN
   RAISE LOG '  - context_name_assignments_context_id_key';
 END $$;
 
--- =============================================================================
+-- ===
 -- Add missing oidc_property column
--- =============================================================================
+-- ===
 
 -- Add the oidc_property column if it doesn't exist
 DO $$
@@ -54,9 +53,9 @@ RAISE LOG 'TrueNamePath Migration: oidc_property column already exists';
   END IF;
 END $$;
 
--- =============================================================================
+-- ===
 -- Ensure proper OIDC constraint exists
--- =============================================================================
+-- ===
 
 -- Add the correct constraint that allows same name for different OIDC properties
 -- but prevents duplicate assignments of the same OIDC property to the same context
@@ -84,9 +83,9 @@ BEGIN
   RAISE LOG 'TrueNamePath Migration: Added unique_oidc_property_per_context constraint';
 END $$;
 
--- =============================================================================
+-- ===
 -- Validation
--- =============================================================================
+-- ===
 
 -- Verify the constraints are in the correct state
 DO $$
@@ -137,9 +136,9 @@ END $$;
 
 COMMIT;
 
--- =============================================================================
+-- ===
 -- POST-MIGRATION NOTES
--- =============================================================================
+-- ===
 
 -- This migration resolves the constraint conflict for OIDC assignments:
 --

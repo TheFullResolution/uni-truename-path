@@ -1,12 +1,10 @@
--- Migration: 20250831200000_058_fix_auto_populate_context.sql
 -- Purpose: Fix auto_populate_context function after visibility column removal
 -- Description: Update function to work without visibility column reference
--- Date: August 31, 2025
 -- Dependencies: Migration 057 (context visibility removal)
 
--- =====================================================
+-- ===
 -- OVERVIEW & REQUIREMENTS
--- =====================================================
+-- ===
 
 -- AUTO-POPULATE CONTEXT FIX:
 -- Migration 056 created auto_populate_context function that references visibility column
@@ -21,9 +19,9 @@
 
 -- Impact: Fixes new context creation auto-population feature
 
--- =====================================================
+-- ===
 -- SECTION 1: MIGRATION HEADER AND LOGGING
--- =====================================================
+-- ===
 
 DO $$
 BEGIN
@@ -34,9 +32,9 @@ RAISE LOG 'Dependencies: Migration 057 context visibility removal';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 2: UPDATE AUTO-POPULATE CONTEXT FUNCTION
--- =====================================================
+-- ===
 
 -- Updated function without visibility column references
 CREATE OR REPLACE FUNCTION public.auto_populate_context(p_new_context_id UUID, p_user_id UUID)
@@ -235,9 +233,9 @@ Performance: <10ms atomic operation with comprehensive error handling and valida
 Used by auto_populate_new_context_trigger to automatically populate contexts on creation.
 Updated for simplified context model without visibility states.';
 
--- =====================================================
+-- ===
 -- SECTION 3: VALIDATE FUNCTION UPDATE
--- =====================================================
+-- ===
 
 -- Test the updated function with invalid parameters to ensure it still handles errors
 DO $$
@@ -277,9 +275,9 @@ RAISE LOG '  • Error handling maintained';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 4: MIGRATION COMPLETION
--- =====================================================
+-- ===
 
 -- Final migration completion log with summary
 DO $$

@@ -1,7 +1,4 @@
-/**
- * OAuth E2E Test Configuration
- * Centralized configuration for OAuth testing
- */
+// OAuth E2E Test Configuration
 
 export const OAUTH_TEST_CONFIG = {
   DEMO_APPS: ['demo-hr', 'demo-chat'] as const,

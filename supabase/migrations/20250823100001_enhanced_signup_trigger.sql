@@ -1,7 +1,6 @@
--- =============================================================================
+-- ===
 -- Enhanced Signup Trigger Migration for TrueNamePath
--- =============================================================================
--- Migration: 20250823_enhanced_signup_trigger.sql
+-- ===
 -- Purpose: Replace existing handle_new_user() function with enhanced version that:
 --   - Extracts metadata from auth.users.raw_user_meta_data
 --   - Creates profile record (as it currently does)
@@ -16,8 +15,7 @@
 --   - Uses existing 'user_contexts' table with is_permanent and visibility
 --   - Uses existing 'context_oidc_assignments' table with oidc_property enum
 --
--- Date: August 23, 2025
--- =============================================================================
+-- ===
 
 -- Log migration start
 DO $$
@@ -27,9 +25,9 @@ RAISE LOG 'Migration will create complete user onboarding with metadata extracti
 END
 $$;
 
--- =============================================================================
+-- ===
 -- STEP 1: Drop existing handle_new_user function and trigger
--- =============================================================================
+-- ===
 
 -- Drop the existing trigger first to avoid conflicts
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
@@ -44,9 +42,9 @@ RAISE LOG 'Enhanced Signup Trigger: Dropped existing handle_new_user() function 
 END
 $$;
 
--- =============================================================================
+-- ===
 -- STEP 2: Create enhanced handle_new_user function
--- =============================================================================
+-- ===
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger
@@ -360,9 +358,9 @@ RAISE EXCEPTION 'Enhanced signup failed for user %: %', new.id, SQLERRM;
 END;
 $$;
 
--- =============================================================================
+-- ===
 -- STEP 3: Add comprehensive function documentation
--- =============================================================================
+-- ===
 
 COMMENT ON FUNCTION public.handle_new_user() IS 
 'Enhanced signup trigger function for TrueNamePath (August 23, 2025).
@@ -376,9 +374,9 @@ Automatically processes new Supabase auth users with complete onboarding:
 7. Handles race conditions and constraint violations gracefully
 Compatible with existing database schema and maintains data consistency.';
 
--- =============================================================================
+-- ===
 -- STEP 4: Recreate the trigger on auth.users table
--- =============================================================================
+-- ===
 
 -- Create trigger that fires after INSERT on auth.users
 -- This ensures every new auth user gets complete onboarding processing
@@ -394,9 +392,9 @@ RAISE LOG 'Enhanced Signup Trigger: Recreated on_auth_user_created trigger with 
 END
 $$;
 
--- =============================================================================
+-- ===
 -- STEP 5: Grant necessary permissions
--- =============================================================================
+-- ===
 
 -- Ensure proper permissions for enhanced function
 GRANT EXECUTE ON FUNCTION public.handle_new_user() TO postgres, service_role;
@@ -417,9 +415,9 @@ RAISE LOG 'Enhanced Signup Trigger: Granted all necessary permissions for enhanc
 END
 $$;
 
--- =============================================================================
+-- ===
 -- STEP 6: Validation and testing setup
--- =============================================================================
+-- ===
 
 -- Create validation function to test enhanced signup behavior
 CREATE OR REPLACE FUNCTION public.validate_enhanced_signup_setup()
@@ -477,9 +475,9 @@ COMMENT ON FUNCTION public.validate_enhanced_signup_setup() IS
 Returns JSON with status of function, trigger, and permissions.
 Use for debugging and deployment validation.';
 
--- =============================================================================
+-- ===
 -- STEP 7: Migration completion and summary
--- =============================================================================
+-- ===
 
 -- Log successful completion with comprehensive summary
 DO $$

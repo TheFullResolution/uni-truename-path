@@ -1,12 +1,9 @@
 -- OAuth Automatic Logging Trigger Migration
--- Migration: 20250827100000_042_oauth_logging_trigger.sql
 -- Purpose: Replace client-side OAuth logging with secure database triggers
--- Date: August 27, 2025
--- Performance: Maintains <3ms resolution times with atomic logging
 
--- =====================================================
+-- ===
 -- OVERVIEW & SECURITY BENEFITS
--- =====================================================
+-- ===
 
 -- Problem solved:
 -- 1. Removes service role keys from application code (security risk)
@@ -15,15 +12,15 @@
 -- 4. Ensures consistent logging (no missed events)
 -- 5. Database-level security with SECURITY DEFINER privileges
 
--- Academic implementation:
+-- implementation:
 -- - Simple trigger function (<50 lines)
 -- - Runs only on actual token usage (used_at change from NULL to timestamp)
 -- - Atomic operation with OAuth resolution
 -- - No over-engineering, focused on demonstration
 
--- =====================================================
+-- ===
 -- SECTION 1: CREATE TRIGGER FUNCTION
--- =====================================================
+-- ===
 
 -- Create the trigger function to automatically log OAuth usage
 -- Runs with elevated permissions to access app_usage_log table
@@ -79,11 +76,11 @@ END $$;
 COMMENT ON FUNCTION public.log_oauth_usage_trigger() IS 
 'Trigger function for automatic OAuth usage logging. Runs when oauth_sessions.used_at 
 changes from NULL to timestamp. Logs to app_usage_log with SECURITY DEFINER privileges. 
-Academic constraint: <50 lines, simple implementation focused on concept demonstration.';
+Note: <50 lines, simple implementation focused on concept demonstration.';
 
--- =====================================================
+-- ===
 -- SECTION 2: CREATE TRIGGER
--- =====================================================
+-- ===
 
 -- Drop existing trigger if it exists (for migration reruns)
 DROP TRIGGER IF EXISTS oauth_usage_logging_trigger ON public.oauth_sessions;
@@ -109,9 +106,9 @@ RAISE LOG 'Uses SECURITY DEFINER for secure database access without service keys
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 3: UPDATE APP_USAGE_LOG SCHEMA
--- =====================================================
+-- ===
 
 -- Add resource_type and resource_id columns if they don't exist
 -- These support the new trigger-based logging pattern
@@ -154,9 +151,9 @@ COMMENT ON COLUMN public.app_usage_log.resource_id IS
 'Identifier of the specific resource accessed. Example: session UUID, token hash. 
 Supports audit trails and usage analytics for specific OAuth operations.';
 
--- =====================================================
+-- ===
 -- SECTION 4: GRANT PERMISSIONS
--- =====================================================
+-- ===
 
 -- Grant execute permission to authenticated users (for function calls)
 GRANT EXECUTE ON FUNCTION public.log_oauth_usage_trigger() TO authenticated;
@@ -170,9 +167,9 @@ RAISE LOG 'OAuth Logging Trigger: Granted function permissions to authenticated 
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 5: VALIDATE IMPLEMENTATION
--- =====================================================
+-- ===
 
 -- Test the trigger setup by checking system catalogs
 DO $$
@@ -226,9 +223,9 @@ RAISE LOG 'Schema: Added resource_type and resource_id columns';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 6: MIGRATION COMPLETION
--- =====================================================
+-- ===
 
 -- Final migration completion log
 DO $$
@@ -246,7 +243,7 @@ RAISE LOG '✅ SECURITY & PERFORMANCE BENEFITS:';
 RAISE LOG '  • Eliminates service role key exposure in client code';
 RAISE LOG '  • Prevents silent logging failures (atomic with resolution)';
 RAISE LOG '  • Maintains <3ms resolution performance requirements';
-RAISE LOG '  • Academic simplicity: <50 lines, focused implementation';
+RAISE LOG '  • simplicity: <50 lines, focused implementation';
 RAISE LOG '';
 RAISE LOG '✅ DATABASE SCHEMA UPDATES:';
 RAISE LOG '  • Added resource_type and resource_id columns to app_usage_log';

@@ -1,12 +1,10 @@
 -- Step 16.1.5: Fix Token Generation Function - pgcrypto Issue
--- Migration: 20250822030000_034_fix_token_generation_pgcrypto.sql
 -- Purpose: Fix generate_oauth_token function - gen_random_bytes not available
--- Date: August 22, 2025  
 -- Context: Hotfix for OAuth migration testing completion - use alternative UUID-based approach
 
--- =====================================================
+-- ===
 -- SECTION 1: MIGRATION INITIALIZATION & LOGGING
--- =====================================================
+-- ===
 
 -- Log migration start
 DO $$
@@ -18,9 +16,9 @@ RAISE LOG 'Solution: Use gen_random_uuid() which is built-in and reliable';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 2: REPLACE TOKEN GENERATION FUNCTION
--- =====================================================
+-- ===
 
 -- Replace the generate_oauth_token function with UUID-based approach
 -- This is more reliable than depending on pgcrypto extension availability
@@ -72,9 +70,9 @@ Returns varchar(36) tokens in format: tnp_[32 hex characters from UUID].';
 -- Grant execute permission to service role for token generation
 GRANT EXECUTE ON FUNCTION public.generate_oauth_token() TO service_role;
 
--- =====================================================
+-- ===
 -- SECTION 3: VALIDATION & TESTING
--- =====================================================
+-- ===
 
 -- Test the fixed function
 DO $$
@@ -110,9 +108,9 @@ END IF;
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 4: MIGRATION COMPLETION
--- =====================================================
+-- ===
 
 -- Final migration completion log
 DO $$

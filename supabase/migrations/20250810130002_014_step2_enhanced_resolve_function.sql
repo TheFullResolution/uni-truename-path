@@ -1,6 +1,5 @@
 -- TrueNamePath: Step 2 - User-Defined Context Architecture
 -- Phase 3: Enhanced resolve_name() Function Implementation  
--- Date: August 10, 2025
 -- Core Innovation: 3-layer resolution logic (consent > context > preferred)
 
 -- This migration implements the revolutionary resolve_name() function that enables
@@ -9,9 +8,9 @@
 
 BEGIN;
 
--- =============================================================================
+-- ===
 -- STEP 1: Create the enhanced resolve_name() function
--- =============================================================================
+-- ===
 
 -- This function implements the core innovation of TrueNamePath:
 -- Context-aware name resolution with user-defined contexts and consent management
@@ -207,9 +206,9 @@ BEGIN
   RAISE LOG '  ✅ Error handling with graceful fallback';
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 2: Create supporting consent management functions
--- =============================================================================
+-- ===
 
 -- Function to request consent for a specific context
 CREATE OR REPLACE FUNCTION public.request_consent(
@@ -370,9 +369,9 @@ BEGIN
   RAISE LOG '  ✅ revoke_consent() - Revoke active consent grants';
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 3: Create helper query functions
--- =============================================================================
+-- ===
 
 -- Function to get user's contexts
 CREATE OR REPLACE FUNCTION public.get_user_contexts(p_user_id uuid)
@@ -438,9 +437,9 @@ BEGIN
   RAISE LOG '  ✅ get_user_audit_log() - User audit trail with context details';
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 4: Test the enhanced resolve_name() function with demo data
--- =============================================================================
+-- ===
 
 -- Test resolve_name function with existing demo data
 DO $$
@@ -479,9 +478,9 @@ END IF;
 RAISE LOG 'TrueNamePath Step 2 Phase 3: resolve_name() function testing completed';
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 5: Grant appropriate permissions
--- =============================================================================
+-- ===
 
 -- Grant execute permissions on new functions
 GRANT EXECUTE ON FUNCTION public.resolve_name(uuid, uuid, text) TO authenticated, anon;
@@ -500,9 +499,9 @@ BEGIN
   RAISE LOG 'TrueNamePath Step 2 Phase 3: Function permissions granted to authenticated users';
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 6: Completion and status logging  
--- =============================================================================
+-- ===
 
 -- Log successful completion with comprehensive summary
 DO $$
@@ -530,9 +529,9 @@ END $$;
 
 COMMIT;
 
--- =============================================================================
+-- ===
 -- POST-MIGRATION NOTES  
--- =============================================================================
+-- ===
 
 -- This migration implements the core innovation of TrueNamePath:
 -- A context-aware name resolution system with user-defined contexts and consent management.

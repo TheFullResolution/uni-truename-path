@@ -1,5 +1,4 @@
 -- TrueNamePath: Fix consent request ENUM issue
--- Date: August 10, 2025
 -- Issue: audit_action ENUM missing CONSENT_REQUESTED value
 
 BEGIN;

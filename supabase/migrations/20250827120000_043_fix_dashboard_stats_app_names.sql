@@ -1,7 +1,7 @@
--- =====================================================
+-- ===
 -- Migration: Fix Dashboard Stats to Use App Names
 -- Purpose: Map client_ids to app_names for OAuth dashboard display
--- =====================================================
+-- ===
 
 CREATE OR REPLACE FUNCTION public.get_oauth_dashboard_stats(p_profile_id uuid)
 RETURNS json
@@ -73,7 +73,7 @@ $$;
 -- Update function documentation
 COMMENT ON FUNCTION public.get_oauth_dashboard_stats(uuid) IS 
 'OAuth dashboard statistics with client_id to app_name mapping via oauth_client_registry. 
-Returns app_name fields for proper dashboard display. Academic demonstration focused.';
+Returns app_name fields for proper dashboard display. demonstration focused.';
 
 -- Test the function works correctly by creating a validation procedure
 DO $$
@@ -111,6 +111,6 @@ RAISE LOG 'Dashboard Stats Fix: Updated get_oauth_dashboard_stats to use app_nam
 RAISE LOG '  • Joins app_usage_log with oauth_client_registry via client_id';
 RAISE LOG '  • Returns app_name fields for dashboard compatibility';  
 RAISE LOG '  • Maintains all existing functionality and performance';
-RAISE LOG '  • Function stays under 80 lines for academic constraint';
+RAISE LOG '  • Function stays under 80 lines for constraint';
 END
 $$;

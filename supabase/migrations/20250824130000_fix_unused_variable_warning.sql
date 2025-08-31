@@ -1,5 +1,4 @@
 -- Migration: Fix unused variable warning in test function
--- Date: August 24, 2025
 -- Purpose: Remove unused variable v_test_result from test_enhanced_signup_functionality function
 
 -- Fix the linting warning by removing the unused variable declaration

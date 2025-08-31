@@ -1,6 +1,5 @@
 -- Enhanced OIDC Compliance for Signup Function
 -- Adds support for preferred_username and auto-generation of full name
--- Date: August 20, 2025 - Step 15 Backend OIDC Improvements
 
 -- Update complete_signup_with_oidc function to support preferred_username and auto-generate full name
 CREATE OR REPLACE FUNCTION complete_signup_with_oidc(

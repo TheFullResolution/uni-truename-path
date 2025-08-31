@@ -1,12 +1,10 @@
 -- Step 16.1.3: OAuth App Context Assignments Table for User-App Context Mapping
--- Migration: 20250822000000_031_app_context_assignments.sql
 -- Purpose: Create OAuth app context assignments table for bridging apps with user contexts
--- Date: August 22, 2025
 -- Context: Part of Step 16 OAuth integration system - enables default context assignment to apps
 
--- =====================================================
+-- ===
 -- SECTION 1: MIGRATION INITIALIZATION & LOGGING
--- =====================================================
+-- ===
 
 -- Log migration start
 DO $$
@@ -17,9 +15,9 @@ RAISE LOG 'Performance Target: <3ms assignment lookup operations for OAuth flow'
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 2: APP CONTEXT ASSIGNMENTS TABLE CREATION
--- =====================================================
+-- ===
 
 -- Create the OAuth app context assignments table for mapping user contexts to applications
 -- This table stores which context a user has assigned to each OAuth application
@@ -69,9 +67,9 @@ COMMENT ON COLUMN public.app_context_assignments.context_id IS
 'Foreign key to public.user_contexts. Identifies which user-defined context should be 
 used when this app requests identity data. Enables context-aware name resolution.';
 
--- =====================================================
+-- ===
 -- SECTION 3: PERFORMANCE INDEXES
--- =====================================================
+-- ===
 
 -- Primary lookup index for OAuth flow (< 3ms requirement)
 -- Most critical query: SELECT context_id FROM app_context_assignments WHERE profile_id = ? AND app_id = ?
@@ -98,9 +96,9 @@ RAISE LOG 'Analytics indexes: profile_id, app_id, context_id for dashboard and m
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 4: ROW LEVEL SECURITY (RLS) POLICIES
--- =====================================================
+-- ===
 
 -- Enable RLS on the app_context_assignments table
 ALTER TABLE public.app_context_assignments ENABLE ROW LEVEL SECURITY;
@@ -131,9 +129,9 @@ RAISE LOG 'No public access - assignments are private user configuration';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 5: HELPER FUNCTIONS
--- =====================================================
+-- ===
 
 -- Create helper function for default context assignment to apps
 -- Assigns user's permanent "Default" context to a new OAuth application
@@ -209,9 +207,9 @@ Used during OAuth authorization flow to ensure every app has a context assignmen
 Returns the assigned context_id. Handles existing assignments gracefully and 
 includes race condition protection for concurrent OAuth flows.';
 
--- =====================================================
+-- ===
 -- SECTION 6: PERMISSIONS & GRANTS
--- =====================================================
+-- ===
 
 -- Grant full access to authenticated users for their own assignments
 GRANT ALL ON public.app_context_assignments TO authenticated;
@@ -236,9 +234,9 @@ RAISE LOG 'Helper function: EXECUTE access for authenticated and service_role';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 7: UPDATED_AT TRIGGER
--- =====================================================
+-- ===
 
 -- Create trigger for updated_at column automation
 CREATE TRIGGER update_app_context_assignments_updated_at
@@ -253,9 +251,9 @@ RAISE LOG 'App Context Assignments: Created updated_at trigger for automatic tim
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 8: MIGRATION VALIDATION & COMPLETION
--- =====================================================
+-- ===
 
 -- Validate the created table structure and functions
 DO $$
@@ -340,7 +338,7 @@ RAISE LOG 'TrueNamePath OAuth Integration: Migration 031 completed successfully'
 RAISE LOG '';
 RAISE LOG '✅ APP CONTEXT ASSIGNMENTS INFRASTRUCTURE:';
 RAISE LOG '  • Table created with comprehensive constraints and documentation';
-RAISE LOG '  • Unique constraint: (profile_id, app_id) for deterministic assignments';
+RAISE LOG '  • Unique Note: (profile_id, app_id) for deterministic assignments';
 RAISE LOG '  • Foreign keys to profiles, oauth_applications, and user_contexts with CASCADE';
 RAISE LOG '  • Updated_at trigger for automatic timestamp management';
 RAISE LOG '';

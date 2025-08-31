@@ -1,6 +1,5 @@
 -- TrueNamePath: Authentication Integration Migration
 -- Step 1: Enable Supabase Authentication with Profile Linking
--- Date: August 10, 2025
 -- Version: 1.2 (JWT Signing Keys System)
 
 -- This migration integrates Supabase authentication with the existing profiles system
@@ -12,9 +11,9 @@
 
 BEGIN;
 
--- =============================================================================
+-- ===
 -- STEP 1: Prepare for auth integration (NO foreign key constraint yet)
--- =============================================================================
+-- ===
 
 -- We cannot add the foreign key constraint yet because existing demo profiles
 -- (with hardcoded UUIDs) don't have corresponding auth.users records.
@@ -26,9 +25,9 @@ BEGIN
   RAISE LOG 'TrueNamePath: Preparing for auth integration - foreign key will be added after auth user creation';
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 2: Create automatic profile creation function
--- =============================================================================
+-- ===
 
 -- Function to automatically create a profile when a new auth user is created
 -- Uses SECURITY DEFINER to ensure proper permissions
@@ -62,9 +61,9 @@ $$;
 COMMENT ON FUNCTION public.handle_new_user() IS 
   'Automatically creates a profile record when a new Supabase auth user is created';
 
--- =============================================================================
+-- ===
 -- STEP 3: Attach trigger to auth.users table
--- =============================================================================
+-- ===
 
 -- Create trigger that fires after INSERT on auth.users
 -- This ensures every new auth user gets a corresponding profile
@@ -76,9 +75,9 @@ CREATE TRIGGER on_auth_user_created
 -- Note: Cannot add comment on auth schema trigger due to permissions
 -- Trigger purpose: Automatically creates profile records for new auth users
 
--- =============================================================================
+-- ===
 -- STEP 4: Grant necessary permissions
--- =============================================================================
+-- ===
 
 -- Ensure proper schema and table permissions for all roles
 GRANT USAGE ON SCHEMA public TO postgres, anon, authenticated, service_role;
@@ -99,9 +98,9 @@ GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO postgres, service_role;
 GRANT EXECUTE ON FUNCTION public.handle_new_user() TO postgres, service_role;
 GRANT EXECUTE ON FUNCTION public.resolve_name(uuid, text, text) TO authenticated;
 
--- =============================================================================
+-- ===
 -- STEP 5: Validation and logging
--- =============================================================================
+-- ===
 
 -- Log completion of migration
 DO $$
@@ -115,9 +114,9 @@ END $$;
 
 COMMIT;
 
--- =============================================================================
+-- ===
 -- POST-MIGRATION NOTES
--- =============================================================================
+-- ===
 
 -- This migration prepares the database for Supabase authentication integration:
 -- 

@@ -1,9 +1,9 @@
--- =============================================================================
+-- ===
 -- Step 15.2: OIDC Simplification - Fix Assignment Table Column Rename
--- =============================================================================
+-- ===
 -- This migration completes the OIDC simplification by renaming the property_type
 -- column to oidc_claim_type in the context_oidc_assignments table for clarity
--- =============================================================================
+-- ===
 
 -- Step 1: Rename property_type to oidc_claim_type in context_oidc_assignments table
 DO $$
@@ -132,9 +132,9 @@ RAISE NOTICE 'Created new unique constraint context_oidc_assignments_context_cla
 END IF;
 END $$;
 
--- =============================================================================
+-- ===
 -- Documentation and Comments
--- =============================================================================
+-- ===
 
 COMMENT ON TABLE context_oidc_assignments IS 
 'Context-specific OIDC claim assignments. The oidc_claim_type column specifies which OIDC claim this assignment provides.';

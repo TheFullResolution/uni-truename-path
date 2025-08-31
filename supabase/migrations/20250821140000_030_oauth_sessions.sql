@@ -1,12 +1,10 @@
 -- Step 16.1.2: OAuth Sessions Table for Context-Aware Token Management
--- Migration: 20250821140000_030_oauth_sessions.sql
 -- Purpose: Create OAuth sessions table for secure token-based authentication flow
--- Date: August 21, 2025
 -- Context: Part of Step 16 OAuth integration system for demo HR and Chat applications
 
--- =====================================================
+-- ===
 -- SECTION 1: MIGRATION INITIALIZATION & LOGGING
--- =====================================================
+-- ===
 
 -- Ensure pgcrypto extension is available for token generation
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
@@ -20,13 +18,13 @@ RAISE LOG 'Performance Target: <3ms token lookup operations for demo scenarios';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 2: OAUTH SESSIONS TABLE CREATION
--- =====================================================
+-- ===
 
 -- Create the OAuth sessions table for managing user authorization sessions
 -- This table stores temporary session tokens that can be exchanged for OIDC claims
--- Supports the simplified token-based OAuth flow for academic demonstration
+-- Supports the simplified token-based OAuth flow for demonstration
 CREATE TABLE public.oauth_sessions (
   -- Primary identifier (UUID for consistency with existing schema)
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -49,7 +47,7 @@ CREATE TABLE public.oauth_sessions (
   return_url text NOT NULL,
   
   -- Session expiration timestamp (2-hour window for demo scenarios)
-  -- Academic requirement: reasonable expiry for demonstration purposes
+  -- requirement: reasonable expiry for demonstration purposes
   expires_at timestamptz NOT NULL DEFAULT (now() + INTERVAL '2 hours'),
   
   -- Track when the token was used for claims exchange
@@ -98,9 +96,9 @@ COMMENT ON COLUMN public.oauth_sessions.used_at IS
 'Timestamp when token was used for claims exchange. NULL for unused tokens. 
 Supports token reusability analysis and comprehensive audit trails.';
 
--- =====================================================
+-- ===
 -- SECTION 3: TOKEN GENERATION FUNCTION
--- =====================================================
+-- ===
 
 -- Create secure token generation function with collision handling
 -- Generates unique tokens with 'tnp_' prefix using PostgreSQL crypto functions
@@ -146,9 +144,9 @@ Returns varchar(36) tokens in format: tnp_[32 hex characters].';
 -- Grant execute permission to service role for token generation
 GRANT EXECUTE ON FUNCTION public.generate_oauth_token() TO service_role;
 
--- =====================================================
+-- ===
 -- SECTION 4: PERFORMANCE INDEXES
--- =====================================================
+-- ===
 
 -- Primary lookup index on session_token for token validation (<3ms requirement)
 -- Most critical query: SELECT * FROM oauth_sessions WHERE session_token = ?
@@ -176,9 +174,9 @@ RAISE LOG 'Date index: expires_at for efficient cleanup and filtering';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 5: ROW LEVEL SECURITY (RLS) POLICIES
--- =====================================================
+-- ===
 
 -- Enable RLS on the oauth_sessions table
 ALTER TABLE public.oauth_sessions ENABLE ROW LEVEL SECURITY;
@@ -219,9 +217,9 @@ RAISE LOG 'No public access - sessions contain sensitive authorization data';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 6: PERMISSIONS & GRANTS
--- =====================================================
+-- ===
 
 -- Grant read access to authenticated users for their own sessions
 GRANT SELECT ON public.oauth_sessions TO authenticated;
@@ -244,9 +242,9 @@ RAISE LOG 'Service role: ALL operations for OAuth system management';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 7: CLEANUP FUNCTION & MIGRATION VALIDATION
--- =====================================================
+-- ===
 
 -- Create cleanup function for expired OAuth sessions
 -- Automatically removes expired sessions to maintain database performance
@@ -282,9 +280,9 @@ for database maintenance. Logs activity for monitoring.';
 -- Grant execute permission to service role for cleanup operations
 GRANT EXECUTE ON FUNCTION public.cleanup_expired_oauth_sessions() TO service_role;
 
--- =====================================================
+-- ===
 -- MIGRATION VALIDATION & COMPLETION
--- =====================================================
+-- ===
 
 -- Simple validation log (removed complex validation for now)
 DO $$
@@ -303,7 +301,7 @@ RAISE LOG '';
 RAISE LOG '✅ OAUTH SESSIONS INFRASTRUCTURE:';
 RAISE LOG '  • Table created with comprehensive constraints and documentation';
 RAISE LOG '  • Token format: tnp_[32 hex chars] with uniqueness validation';
-RAISE LOG '  • 2-hour default expiry for academic demonstration scenarios';
+RAISE LOG '  • 2-hour default expiry for demonstration scenarios';
 RAISE LOG '  • Foreign keys to profiles and oauth_applications with CASCADE';
 RAISE LOG '';
 RAISE LOG '✅ PERFORMANCE OPTIMIZATION:';

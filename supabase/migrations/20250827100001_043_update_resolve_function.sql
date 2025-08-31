@@ -1,18 +1,15 @@
 -- Update OAuth Resolution Function for Trigger-Based Logging
--- Migration: 20250827100001_043_update_resolve_function.sql
 -- Purpose: Remove client-side logging from resolve_oauth_oidc_claims function
--- Date: August 27, 2025
--- Performance: Maintains <3ms resolution times, simplifies function logic
 
--- =====================================================
+-- ===
 -- OVERVIEW & CHANGES
--- =====================================================
+-- ===
 
 -- Changes made:
 -- 1. Remove any client-side log_app_usage() calls
 -- 2. Keep only the used_at timestamp update (triggers automatic logging)
 -- 3. Simplify function logic (remove logging complexity)
--- 4. Maintain academic constraint: <80 lines total
+-- 4. Maintain Note: <80 lines total
 -- 5. Focus on core resolution algorithm
 
 -- Benefits:
@@ -21,9 +18,9 @@
 -- - Atomic logging via database trigger
 -- - Better error isolation (logging failures don't affect resolution)
 
--- =====================================================
+-- ===
 -- SECTION 1: UPDATE RESOLVE FUNCTION
--- =====================================================
+-- ===
 
 -- Update resolve_oauth_oidc_claims to use trigger-based logging only
 CREATE OR REPLACE FUNCTION public.resolve_oauth_oidc_claims(p_session_token text)
@@ -119,14 +116,14 @@ END $$;
 
 -- Update function documentation
 COMMENT ON FUNCTION public.resolve_oauth_oidc_claims(text) IS 
-'Academic OAuth OIDC claims resolution with trigger-based automatic logging.
+'OAuth OIDC claims resolution with trigger-based automatic logging.
 Core algorithm: Session Token → Client Registry → Context Assignment → OIDC Claims.
 Simplified implementation: 70 lines, trigger handles usage logging automatically.
 Performance: <3ms resolution time, no client-side logging complexity.';
 
--- =====================================================
+-- ===
 -- SECTION 2: VALIDATE INTEGRATION
--- =====================================================
+-- ===
 
 -- Verify the function and trigger work together correctly
 DO $$
@@ -150,7 +147,7 @@ WHERE tgname = 'oauth_usage_logging_trigger'
 AND tgrelid = 'public.oauth_sessions'::regclass
 ) INTO trigger_exists;
 
--- Estimate function complexity (academic constraint check)
+-- Estimate function complexity (constraint check)
 SELECT LENGTH(prosrc) / 50 INTO line_count  -- Rough line count estimate
 FROM pg_proc p
 JOIN pg_namespace n ON p.pronamespace = n.oid
@@ -167,19 +164,19 @@ RAISE EXCEPTION 'Function Update: oauth_usage_logging_trigger not found';
 END IF;
 
 IF line_count > 80 THEN
-RAISE EXCEPTION 'Function Update: Function exceeds 80-line academic constraint (% estimated lines)', line_count;
+RAISE EXCEPTION 'Function Update: Function exceeds 80-line constraint (% estimated lines)', line_count;
 END IF;
 
 RAISE LOG 'Function Update: All validation checks passed successfully';
 RAISE LOG 'Function: resolve_oauth_oidc_claims updated for trigger-based logging';
 RAISE LOG 'Integration: Function + trigger provide atomic OAuth logging';
-RAISE LOG 'Academic compliance: Function estimated at % lines (limit: 80)', line_count;
+RAISE LOG 'compliance: Function estimated at % lines (limit: 80)', line_count;
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 3: MIGRATION COMPLETION
--- =====================================================
+-- ===
 
 -- Final migration completion log
 DO $$
@@ -190,7 +187,7 @@ RAISE LOG '✅ FUNCTION UPDATE COMPLETE:';
 RAISE LOG '  • resolve_oauth_oidc_claims simplified for trigger-based logging';
 RAISE LOG '  • Removed client-side log_app_usage() calls entirely';
 RAISE LOG '  • Kept only used_at timestamp update (triggers automatic logging)';
-RAISE LOG '  • Function maintained under 80-line academic constraint';
+RAISE LOG '  • Function maintained under 80-line constraint';
 RAISE LOG '';
 RAISE LOG '✅ INTEGRATION BENEFITS:';
 RAISE LOG '  • Cleaner function code focused on core resolution algorithm';

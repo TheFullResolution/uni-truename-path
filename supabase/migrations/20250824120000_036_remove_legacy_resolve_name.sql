@@ -1,5 +1,3 @@
--- Migration: 036 - Remove Legacy resolve_name Function
--- Date: August 24, 2025
 -- Step: 16.2.7 - Legacy resolve_name Cleanup
 -- Purpose: Final cleanup of legacy resolve_name function and complete migration to OIDC-based system
 

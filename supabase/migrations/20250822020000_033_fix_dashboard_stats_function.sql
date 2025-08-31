@@ -1,12 +1,10 @@
 -- Step 16.1.5: Fix OAuth Dashboard Stats Function GROUP BY Error
--- Migration: 20250822020000_033_fix_dashboard_stats_function.sql  
 -- Purpose: Fix GROUP BY clause error in get_oauth_dashboard_stats function
--- Date: August 22, 2025
 -- Context: Hotfix for OAuth migration testing completion
 
--- =====================================================
+-- ===
 -- SECTION 1: MIGRATION INITIALIZATION & LOGGING
--- =====================================================
+-- ===
 
 -- Log migration start
 DO $$
@@ -17,9 +15,9 @@ RAISE LOG 'Issue: json_agg with ORDER BY in subquery conflicts with main query O
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 2: FIX DASHBOARD STATS FUNCTION
--- =====================================================
+-- ===
 
 -- Replace the get_oauth_dashboard_stats function with fixed GROUP BY handling
 CREATE OR REPLACE FUNCTION public.get_oauth_dashboard_stats(p_profile_id uuid)
@@ -142,9 +140,9 @@ $$;
 COMMENT ON FUNCTION public.get_oauth_dashboard_stats IS 
 'FIXED OAuth-focused dashboard statistics for demo integration - resolved GROUP BY conflict in recent activity query';
 
--- =====================================================
+-- ===
 -- SECTION 3: VALIDATION & COMPLETION
--- =====================================================
+-- ===
 
 -- Test the fixed function with a dummy call
 DO $$

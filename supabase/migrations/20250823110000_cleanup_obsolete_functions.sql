@@ -1,7 +1,6 @@
--- =============================================================================
+-- ===
 -- Cleanup Obsolete Database Functions Migration for TrueNamePath
--- =============================================================================
--- Migration: 20250823110000_cleanup_obsolete_functions.sql
+-- ===
 -- Purpose: Remove obsolete complete_signup_with_oidc function and ensure database consistency
 --
 -- Background: 
@@ -16,8 +15,7 @@
 --   4. Create rollback procedure documentation
 --   5. Test database consistency
 --
--- Date: August 23, 2025
--- =============================================================================
+-- ===
 
 -- Log migration start
 DO $$
@@ -29,9 +27,9 @@ RAISE LOG 'Date: August 23, 2025';
 END
 $$;
 
--- =============================================================================
+-- ===
 -- STEP 1: Verify enhanced signup system is working before cleanup
--- =============================================================================
+-- ===
 
 DO $$
 DECLARE
@@ -52,9 +50,9 @@ RAISE LOG 'Enhanced signup system validated - safe to proceed with cleanup';
 END
 $$;
 
--- =============================================================================
+-- ===
 -- STEP 2: Document function removal for rollback purposes
--- =============================================================================
+-- ===
 
 -- Create rollback information function (for documentation/emergency use)
 CREATE OR REPLACE FUNCTION public.get_cleanup_rollback_info()
@@ -82,9 +80,9 @@ COMMENT ON FUNCTION public.get_cleanup_rollback_info() IS
 'Documentation function containing rollback information for database cleanup migration.
 Contains details about removed functions and how to restore them if needed.';
 
--- =============================================================================
+-- ===
 -- STEP 3: Remove obsolete complete_signup_with_oidc function
--- =============================================================================
+-- ===
 
 DO $$
 DECLARE
@@ -111,9 +109,9 @@ END IF;
 END
 $$;
 
--- =============================================================================
+-- ===
 -- STEP 4: Verify database consistency after cleanup
--- =============================================================================
+-- ===
 
 -- Create comprehensive database consistency check
 CREATE OR REPLACE FUNCTION public.verify_database_consistency()
@@ -174,9 +172,9 @@ COMMENT ON FUNCTION public.verify_database_consistency() IS
 'Comprehensive database consistency check after cleanup migration.
 Verifies enhanced signup system is active and obsolete functions are removed.';
 
--- =============================================================================
+-- ===
 -- STEP 5: Run consistency verification
--- =============================================================================
+-- ===
 
 DO $$
 DECLARE
@@ -197,9 +195,9 @@ RAISE LOG 'Database consistency verified - cleanup successful';
 END
 $$;
 
--- =============================================================================
+-- ===
 -- STEP 6: Test enhanced signup functionality
--- =============================================================================
+-- ===
 
 -- Create test function to verify enhanced signup works
 CREATE OR REPLACE FUNCTION public.test_enhanced_signup_functionality()
@@ -239,9 +237,9 @@ COMMENT ON FUNCTION public.test_enhanced_signup_functionality() IS
 'Comprehensive test of enhanced signup functionality after cleanup migration.
 Returns complete status of enhanced signup system and cleanup results.';
 
--- =============================================================================
+-- ===
 -- STEP 7: Grant necessary permissions for new functions
--- =============================================================================
+-- ===
 
 -- Grant permissions on new utility functions
 GRANT EXECUTE ON FUNCTION public.get_cleanup_rollback_info() TO postgres, service_role;
@@ -255,9 +253,9 @@ RAISE LOG 'Granted permissions on cleanup utility functions';
 END
 $$;
 
--- =============================================================================
+-- ===
 -- STEP 8: Final validation and migration completion
--- =============================================================================
+-- ===
 
 DO $$
 DECLARE

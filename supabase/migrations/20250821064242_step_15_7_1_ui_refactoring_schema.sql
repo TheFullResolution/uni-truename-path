@@ -2,9 +2,9 @@
 -- This migration implements the comprehensive schema refactoring for TrueNamePath
 -- Focus: Clean up existing scope complexity, introduce simplified context visibility
 
--- =====================================================
+-- ===
 -- SECTION 1: CLEANUP EXISTING CONFLICTING SCHEMAS
--- =====================================================
+-- ===
 
 -- Drop existing context_oidc_assignments table completely
 -- This table had scope/visibility complexity that needs to be simplified
@@ -18,9 +18,9 @@ DROP TYPE IF EXISTS oidc_property_type_enum CASCADE;
 DROP FUNCTION IF EXISTS validate_oidc_scopes(text[]) CASCADE;
 DROP FUNCTION IF EXISTS check_scope_access(text, text[]) CASCADE;
 
--- =====================================================
+-- ===
 -- SECTION 2: CREATE NEW SIMPLIFIED ENUMS
--- =====================================================
+-- ===
 
 -- Context visibility enum - single source of truth for visibility control
 CREATE TYPE context_visibility AS ENUM ('public', 'restricted', 'private');
@@ -36,9 +36,9 @@ CREATE TYPE oidc_property AS ENUM (
   'middle_name'
 );
 
--- =====================================================
+-- ===
 -- SECTION 3: UPDATE USER_CONTEXTS TABLE
--- =====================================================
+-- ===
 
 -- Add visibility column to user_contexts with default 'restricted'
 ALTER TABLE user_contexts 
@@ -58,14 +58,14 @@ ADD COLUMN is_permanent boolean NOT NULL DEFAULT false;
   END IF;
 END $$;
 
--- Add constraint: default context must be public if permanent
+-- Add Note: default context must be public if permanent
 ALTER TABLE user_contexts 
 ADD CONSTRAINT default_context_visibility_check 
 CHECK (
   NOT is_permanent OR visibility = 'public'
 );
 
--- Add partial unique constraint: only one permanent context per user
+-- Add partial unique Note: only one permanent context per user
 -- This allows multiple non-permanent contexts but ensures only one default
 CREATE UNIQUE INDEX unique_permanent_context_per_user 
 ON user_contexts (user_id) 
@@ -78,9 +78,9 @@ COMMENT ON COLUMN user_contexts.visibility IS
 COMMENT ON COLUMN user_contexts.is_permanent IS 
 'Marks system-managed default contexts that cannot be deleted by users';
 
--- =====================================================
+-- ===
 -- SECTION 4: CREATE SIMPLIFIED ASSIGNMENT TABLE
--- =====================================================
+-- ===
 
 -- Create new context_oidc_assignments table with simplified structure
 -- No scope complexity, just direct property assignments
@@ -104,9 +104,9 @@ COMMENT ON TABLE context_oidc_assignments IS
 COMMENT ON COLUMN context_oidc_assignments.oidc_property IS 
 'OIDC standard property type (name, given_name, etc.) for this assignment';
 
--- =====================================================
+-- ===
 -- SECTION 5: CREATE INDEXES FOR PERFORMANCE
--- =====================================================
+-- ===
 
 -- Performance indexes for common query patterns
 CREATE INDEX idx_context_oidc_assignments_user_context 
@@ -122,9 +122,9 @@ CREATE INDEX idx_user_contexts_permanent
 ON user_contexts(user_id, is_permanent) 
 WHERE is_permanent = true;
 
--- =====================================================
+-- ===
 -- SECTION 6: ROW LEVEL SECURITY (RLS)
--- =====================================================
+-- ===
 
 -- Enable RLS on the new table
 ALTER TABLE context_oidc_assignments ENABLE ROW LEVEL SECURITY;
@@ -157,9 +157,9 @@ TO authenticated
 USING (auth.uid()::uuid = user_id)
 WITH CHECK (auth.uid()::uuid = user_id);
 
--- =====================================================
+-- ===
 -- SECTION 7: UPDATE TRIGGERS
--- =====================================================
+-- ===
 
 -- Create trigger for updated_at on context_oidc_assignments
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -174,9 +174,9 @@ CREATE TRIGGER update_context_oidc_assignments_updated_at
 BEFORE UPDATE ON context_oidc_assignments
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- =====================================================
+-- ===
 -- SECTION 8: CLEANUP OLD SCOPE REFERENCES
--- =====================================================
+-- ===
 
 -- Remove any scope-related columns from existing tables if they exist
 -- This ensures no leftover scope complexity
@@ -197,9 +197,9 @@ END $$;
 -- Keep oidc_property column in context_name_assignments table (needed for get_context_oidc_claims function)
 -- Note: Previously this migration dropped oidc_property, but it's required for OAuth integration
 
--- =====================================================
+-- ===
 -- SECTION 9: VALIDATION AND VERIFICATION
--- =====================================================
+-- ===
 
 -- Verify the new structure is in place
 DO $$ 

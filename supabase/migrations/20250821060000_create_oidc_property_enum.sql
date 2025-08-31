@@ -1,14 +1,13 @@
 -- TrueNamePath: Migration 027 - Create OIDC Property Enum
--- Date: August 21, 2025
 -- Purpose: Replace CHECK constraint with enum type to establish single source of truth for OIDC properties
 -- Status: Production-ready
 -- Issue: Frontend schema includes 7 OIDC properties but database CHECK constraint only has 6 (missing middle_name)
 
 BEGIN;
 
--- =============================================================================
+-- ===
 -- Log migration start
--- =============================================================================
+-- ===
 
 DO $$
 BEGIN
@@ -17,9 +16,9 @@ BEGIN
   RAISE LOG 'Solution: Replace CHECK constraint with comprehensive enum type';
 END $$;
 
--- =============================================================================
+-- ===
 -- Create enum with all 7 OIDC properties (including middle_name)
--- =============================================================================
+-- ===
 
 -- Create enum type with all supported OIDC properties
 -- This becomes the single source of truth for valid OIDC properties
@@ -41,9 +40,9 @@ BEGIN
   RAISE LOG '  ✅ display_name, preferred_username, middle_name';
 END $$;
 
--- =============================================================================
+-- ===
 -- Replace CHECK constraint with enum type
--- =============================================================================
+-- ===
 
 -- Drop the existing CHECK constraint that was missing middle_name
 ALTER TABLE public.context_name_assignments
@@ -70,9 +69,9 @@ BEGIN
   RAISE LOG '  ✅ NULL values handled correctly (enum allows NULL)';
 END $$;
 
--- =============================================================================
+-- ===
 -- Validation and verification
--- =============================================================================
+-- ===
 
 -- Verify enum was created with all expected values
 DO $$
@@ -149,9 +148,9 @@ BEGIN
   RAISE LOG '  ✅ All enum values functional and accessible';
 END $$;
 
--- =============================================================================
+-- ===
 -- Migration completion and summary
--- =============================================================================
+-- ===
 
 -- Log successful completion
 DO $$
@@ -167,9 +166,9 @@ END $$;
 
 COMMIT;
 
--- =============================================================================
+-- ===
 -- POST-MIGRATION NOTES
--- =============================================================================
+-- ===
 
 -- This migration establishes the database enum as the authoritative source for OIDC properties:
 --

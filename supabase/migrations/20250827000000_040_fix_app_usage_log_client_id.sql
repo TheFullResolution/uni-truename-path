@@ -1,12 +1,11 @@
 -- TrueNamePath Migration: Fix OAuth Logging Client ID System
--- Migration: 20250827000000_040_fix_app_usage_log_client_id
 -- Purpose: Update app_usage_log table to use client_id VARCHAR(20) instead of app_id UUID
 -- Context: Part of Step 16 OAuth integration - aligns logging with client_id conversion
 -- Issue: app_usage_log was missed in previous client_id conversion migration
 
--- =====================================================
+-- ===
 -- SECTION 1: MIGRATION INITIALIZATION & LOGGING
--- =====================================================
+-- ===
 
 -- Log migration start
 DO $$
@@ -18,9 +17,9 @@ RAISE LOG 'Performance Target: <3ms logging operations, maintain all existing fu
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 2: BACKUP EXISTING DATA
--- =====================================================
+-- ===
 
 -- Create backup table for existing usage logs
 CREATE TABLE IF NOT EXISTS public.app_usage_log_backup_040 AS
@@ -35,9 +34,9 @@ RAISE LOG 'Client ID Fix: Backed up % existing app usage log entries', backup_co
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 3: DROP FOREIGN KEY CONSTRAINT AND INDEXES
--- =====================================================
+-- ===
 
 -- Remove foreign key constraint to oauth_applications
 ALTER TABLE public.app_usage_log 
@@ -56,9 +55,9 @@ RAISE LOG 'Client ID Fix: Removed foreign key constraints and indexes for app_id
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 4: SCHEMA TRANSFORMATION
--- =====================================================
+-- ===
 
 -- Add new client_id column
 ALTER TABLE public.app_usage_log 
@@ -89,9 +88,9 @@ RAISE LOG 'Client ID Fix: Schema transformation complete - app_id -> client_id';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 5: RECREATE PERFORMANCE INDEXES
--- =====================================================
+-- ===
 
 -- Primary dashboard query index: user's recent activity (unchanged)
 CREATE INDEX IF NOT EXISTS idx_app_usage_log_profile_time 
@@ -128,9 +127,9 @@ RAISE LOG 'Client index: (client_id, created_at) for app usage analytics';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 6: UPDATE TABLE COMMENTS
--- =====================================================
+-- ===
 
 -- Update table and column comments for new schema
 COMMENT ON COLUMN public.app_usage_log.client_id IS 
@@ -144,9 +143,9 @@ RAISE LOG 'Client ID Fix: Updated table documentation for client_id schema';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 7: UPDATE FUNCTIONS
--- =====================================================
+-- ===
 
 -- Update log_app_usage function to use p_client_id parameter instead of p_app_id
 CREATE OR REPLACE FUNCTION public.log_app_usage(
@@ -214,7 +213,7 @@ $$;
 COMMENT ON FUNCTION public.log_app_usage(uuid, varchar, varchar, uuid, uuid, integer, boolean, varchar) IS 
 'OAuth usage logging for app_usage_log table using client_id system. 
 Validates client_id format and provides comprehensive error handling for reliable analytics.
-Academic constraint: <80 lines, <3ms execution time.';
+Note: <80 lines, <3ms execution time.';
 
 DO $$
 BEGIN
@@ -222,9 +221,9 @@ RAISE LOG 'Client ID Fix: Updated log_app_usage function for client_id parameter
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 8: UPDATE ANALYTICS FUNCTIONS
--- =====================================================
+-- ===
 
 -- Update get_oauth_dashboard_stats to work without oauth_applications joins
 CREATE OR REPLACE FUNCTION public.get_oauth_dashboard_stats(p_profile_id uuid)
@@ -340,7 +339,7 @@ $$;
 -- Update function documentation
 COMMENT ON FUNCTION public.get_oauth_dashboard_stats(uuid) IS 
 'OAuth dashboard statistics using client_id system without oauth_applications dependency. 
-Returns analytics for academic demonstration - simplified for performance and reliability.';
+Returns analytics for demonstration - simplified for performance and reliability.';
 
 DO $$
 BEGIN
@@ -348,9 +347,9 @@ RAISE LOG 'Client ID Fix: Updated get_oauth_dashboard_stats function for client_
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 9: RECREATE ANALYTICS VIEWS
--- =====================================================
+-- ===
 
 -- Daily app usage summary view (updated for client_id)
 CREATE VIEW public.oauth_app_daily_stats AS
@@ -403,9 +402,9 @@ RAISE LOG 'Client ID Fix: Recreated analytics views for client_id schema';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 10: MIGRATION VALIDATION
--- =====================================================
+-- ===
 
 -- Validate the migration results
 DO $$
@@ -464,9 +463,9 @@ RAISE LOG 'Client ID Fix: All validation checks passed successfully';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 11: MIGRATION COMPLETION
--- =====================================================
+-- ===
 
 -- Final migration completion log
 DO $$
@@ -482,7 +481,7 @@ RAISE LOG '';
 RAISE LOG '✅ FUNCTIONS UPDATED:';
 RAISE LOG '  • log_app_usage now uses p_client_id parameter';
 RAISE LOG '  • get_oauth_dashboard_stats works without oauth_applications dependency';
-RAISE LOG '  • Maintained academic constraint of <80 lines per function';
+RAISE LOG '  • Maintained constraint of <80 lines per function';
 RAISE LOG '  • Added comprehensive error handling and logging';
 RAISE LOG '';
 RAISE LOG '✅ ANALYTICS SYSTEM UPDATED:';
@@ -494,7 +493,7 @@ RAISE LOG '✅ PERFORMANCE & SECURITY:';
 RAISE LOG '  • Maintained <3ms logging operation requirements';
 RAISE LOG '  • Added client_id format validation for security';
 RAISE LOG '  • RLS policies unchanged - privacy protection maintained';
-RAISE LOG '  • Academic demonstration requirements satisfied';
+RAISE LOG '  • demonstration requirements satisfied';
 RAISE LOG '';
 RAISE LOG '🔧 OAUTH LOGGING NOW READY:';
 RAISE LOG '  • OAuth resolution can now log usage with session tokens';

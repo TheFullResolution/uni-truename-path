@@ -1,7 +1,5 @@
 -- TrueNamePath: Step 3 - Security Fix Migration
--- Migration: 20250811000001_020_step3_security_fix.sql
 -- Purpose: Remove anonymous access to helper functions (security best practice)
--- Date: August 11, 2025
 
 -- SECURITY ISSUE: Helper functions in Migration 19 have EXECUTE permissions 
 -- granted to both 'authenticated' and 'anon' roles, which violates the
@@ -10,9 +8,9 @@
 
 BEGIN;
 
--- =============================================================================
+-- ===
 -- STEP 1: Remove anonymous access from helper functions
--- =============================================================================
+-- ===
 
 -- Remove anon permissions from get_active_consent()
 REVOKE EXECUTE ON FUNCTION public.get_active_consent(uuid, uuid) FROM anon;
@@ -23,9 +21,9 @@ REVOKE EXECUTE ON FUNCTION public.get_context_assignment(uuid, text) FROM anon;
 -- Remove anon permissions from get_preferred_name()
 REVOKE EXECUTE ON FUNCTION public.get_preferred_name(uuid) FROM anon;
 
--- =============================================================================
+-- ===
 -- STEP 2: Explicitly confirm authenticated access (defensive programming)
--- =============================================================================
+-- ===
 
 -- Ensure authenticated users still have access to get_active_consent()
 GRANT EXECUTE ON FUNCTION public.get_active_consent(uuid, uuid) TO authenticated;
@@ -39,9 +37,9 @@ GRANT EXECUTE ON FUNCTION public.get_preferred_name(uuid) TO authenticated;
 -- Service role maintains full access (already granted in Migration 19)
 -- No changes needed for service_role permissions
 
--- =============================================================================
+-- ===
 -- STEP 3: Security Fix Applied Successfully
--- =============================================================================
+-- ===
 
 -- Log security improvements
 DO $$
@@ -66,9 +64,9 @@ END $$;
 
 COMMIT;
 
--- =============================================================================
+-- ===
 -- POST-MIGRATION SECURITY STATUS
--- =============================================================================
+-- ===
 
 -- SECURITY IMPROVEMENTS IMPLEMENTED:
 -- 

@@ -1,12 +1,10 @@
--- Migration: 20250831000002_056_auto_populate_context.sql
 -- Purpose: Step 18 Session 7 - Auto-Population from Default Context
 -- Description: Implement automatic population of new contexts with OIDC assignments from user's default context
--- Date: August 31, 2025
 -- Performance: <10ms operation time with atomic transactions
 
--- =====================================================
+-- ===
 -- OVERVIEW & REQUIREMENTS
--- =====================================================
+-- ===
 
 -- AUTO-POPULATION FROM DEFAULT CONTEXT:
 -- This migration implements automatic population of new contexts with OIDC assignments
@@ -32,11 +30,11 @@
 -- - New contexts automatically have required OIDC properties for completeness
 -- - Reduces manual work for users to assign names to contexts
 -- - Follows existing pattern of default context providing baseline assignments
--- - Academic constraint: Simple, maintainable auto-population logic
+-- - Note: Simple, maintainable auto-population logic
 
--- =====================================================
+-- ===
 -- SECTION 1: MIGRATION HEADER AND LOGGING
--- =====================================================
+-- ===
 
 DO $$
 BEGIN
@@ -47,9 +45,9 @@ RAISE LOG 'Performance: <10ms atomic operation with indexed queries on context_o
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 2: AUTO-POPULATE CONTEXT FUNCTION
--- =====================================================
+-- ===
 
 -- Function to automatically populate new context with OIDC assignments from default context
 -- Returns JSONB with operation status and details
@@ -247,9 +245,9 @@ Designed for new context creation to ensure OIDC completeness without manual ass
 Performance: <10ms atomic operation with comprehensive error handling and validation.
 Used by auto_populate_new_context_trigger to automatically populate contexts on creation.';
 
--- =====================================================
+-- ===
 -- SECTION 3: AUTO-POPULATE TRIGGER FUNCTION
--- =====================================================
+-- ===
 
 -- Trigger function to automatically populate new contexts after insertion
 CREATE OR REPLACE FUNCTION public.auto_populate_new_context_trigger()
@@ -306,9 +304,9 @@ Calls auto_populate_context function to copy assignments from user default conte
 Designed to fail gracefully - context creation succeeds even if auto-population fails.
 Avoids recursion by skipping permanent contexts (populated during signup).';
 
--- =====================================================
+-- ===
 -- SECTION 4: CREATE TRIGGER ON USER_CONTEXTS
--- =====================================================
+-- ===
 
 -- Create trigger that fires after new context insertion
 DROP TRIGGER IF EXISTS auto_populate_new_context_trigger ON user_contexts;
@@ -325,9 +323,9 @@ RAISE LOG 'Trigger will automatically populate new non-permanent contexts with O
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 5: GRANT PERMISSIONS
--- =====================================================
+-- ===
 
 -- Grant execute permissions to authenticated users for API access
 GRANT EXECUTE ON FUNCTION public.auto_populate_context(UUID, UUID) TO authenticated;
@@ -344,9 +342,9 @@ RAISE LOG '  • auto_populate_new_context_trigger() - automatic trigger functio
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 6: VALIDATE IMPLEMENTATION
--- =====================================================
+-- ===
 
 -- Comprehensive validation of the auto-populate context system
 DO $$
@@ -442,9 +440,9 @@ RAISE LOG '  • Execute permissions validated for authenticated role';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 7: MIGRATION COMPLETION
--- =====================================================
+-- ===
 
 -- Final migration completion log with detailed summary
 DO $$
@@ -463,7 +461,7 @@ RAISE LOG '  • OPERATION: Copy all OIDC assignments from source to target cont
 RAISE LOG '  • REQUIRED PROPERTIES: name, given_name, family_name (for completeness)';
 RAISE LOG '  • RECURSION PREVENTION: Skip permanent contexts (populated during signup)';
 RAISE LOG '';
-RAISE LOG '🔧 TECHNICAL IMPLEMENTATION:';
+RAISE LOG 'TECHNICAL IMPLEMENTATION:';
 RAISE LOG '  • Atomic operation with comprehensive error handling and rollback';
 RAISE LOG '  • Performance optimized with indexed queries (<10ms requirement)';
 RAISE LOG '  • Graceful failure - context creation succeeds even if auto-population fails';
@@ -476,8 +474,8 @@ RAISE LOG '  • Comprehensive error logging with detailed context information';
 RAISE LOG '  • Edge case handling for missing default context or empty assignments';
 RAISE LOG '  • Race condition protection with conflict resolution';
 RAISE LOG '';
-RAISE LOG '🎓 ACADEMIC COMPLIANCE:';
-RAISE LOG '  • Simple, maintainable auto-population logic within academic constraints';
+RAISE LOG 'ACADEMIC COMPLIANCE:';
+RAISE LOG '  • Simple, maintainable auto-population logic within constraints';
 RAISE LOG '  • Clear separation between manual function and automatic trigger';
 RAISE LOG '  • Database-level automation reduces manual user work';
 RAISE LOG '  • Educational demonstration of trigger-based automation patterns';

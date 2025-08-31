@@ -1,6 +1,5 @@
 -- TrueNamePath: Drop Unused Database Functions - Security Cleanup
 -- Migration 041: Remove functions that are not actively used in the application
--- Date: August 27, 2025
 -- Purpose: Reduce security warnings and clean up database schema
 
 -- Drop unused utility and test functions

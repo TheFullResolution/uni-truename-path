@@ -1,13 +1,12 @@
 -- TrueNamePath: Migration 024 - Implement Default Context Pattern
--- Date: August 20, 2025
 -- Purpose: Change from 3 default contexts to 1 permanent "Default" context
 -- Status: Production-ready
 
 BEGIN;
 
--- =============================================================================
+-- ===
 -- STEP 1: Add is_permanent column to user_contexts table
--- =============================================================================
+-- ===
 
 -- Add the is_permanent column with default FALSE
 ALTER TABLE public.user_contexts 
@@ -23,9 +22,9 @@ BEGIN
   RAISE LOG 'TrueNamePath Migration 024: Added is_permanent column to user_contexts table';
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 2: Add unique constraint for permanent contexts
--- =============================================================================
+-- ===
 
 -- Create unique index to ensure only one permanent context per user
 CREATE UNIQUE INDEX IF NOT EXISTS idx_one_permanent_context_per_user
@@ -38,9 +37,9 @@ BEGIN
   RAISE LOG 'TrueNamePath Migration 024: Created unique constraint for one permanent context per user';
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 3: Drop existing trigger and function
--- =============================================================================
+-- ===
 
 -- Drop the trigger first
 DROP TRIGGER IF EXISTS trigger_create_default_contexts ON public.profiles;
@@ -54,9 +53,9 @@ BEGIN
   RAISE LOG 'TrueNamePath Migration 024: Dropped existing trigger and function for 3-context creation';
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 4: Create new function for single default context
--- =============================================================================
+-- ===
 
 -- Create new function to create only one "Default" context
 CREATE OR REPLACE FUNCTION public.create_default_context_for_user()
@@ -102,9 +101,9 @@ BEGIN
   RAISE LOG 'TrueNamePath Migration 024: Created create_default_context_for_user() function';
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 5: Create new trigger
--- =============================================================================
+-- ===
 
 -- Create trigger that fires after INSERT on profiles
 CREATE TRIGGER trigger_create_default_context
@@ -118,9 +117,9 @@ BEGIN
   RAISE LOG 'TrueNamePath Migration 024: Created trigger_create_default_context on profiles table';
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 6: Grant necessary permissions
--- =============================================================================
+-- ===
 
 -- Ensure proper permissions for the function
 GRANT EXECUTE ON FUNCTION public.create_default_context_for_user() TO postgres, service_role;
@@ -134,9 +133,9 @@ BEGIN
   RAISE LOG 'TrueNamePath Migration 024: Granted necessary permissions for default context creation';
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 7: Validation and completion
--- =============================================================================
+-- ===
 
 -- Validate migration success
 DO $$
@@ -210,9 +209,9 @@ END $$;
 
 COMMIT;
 
--- =============================================================================
+-- ===
 -- POST-MIGRATION NOTES
--- =============================================================================
+-- ===
 
 -- This migration implements the default context pattern for TrueNamePath:
 --
@@ -239,7 +238,7 @@ COMMIT;
 -- • Test new user creation: should auto-create 1 "Default" context
 -- • Test context deletion: "Default" context should be protected
 -- • Test duplicate migration runs: should handle gracefully
--- • Test unique constraint: only one permanent context per user allowed
+-- • Test unique Note: only one permanent context per user allowed
 --
 -- ROLLBACK PROCEDURE:
 -- If rollback is needed, run:

@@ -1,4 +1,3 @@
--- Migration: 20250830000000_052_account_deletion_function
 -- Purpose: Create complete account deletion function for settings page
 -- Description: Implements secure account deletion with email verification and comprehensive cleanup
 --
@@ -7,11 +6,11 @@
 -- • Complete data erasure with cascading deletion via profiles table
 -- • Direct auth.users deletion with SECURITY DEFINER privileges
 -- • Comprehensive error handling and JSON responses
--- • Follows academic security and privacy requirements
+-- • Follows security and privacy requirements
 
--- =====================================================
+-- ===
 -- SECTION 1: MIGRATION HEADER AND LOGGING
--- =====================================================
+-- ===
 
 DO $$
 BEGIN
@@ -22,9 +21,9 @@ RAISE LOG 'Privacy: GDPR-compliant complete data removal and erasure';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 2: CREATE ACCOUNT DELETION FUNCTION
--- =====================================================
+-- ===
 
 -- Create the secure account deletion function
 -- Uses SECURITY DEFINER to allow deletion from auth.users table
@@ -178,11 +177,11 @@ COMMENT ON FUNCTION public.delete_user_account(UUID, TEXT) IS
 Verifies email confirmation and performs complete data erasure via cascading deletion 
 of all user data from both application and authentication tables.
 Uses SECURITY DEFINER to enable auth.users deletion. GDPR-compliant complete data removal.
-Academic constraint: Secure implementation with comprehensive error handling.';
+Note: Secure implementation with comprehensive error handling.';
 
--- =====================================================
+-- ===
 -- SECTION 3: GRANT PERMISSIONS
--- =====================================================
+-- ===
 
 -- Grant execute permission to authenticated users (for settings page)
 GRANT EXECUTE ON FUNCTION public.delete_user_account(UUID, TEXT) TO authenticated;
@@ -196,9 +195,9 @@ RAISE LOG 'Account Deletion: Granted function permissions to authenticated and s
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 4: VALIDATE FUNCTION IMPLEMENTATION
--- =====================================================
+-- ===
 
 -- Validate the function was created successfully
 DO $$
@@ -251,9 +250,9 @@ RAISE LOG 'Privacy: Complete GDPR-compliant data removal with audit trail';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 5: MIGRATION COMPLETION
--- =====================================================
+-- ===
 
 -- Final migration completion log
 DO $$
@@ -278,7 +277,7 @@ RAISE LOG '✅ DATABASE INTEGRATION:';
 RAISE LOG '  • Leverages existing CASCADE relationships in schema';
 RAISE LOG '  • True GDPR Right to Erasure implementation';
 RAISE LOG '  • Follows established migration patterns and security model';
-RAISE LOG '  • Academic constraint: Secure, maintainable implementation';
+RAISE LOG '  • Note: Secure, maintainable implementation';
 RAISE LOG '';
 RAISE LOG '⚡ READY FOR SETTINGS PAGE: Account deletion function active';
 RAISE LOG 'Next: Implement settings page UI with account deletion confirmation';

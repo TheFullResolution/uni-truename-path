@@ -1,12 +1,11 @@
 -- TrueNamePath Migration: Fix Security Definer Views
--- Migration: 20250828000000_042_fix_security_definer_views
 -- Purpose: Convert oauth analytics views from SECURITY DEFINER to SECURITY INVOKER
 -- Issue: Supabase linter flagged oauth_app_daily_stats and oauth_user_activity_summary as security risks
 -- Solution: Recreate views with security_invoker = true to respect RLS policies
 
--- =====================================================
+-- ===
 -- SECTION 1: MIGRATION INITIALIZATION & LOGGING
--- =====================================================
+-- ===
 
 -- Log migration start
 DO $$
@@ -19,9 +18,9 @@ RAISE LOG 'Target Views: oauth_app_daily_stats, oauth_user_activity_summary';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 2: DROP EXISTING SECURITY DEFINER VIEWS
--- =====================================================
+-- ===
 
 -- Drop existing views that are causing security definer errors
 -- These were created in migrations 032 and 040 without explicit security mode
@@ -34,9 +33,9 @@ RAISE LOG 'Security Fix: Dropped existing SECURITY DEFINER views';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 3: RECREATE VIEWS WITH SECURITY INVOKER
--- =====================================================
+-- ===
 
 -- Daily app usage summary view with SECURITY INVOKER
 -- This ensures the view respects Row Level Security policies
@@ -92,9 +91,9 @@ RAISE LOG 'Security Fix: Recreated views with SECURITY INVOKER mode';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 4: RESTORE VIEW PERMISSIONS
--- =====================================================
+-- ===
 
 -- Grant view permissions (same as original migration)
 GRANT SELECT ON public.oauth_app_daily_stats TO authenticated;
@@ -108,9 +107,9 @@ RAISE LOG 'Security Fix: Restored view permissions for authenticated and service
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 5: VALIDATION AND VERIFICATION
--- =====================================================
+-- ===
 
 -- Validate that views were created successfully with security_invoker
 DO $$
@@ -156,9 +155,9 @@ RAISE LOG 'Security Fix Validation: Successfully created % OAuth analytics views
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 6: MIGRATION COMPLETION
--- =====================================================
+-- ===
 
 -- Final migration completion log
 DO $$
@@ -180,7 +179,7 @@ RAISE LOG '✅ SECURITY IMPROVEMENTS:';
 RAISE LOG '  • Views now execute with querying user permissions (not creator)';
 RAISE LOG '  • Row Level Security policies properly enforced';
 RAISE LOG '  • Aligned with PostgreSQL 15+ and Supabase security best practices';
-RAISE LOG '  • Academic compliance maintained (<80 lines per section)';
+RAISE LOG '  • compliance maintained (<80 lines per section)';
 RAISE LOG '';
 RAISE LOG '✅ PERMISSIONS RESTORED:';
 RAISE LOG '  • authenticated role can SELECT from both views';

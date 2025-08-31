@@ -1,12 +1,10 @@
 -- Step 16.1.4: OAuth Analytics Infrastructure Replacement
--- Migration: 20250822010000_032_app_usage_analytics.sql
 -- Purpose: Replace broken context_usage_analytics with OAuth-focused app_usage_log system
--- Date: August 22, 2025
 -- Context: Part of Step 16 OAuth integration system - enables real dashboard analytics
 
--- =====================================================
+-- ===
 -- SECTION 1: MIGRATION INITIALIZATION & LOGGING
--- =====================================================
+-- ===
 
 -- Log migration start
 DO $$
@@ -18,9 +16,9 @@ RAISE LOG 'Performance Target: <3ms analytics queries for dashboard integration'
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 2: BACKUP AND REMOVE OLD ANALYTICS SYSTEM
--- =====================================================
+-- ===
 
 -- Backup existing analytics data (if any valuable data exists)
 -- This allows rollback if needed during development
@@ -86,9 +84,9 @@ BEGIN
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 3: CREATE NEW OAuth-FOCUSED ANALYTICS SYSTEM
--- =====================================================
+-- ===
 
 -- Create the OAuth app usage log table for simplified analytics
 -- This table tracks OAuth application usage with focus on demo scenarios
@@ -142,9 +140,9 @@ COMMENT ON COLUMN public.app_usage_log.action IS 'Type of OAuth operation: autho
 COMMENT ON COLUMN public.app_usage_log.context_id IS 'User context used for name resolution (if applicable)';
 COMMENT ON COLUMN public.app_usage_log.response_time_ms IS 'Operation response time in milliseconds for performance monitoring';
 
--- =====================================================
+-- ===
 -- SECTION 4: CREATE PERFORMANCE INDEXES
--- =====================================================
+-- ===
 
 -- Primary dashboard query index: user's recent activity
 CREATE INDEX idx_app_usage_log_profile_time 
@@ -179,9 +177,9 @@ BEGIN
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 5: IMPLEMENT ROW LEVEL SECURITY
--- =====================================================
+-- ===
 
 -- Enable RLS for privacy compliance
 ALTER TABLE public.app_usage_log ENABLE ROW LEVEL SECURITY;
@@ -210,9 +208,9 @@ BEGIN
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 6: CREATE HELPER FUNCTIONS
--- =====================================================
+-- ===
 
 -- Simplified OAuth usage logging function
 -- Replaces complex 13-parameter log_context_usage with 7 focused parameters
@@ -269,9 +267,9 @@ GRANT EXECUTE ON FUNCTION public.log_app_usage TO service_role;
 COMMENT ON FUNCTION public.log_app_usage IS 
 'Simplified OAuth usage logging for app_usage_log table - replaces complex log_context_usage';
 
--- =====================================================
+-- ===
 -- SECTION 7: CREATE DASHBOARD ANALYTICS FUNCTION
--- =====================================================
+-- ===
 
 -- OAuth-focused dashboard statistics function
 -- Replaces complex get_dashboard_stats with simplified OAuth metrics
@@ -397,9 +395,9 @@ BEGIN
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 8: CREATE CLEANUP AND MAINTENANCE FUNCTIONS
--- =====================================================
+-- ===
 
 -- Cleanup function for old app usage logs
 -- Removes logs older than specified days to manage storage
@@ -434,9 +432,9 @@ GRANT EXECUTE ON FUNCTION public.cleanup_old_app_logs TO service_role;
 COMMENT ON FUNCTION public.cleanup_old_app_logs IS 
 'Cleanup function to remove old app usage logs for storage management';
 
--- =====================================================
+-- ===
 -- SECTION 9: CREATE ANALYTICS VIEWS
--- =====================================================
+-- ===
 
 -- Daily app usage summary view
 CREATE VIEW public.oauth_app_daily_stats AS
@@ -490,9 +488,9 @@ BEGIN
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 10: SEED DEMO DATA (Optional)
--- =====================================================
+-- ===
 
 -- Create some demo analytics data for development and testing
 -- This will be replaced by real data from OAuth operations
@@ -545,9 +543,9 @@ RAISE LOG 'Analytics Migration: No demo apps found, skipping demo data creation'
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 11: MIGRATION COMPLETION
--- =====================================================
+-- ===
 
 DO $$
 BEGIN

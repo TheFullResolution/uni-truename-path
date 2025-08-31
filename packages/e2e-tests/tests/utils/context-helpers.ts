@@ -1,9 +1,4 @@
-/**
- * Context Management Test Helpers
- *
- * Reusable functions for context, name, and assignment operations in E2E tests.
- * Following academic constraints: ≤30 lines per function
- */
+// Context Management Test Helpers
 
 import type { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
@@ -15,10 +10,6 @@ import {
 
 /**
  * Creates a new context via the dashboard UI
- * @param page - Playwright page instance
- * @param contextName - Name of the context to create
- * @param description - Optional description for the context
- * @returns Promise<boolean> - Success status
  */
 export async function createContext(
   page: Page,
@@ -29,21 +20,15 @@ export async function createContext(
 console.log(`📁 Creating context: ${contextName}`);
 await page.goto('/dashboard/contexts');
 
-// Enhanced wait strategy for different browsers
 await page.waitForLoadState('networkidle', { timeout: 30000 });
 await page.waitForSelector('[data-testid="tab-contexts"]', {
   timeout: 30000,
 });
-
-// Additional wait for Firefox to complete DOM updates
 await page.waitForTimeout(1000);
 
-// Progressive button search with increased timeouts
 let createButton = page.getByRole('button', { name: /add context/i });
 
-// Try multiple approaches with better timeouts for Firefox
 if (!(await createButton.isVisible({ timeout: 5000 }))) {
-  console.log('🔍 First attempt failed, trying alternative selectors...');
   createButton = page
 .locator('button')
 .filter({ hasText: /add context/i })
@@ -51,7 +36,6 @@ if (!(await createButton.isVisible({ timeout: 5000 }))) {
 }
 
 if (!(await createButton.isVisible({ timeout: 5000 }))) {
-  console.log('🔍 Second attempt failed, trying broader selector...');
   createButton = page
 .locator('button')
 .filter({ hasText: /add context/i })
@@ -59,43 +43,16 @@ if (!(await createButton.isVisible({ timeout: 5000 }))) {
 .first();
 }
 
-// Final attempt with testid selector
 if (!(await createButton.isVisible({ timeout: 5000 }))) {
-  console.log('🔍 Third attempt failed, trying testid selector...');
   createButton = page.getByTestId('add-context-button');
 }
 
 if (!(await createButton.isVisible({ timeout: 8000 }))) {
-  // Enhanced debug: log page state and buttons
-  console.log('🔍 Debug: Page URL:', page.url());
-  console.log('🔍 Debug: Page title:', await page.title());
-
-  const allButtons = await page.locator('button').all();
-  const buttonTexts = await Promise.all(
-allButtons.map(async (button) => {
-  try {
-const text = await button.textContent();
-const isVisible = await button.isVisible();
-return `"${text}" (visible: ${isVisible})`;
-  } catch {
-return 'N/A';
-  }
-}),
-  );
-  console.log('🔍 Available buttons:', buttonTexts);
-
-  // Take screenshot for debugging
-  await page.screenshot({
-path: `context-creation-debug-${Date.now()}.png`,
-fullPage: true,
-  });
-
   throw new Error('Create context button not found after all attempts');
 }
 
 await createButton.click();
 
-// Wait for modal/form to appear and be ready
 await page.waitForSelector('[data-testid="context-name-input"]', {
   timeout: 10000,
 });
@@ -105,21 +62,17 @@ if (description) {
   await page.getByTestId('context-description-input').fill(description);
 }
 
-// Enhanced submit button detection with better error handling
 let submitButton = page
   .locator('button')
   .filter({ hasText: /create context|update context|create|save|submit/i })
   .first();
 
-// Wait for submit button to be enabled and visible
 await expect(submitButton).toBeVisible({ timeout: 10000 });
 await expect(submitButton).toBeEnabled({ timeout: 5000 });
 
 await submitButton.click();
 
-// Wait for context creation to complete - look for success indicators
 try {
-  // Wait for modal to close or success message
   await page.waitForTimeout(2000);
   await page.waitForLoadState('networkidle');
 } catch (error) {
@@ -136,10 +89,6 @@ return false;
 
 /**
  * Assigns an existing name to a specific context
- * @param page - Playwright page instance
- * @param nameText - Text of the name to assign
- * @param contextName - Name of the context to assign to
- * @returns Promise<boolean> - Success status
  */
 export async function assignNameToContext(
   page: Page,
@@ -186,10 +135,6 @@ return false;
 
 /**
  * Creates a new name variant with specified category
- * @param page - Playwright page instance
- * @param nameText - Text of the name to create
- * @param category - Name category (LEGAL, PREFERRED, NICKNAME, ALIAS, PROFESSIONAL, CULTURAL)
- * @returns Promise<boolean> - Success status
  */
 export async function createNameVariant(
   page: Page,
@@ -230,9 +175,6 @@ return false;
 
 /**
  * Validates OIDC claims structure and content
- * @param claims - OIDC claims object to validate
- * @param expectedFields - Expected field values to check
- * @returns { isValid: boolean, errors: string[] } - Validation results
  */
 export function verifyOidcClaims(
   claims: Record<string, any>,

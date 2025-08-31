@@ -1,13 +1,12 @@
 -- TrueNamePath: Migration 026 - Fix Context Assignments Constraint
--- Date: August 20, 2025  
 -- Purpose: Remove unique constraint on context_id to allow multiple OIDC property assignments per context
 -- Status: Production-ready
 
 BEGIN;
 
--- =============================================================================
+-- ===
 -- Remove the unique constraint that prevents multiple assignments per context
--- =============================================================================
+-- ===
 
 -- Drop the constraint that only allows one assignment per context
 -- This was preventing OIDC properties from working correctly
@@ -21,9 +20,9 @@ BEGIN
   RAISE LOG '✅ Multiple name assignments per context now allowed (required for OIDC properties)';
 END $$;
 
--- =============================================================================
+-- ===
 -- Add new constraint to ensure unique OIDC property assignments per context
--- =============================================================================
+-- ===
 
 -- Add constraint to ensure only one assignment per OIDC property per context
 -- This replaces the old constraint but allows multiple different properties
@@ -39,9 +38,9 @@ BEGIN
   RAISE LOG '✅ Only one assignment per OIDC property type per context allowed';
 END $$;
 
--- =============================================================================
+-- ===
 -- Validation and completion
--- =============================================================================
+-- ===
 
 -- Validate migration success
 DO $$
@@ -91,9 +90,9 @@ END $$;
 
 COMMIT;
 
--- =============================================================================
+-- ===
 -- POST-MIGRATION NOTES
--- =============================================================================
+-- ===
 
 -- This migration fixes the context assignments constraint issue:
 --

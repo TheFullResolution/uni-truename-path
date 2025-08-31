@@ -1,13 +1,12 @@
 -- TrueNamePath: Migration 023 - Auto-Create Default Contexts
--- Date: August 15, 2025
 -- Purpose: Automatically create default contexts for users on profile creation
 -- Status: Production-ready with comprehensive error handling
 
 BEGIN;
 
--- =============================================================================
+-- ===
 -- STEP 1: Create function to auto-create default contexts
--- =============================================================================
+-- ===
 
 -- Drop trigger first for safe redeployment
 DROP TRIGGER IF EXISTS trigger_create_default_contexts ON public.profiles;
@@ -71,9 +70,9 @@ BEGIN
   RAISE LOG 'TrueNamePath Migration 023: Created create_default_contexts_for_user() function';
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 2: Create trigger to fire after profile insertion
--- =============================================================================
+-- ===
 
 -- Create trigger that fires after INSERT on profiles
 -- This ensures every new profile gets default contexts automatically
@@ -88,9 +87,9 @@ BEGIN
   RAISE LOG 'TrueNamePath Migration 023: Created trigger_create_default_contexts on profiles table';
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 3: Backfill existing users who have no contexts
--- =============================================================================
+-- ===
 
 -- Create default contexts for existing users who don't have any contexts yet
 -- Uses the same ON CONFLICT DO NOTHING pattern for safety
@@ -154,9 +153,9 @@ EXCEPTION
 RAISE EXCEPTION 'TrueNamePath Migration 023: Backfill failed: %', SQLERRM;
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 4: Grant necessary permissions
--- =============================================================================
+-- ===
 
 -- Ensure proper permissions for the function
 GRANT EXECUTE ON FUNCTION public.create_default_contexts_for_user() TO postgres, service_role;
@@ -170,9 +169,9 @@ BEGIN
   RAISE LOG 'TrueNamePath Migration 023: Granted necessary permissions for default context creation';
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 5: Validation and completion
--- =============================================================================
+-- ===
 
 -- Validate migration success
 DO $$
@@ -238,9 +237,9 @@ END $$;
 
 COMMIT;
 
--- =============================================================================
+-- ===
 -- POST-MIGRATION NOTES
--- =============================================================================
+-- ===
 
 -- This migration implements automatic default context creation for TrueNamePath:
 --

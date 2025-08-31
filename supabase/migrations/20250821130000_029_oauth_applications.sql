@@ -1,12 +1,10 @@
 -- Step 16.1.1: OAuth Applications Table for Demo Integration
--- Migration: 20250821130000_029_oauth_applications.sql
 -- Purpose: Create foundation table for OAuth demo applications (HR and Chat apps)
--- Date: August 21, 2025
 -- Context: Part of Step 16 OAuth integration system using session tokens instead of API keys
 
--- =====================================================
+-- ===
 -- SECTION 1: MIGRATION INITIALIZATION & LOGGING
--- =====================================================
+-- ===
 
 -- Log migration start
 DO $$
@@ -16,9 +14,9 @@ RAISE LOG 'Migration: 029_oauth_applications - Foundation for demo HR and Chat a
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 2: OAUTH APPLICATIONS TABLE CREATION
--- =====================================================
+-- ===
 
 -- Create the OAuth applications registry table
 -- This table stores registered OAuth applications without complex API keys
@@ -56,7 +54,7 @@ COMMENT ON TABLE public.oauth_applications IS
 'OAuth application registry for TrueNamePath demo integration system. 
 Stores registered applications (demo-hr, demo-chat) that can request 
 context-aware name resolution via OAuth flow. Uses session tokens 
-instead of API keys for simplified academic demonstration.';
+instead of API keys for simplified demonstration.';
 
 -- Add detailed column comments
 COMMENT ON COLUMN public.oauth_applications.app_name IS 
@@ -78,9 +76,9 @@ COMMENT ON COLUMN public.oauth_applications.app_type IS
 COMMENT ON COLUMN public.oauth_applications.is_active IS 
 'Enable/disable flag for applications. Inactive apps cannot initiate OAuth flows.';
 
--- =====================================================
+-- ===
 -- SECTION 3: PERFORMANCE INDEXES
--- =====================================================
+-- ===
 
 -- Primary lookup index on app_name (< 3ms requirement)
 -- Most common query: SELECT * FROM oauth_applications WHERE app_name = ?
@@ -101,9 +99,9 @@ RAISE LOG 'OAuth Applications: Created performance indexes for < 3ms lookup requ
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 4: ROW LEVEL SECURITY (RLS) POLICIES
--- =====================================================
+-- ===
 
 -- Enable RLS on the oauth_applications table
 ALTER TABLE public.oauth_applications ENABLE ROW LEVEL SECURITY;
@@ -136,9 +134,9 @@ RAISE LOG 'OAuth Applications: Created RLS policies for public discovery and ser
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 5: PERMISSIONS & GRANTS
--- =====================================================
+-- ===
 
 -- Grant read access to authenticated users for OAuth discovery
 GRANT SELECT ON public.oauth_applications TO authenticated;
@@ -156,9 +154,9 @@ RAISE LOG 'OAuth Applications: Granted appropriate permissions to authenticated 
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 6: DEMO APPLICATION SEED DATA
--- =====================================================
+-- ===
 
 -- Insert demo HR application
 INSERT INTO public.oauth_applications (
@@ -202,9 +200,9 @@ RAISE LOG 'Demo applications ready for OAuth flow testing with session token arc
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 7: MIGRATION VALIDATION & COMPLETION
--- =====================================================
+-- ===
 
 -- Validate the created table structure
 DO $$

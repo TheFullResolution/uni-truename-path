@@ -1,6 +1,6 @@
--- =====================================================
+-- ===
 -- MIGRATION: Cleanup Legacy audit_log_entries Table
--- =====================================================
+-- ===
 --
 -- Description: Safely remove the legacy audit_log_entries table that has been
 -- replaced by the modern app_usage_log table in the OAuth integration system.
@@ -19,7 +19,7 @@
 --
 -- Rollback Strategy:
 -- If rollback is needed, recreate the table from the backup and restore indexes/policies
--- =====================================================
+-- ===
 
 BEGIN;
 
@@ -31,9 +31,9 @@ RAISE LOG 'Context: Removing table replaced by app_usage_log in OAuth migration 
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 1: VERIFY TABLE EXISTS AND CHECK DEPENDENCIES
--- =====================================================
+-- ===
 
 DO $$
 DECLARE 
@@ -102,9 +102,9 @@ END IF;
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 2: CREATE BACKUP TABLE IF DATA EXISTS
--- =====================================================
+-- ===
 
 DO $$
 DECLARE 
@@ -150,9 +150,9 @@ END IF;
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 3: REMOVE RLS POLICIES
--- =====================================================
+-- ===
 
 DO $$
 DECLARE
@@ -175,9 +175,9 @@ RAISE LOG 'Removed % RLS policies from audit_log_entries', policy_count;
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 4: REMOVE INDEXES
--- =====================================================
+-- ===
 
 -- Drop performance indexes created for audit_log_entries
 DROP INDEX IF EXISTS public.idx_audit_target_time;
@@ -200,9 +200,9 @@ RAISE LOG '  " idx_audit_rls_requester';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 5: REMOVE FOREIGN KEY CONSTRAINTS
--- =====================================================
+-- ===
 
 -- Remove foreign key constraints safely
 ALTER TABLE IF EXISTS public.audit_log_entries DROP CONSTRAINT IF EXISTS audit_log_entries_target_user_id_fkey;
@@ -221,9 +221,9 @@ RAISE LOG '  " resolved_name_id � names(id)';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 6: REMOVE SEQUENCE
--- =====================================================
+-- ===
 
 -- Drop the sequence used for the id column
 DROP SEQUENCE IF EXISTS public.audit_log_entries_id_seq CASCADE;
@@ -234,9 +234,9 @@ RAISE LOG 'Dropped sequence: audit_log_entries_id_seq';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 7: DROP THE TABLE
--- =====================================================
+-- ===
 
 -- Finally drop the table with CASCADE to handle any remaining dependencies
 DROP TABLE IF EXISTS public.audit_log_entries CASCADE;
@@ -249,9 +249,9 @@ RAISE LOG 'This table has been replaced by app_usage_log for OAuth compliance';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 8: VERIFICATION AND CLEANUP DOCUMENTATION
--- =====================================================
+-- ===
 
 DO $$
 DECLARE

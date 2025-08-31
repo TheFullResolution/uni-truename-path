@@ -1,19 +1,18 @@
--- =====================================================
--- Migration: 061_remove_final_legacy_elements
+-- ===
 -- Description: Final cleanup - remove all legacy tables and unused functions
 -- Author: TrueNamePath Team
 -- Date: 2025-08-31
--- =====================================================
+-- ===
 --
 -- Purpose: Clean up all remaining legacy database elements that were never
 -- implemented or have been replaced during development. This is the final
--- cleanup for the university project, removing all unused components.
+-- cleanup for the project, removing all unused components.
 --
 -- Elements to remove:
 -- - Tables: audit_log_entries_backup_cleanup, name_disclosure_log, oauth_applications, consents
 -- - Functions: grant_consent, request_consent, revoke_consent
 -- NOTE: jsonb_object_keys_count is kept as it's used by resolve_oauth_oidc_claims
--- =====================================================
+-- ===
 
 BEGIN;
 
@@ -26,9 +25,9 @@ RAISE LOG 'This is the final cleanup for the TrueNamePath project';
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 1: DROP LEGACY TABLES
--- =====================================================
+-- ===
 
 -- Drop audit_log_entries backup table (created during previous cleanup)
 DROP TABLE IF EXISTS public.audit_log_entries_backup_cleanup CASCADE;
@@ -78,9 +77,9 @@ DO $$ BEGIN
 RAISE LOG 'Dropped table: consents (consent feature never implemented)';
 END $$;
 
--- =====================================================
+-- ===
 -- SECTION 2: DROP UNUSED FUNCTIONS
--- =====================================================
+-- ===
 
 -- Drop consent-related functions (never implemented in application)
 DROP FUNCTION IF EXISTS public.grant_consent(uuid, uuid);
@@ -101,9 +100,9 @@ END $$;
 -- NOTE: jsonb_object_keys_count is NOT dropped - it's used by resolve_oauth_oidc_claims
 -- This function is actively used in OAuth resolution, not just migrations
 
--- =====================================================
+-- ===
 -- SECTION 3: DROP UNUSED TYPES
--- =====================================================
+-- ===
 
 -- Drop consent_status enum if it exists (was used by consents table)
 DROP TYPE IF EXISTS public.consent_status CASCADE;
@@ -111,9 +110,9 @@ DO $$ BEGIN
 RAISE LOG 'Dropped type: consent_status enum (used by removed consents table)';
 END $$;
 
--- =====================================================
+-- ===
 -- SECTION 4: VERIFICATION
--- =====================================================
+-- ===
 
 DO $$
 DECLARE
@@ -156,9 +155,9 @@ END IF;
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 5: FINAL SUMMARY
--- =====================================================
+-- ===
 
 DO $$
 BEGIN
@@ -192,9 +191,9 @@ $$;
 
 COMMIT;
 
--- =====================================================
+-- ===
 -- POST-MIGRATION NOTES
--- =====================================================
+-- ===
 -- 
 -- This migration completes the database cleanup for the TrueNamePath project.
 -- All legacy tables and unused functions have been removed.
@@ -213,4 +212,4 @@ COMMIT;
 -- resolve_oauth_oidc_claims for OAuth authentication.
 --
 -- No further cleanup is needed. The schema is production-ready for evaluation.
--- =====================================================
+-- ===

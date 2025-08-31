@@ -1,5 +1,4 @@
 -- Migration: Complete Legacy System Cleanup for OIDC Migration
--- Date: August 19, 2025
 -- Purpose: Remove ALL remaining legacy functions and enums that conflict with OIDC system
 
 BEGIN;

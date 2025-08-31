@@ -1,12 +1,12 @@
--- ============================================================================
+-- ===
 -- Migration: Remove Legacy context_name_assignments Table
--- ============================================================================
+-- ===
 -- Purpose: Clean up unused legacy table that was replaced by context_oidc_assignments
 -- Context: This table was part of Step 2 design but replaced in Step 15 with OIDC assignments
 -- Impact:  OAuth filtering was checking wrong table, causing default contexts not to show
 -- Author:  TrueNamePath System
 -- Date:2025-08-31
--- ============================================================================
+-- ===
 
 BEGIN;
 
@@ -17,9 +17,9 @@ RAISE LOG 'TrueNamePath Legacy Cleanup: Starting removal of unused context_name_
 END
 $$;
 
--- ==========================================================================
+-- ===
 -- STEP 1: Drop RLS policies first
--- ==========================================================================
+-- ===
 
 -- Drop user view policy
 DROP POLICY IF EXISTS "Users can view their own context assignments" ON public.context_name_assignments;
@@ -45,9 +45,9 @@ DO $$ BEGIN
 RAISE LOG 'Legacy Cleanup: Dropped delete policy for context_name_assignments';
 END $$;
 
--- ==========================================================================
+-- ===
 -- STEP 2: Drop indexes for performance
--- ==========================================================================
+-- ===
 
 -- Drop user_id index
 DROP INDEX IF EXISTS idx_context_name_assignments_user_id;
@@ -71,9 +71,9 @@ END $$;
 DROP INDEX IF EXISTS idx_context_name_assignments_oidc_property;
 DROP INDEX IF EXISTS idx_context_name_assignments_unique_context;
 
--- ==========================================================================
+-- ===
 -- STEP 3: Drop the table itself
--- ==========================================================================
+-- ===
 
 -- Drop the legacy table (should be empty as it was never used)
 DROP TABLE IF EXISTS public.context_name_assignments CASCADE;
@@ -81,9 +81,9 @@ DO $$ BEGIN
 RAISE LOG 'Legacy Cleanup: Dropped context_name_assignments table with CASCADE';
 END $$;
 
--- ==========================================================================
+-- ===
 -- STEP 4: Verify cleanup and log success
--- ==========================================================================
+-- ===
 
 -- Check that table is gone
 DO $$
@@ -99,9 +99,9 @@ END IF;
 RAISE LOG 'Legacy Cleanup: Verified context_name_assignments table was successfully removed';
 END $$;
 
--- ==========================================================================
+-- ===
 -- STEP 5: Documentation and completion
--- ==========================================================================
+-- ===
 
 -- Add comment about the cleanup (simplified - schema comments are complex)
 -- Legacy Cleanup (2025-08-31): Removed unused context_name_assignments table. 
@@ -116,9 +116,9 @@ END $$;
 
 COMMIT;
 
--- ============================================================================
+-- ===
 -- Migration Notes:
--- ============================================================================
+-- ===
 -- 
 -- BEFORE: OAuth filtering checked name_assignments_count from context_name_assignments
 -- AFTER:  OAuth filtering uses includeUnassigned: true and relies on OIDC completeness
@@ -132,4 +132,4 @@ COMMIT;
 -- - OIDC: context_oidc_assignments (name, given_name, family_name properties)
 --
 -- Now OAuth filtering correctly shows complete contexts regardless of legacy assignment counts.
--- ============================================================================
+-- ===

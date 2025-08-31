@@ -1,6 +1,6 @@
--- =====================================================
+-- ===
 -- MIGRATION 037: DYNAMIC OAUTH APP REGISTRATION
--- =====================================================
+-- ===
 --
 -- This migration enables dynamic OAuth app registration by:
 -- 1. Removing foreign key constraint from app_context_assignments to oauth_applications
@@ -8,15 +8,15 @@
 -- 3. Updating all functions to work with app_name instead of app_id
 -- 4. Removing demo apps from oauth_applications table
 --
--- Academic constraint: Keep functions under 80 lines max
+-- Note: Keep functions under 80 lines max
 -- Performance requirement: <3ms response times maintained
 --
 -- Created: 2025-08-25
 -- Author: TrueNamePath Migration System
 
--- =====================================================
+-- ===
 -- SECTION 1: BACKUP & PREPARATION
--- =====================================================
+-- ===
 
 DO $$
 BEGIN
@@ -38,9 +38,9 @@ RAISE LOG 'Dynamic OAuth Registration: Backed up % existing app context assignme
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 2: DROP FOREIGN KEY CONSTRAINT
--- =====================================================
+-- ===
 
 -- Remove foreign key constraint from app_context_assignments to oauth_applications
 ALTER TABLE public.app_context_assignments 
@@ -62,9 +62,9 @@ RAISE LOG 'Dynamic OAuth Registration: Removed foreign key constraints and index
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 3: SCHEMA TRANSFORMATION
--- =====================================================
+-- ===
 
 -- Add new app_name column
 ALTER TABLE public.app_context_assignments 
@@ -95,9 +95,9 @@ RAISE LOG 'Dynamic OAuth Registration: Schema transformation complete - app_id -
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 4: RECREATE PERFORMANCE INDEXES
--- =====================================================
+-- ===
 
 -- Primary lookup index for OAuth flow (< 3ms requirement)
 -- Updated query: SELECT context_id FROM app_context_assignments WHERE profile_id = ? AND app_name = ?
@@ -123,9 +123,9 @@ RAISE LOG 'Primary index: (profile_id, app_name) for <3ms OAuth lookup requireme
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 5: UPDATE TABLE COMMENTS
--- =====================================================
+-- ===
 
 -- Update table and column comments for new schema
 COMMENT ON COLUMN public.app_context_assignments.app_name IS 
@@ -139,9 +139,9 @@ RAISE LOG 'Dynamic OAuth Registration: Updated table documentation for app_name 
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 6: UPDATE FUNCTIONS
--- =====================================================
+-- ===
 
 -- Update assign_default_context_to_app function to use app_name
 CREATE OR REPLACE FUNCTION public.assign_default_context_to_app(
@@ -233,9 +233,9 @@ RAISE LOG 'Dynamic OAuth Registration: Updated assign_default_context_to_app fun
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 7: UPDATE OAUTH RESOLUTION FUNCTION  
--- =====================================================
+-- ===
 
 -- Update resolve_oauth_oidc_claims to work with app_name
 CREATE OR REPLACE FUNCTION public.resolve_oauth_oidc_claims(p_session_token text)
@@ -261,7 +261,7 @@ RETURN jsonb_build_object('error', 'invalid_token');
 END IF;
 
 -- Extract app_name from session_token prefix pattern (e.g., 'tnp_appname_token')
--- For academic demo, use a simple pattern or default app name
+-- For demo, use a simple pattern or default app name
 v_session.app_name := COALESCE(
 substring(p_session_token from '^tnp_([^_]+)_'),
 'demo-app'
@@ -325,7 +325,7 @@ END $$;
 
 -- Update function documentation
 COMMENT ON FUNCTION public.resolve_oauth_oidc_claims(text) IS 
-'Academic implementation: Resolves OAuth session token to OIDC claims using app_name. 
+'implementation: Resolves OAuth session token to OIDC claims using app_name. 
 Supports dynamic app registration without requiring oauth_applications table entries.
 Core algorithm: Session Token -> App Name -> Context Assignment -> OIDC Claims.';
 
@@ -335,9 +335,9 @@ RAISE LOG 'Dynamic OAuth Registration: Updated resolve_oauth_oidc_claims functio
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 8: CLEAN UP DEMO APPLICATIONS
--- =====================================================
+-- ===
 
 -- Remove demo applications from oauth_applications table
 -- They are no longer needed with dynamic registration
@@ -365,9 +365,9 @@ RAISE LOG 'Dynamic OAuth Registration: Removed demo applications - dynamic regis
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 9: MIGRATION VALIDATION
--- =====================================================
+-- ===
 
 -- Validate the migration results
 DO $$
@@ -413,9 +413,9 @@ RAISE LOG 'Dynamic OAuth Registration: All validation checks passed successfully
 END
 $$;
 
--- =====================================================
+-- ===
 -- SECTION 10: MIGRATION COMPLETION
--- =====================================================
+-- ===
 
 -- Final migration completion log
 DO $$
@@ -431,7 +431,7 @@ RAISE LOG '';
 RAISE LOG '✅ FUNCTIONS UPDATED:';
 RAISE LOG '  • assign_default_context_to_app now uses app_name parameter';
 RAISE LOG '  • resolve_oauth_oidc_claims supports dynamic app registration';
-RAISE LOG '  • Maintained academic constraint of <80 lines per function';
+RAISE LOG '  • Maintained constraint of <80 lines per function';
 RAISE LOG '  • Race condition protection preserved';
 RAISE LOG '';
 RAISE LOG '✅ DEMO APPLICATIONS CLEANUP:';
@@ -443,7 +443,7 @@ RAISE LOG '✅ PERFORMANCE & SECURITY:';
 RAISE LOG '  • Maintained <3ms response time requirements';
 RAISE LOG '  • RLS policies unchanged - privacy protection maintained';
 RAISE LOG '  • No downtime - backward compatible migration';
-RAISE LOG '  • Academic demonstration requirements satisfied';
+RAISE LOG '  • demonstration requirements satisfied';
 RAISE LOG '';
 RAISE LOG '🔧 NEXT STEPS:';
 RAISE LOG '  • Update API endpoints to use app_name instead of app_id';

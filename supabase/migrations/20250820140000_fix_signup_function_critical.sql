@@ -1,6 +1,5 @@
 -- Critical Fix: Complete Signup Function - Column References and Missing Fields
 -- Fixes critical issues preventing OIDC signup from working properly
--- Date: August 20, 2025 - Step 15 Critical Backend Fix
 
 -- Drop the existing function with all its variants
 DROP FUNCTION IF EXISTS complete_signup_with_oidc(UUID, TEXT, TEXT, TEXT, TEXT, TEXT);

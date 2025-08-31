@@ -1,6 +1,5 @@
 -- TrueNamePath: Step 2 - User-Defined Context Architecture
 -- Phase 1: Core Schema Creation
--- Date: August 10, 2025
 -- Major Architectural Change: Implementing user-defined contexts from day 1
 
 -- This migration completely replaces the hardcoded audience system with
@@ -8,9 +7,9 @@
 
 BEGIN;
 
--- =============================================================================
+-- ===
 -- STEP 1: Create ENUMs for type safety
--- =============================================================================
+-- ===
 
 -- Create ENUM for name categories (replacing text constraint)
 CREATE TYPE name_category AS ENUM ('LEGAL', 'PREFERRED', 'NICKNAME', 'ALIAS');
@@ -27,9 +26,9 @@ BEGIN
   RAISE LOG 'TrueNamePath Step 2: Created ENUMs for type safety (name_category, consent_status, audit_action)';
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 2: Drop incompatible existing tables and constraints
--- =============================================================================
+-- ===
 
 -- The existing consents table is architecturally incompatible with user-defined contexts
 -- It uses hardcoded audience strings instead of user-owned context relationships
@@ -44,9 +43,9 @@ BEGIN
   RAISE LOG 'TrueNamePath Step 2: Dropped incompatible tables (consents) and functions (resolve_name)';
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 3: Update profiles table for auth integration
--- =============================================================================
+-- ===
 
 -- Keep demo profiles structure for now (auth integration will be completed later)
 -- Update the existing profiles table structure to match the target architecture
@@ -61,9 +60,9 @@ BEGIN
   RAISE LOG 'TrueNamePath Step 2: Updated profiles table for auth integration';
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 4: Update names table for enhanced multi-name model
--- =============================================================================
+-- ===
 
 -- Update names table to use ENUM and add preferred name constraint
 ALTER TABLE public.names 
@@ -119,14 +118,14 @@ END $$;
 ALTER TABLE public.names 
   DROP COLUMN IF EXISTS visibility CASCADE;
 
--- Add constraint: only one preferred name per user (only when is_preferred = true)
+-- Add Note: only one preferred name per user (only when is_preferred = true)
 -- Use a partial unique index to allow multiple false values but only one true value per user
 ALTER TABLE public.names DROP CONSTRAINT IF EXISTS unique_preferred_name;
 CREATE UNIQUE INDEX IF NOT EXISTS unique_preferred_name 
   ON public.names (user_id) 
   WHERE is_preferred = true;
 
--- Add constraint: name text cannot be empty
+-- Add Note: name text cannot be empty
 ALTER TABLE public.names 
   ADD CONSTRAINT check_name_not_empty 
   CHECK (char_length(name_text) > 0);
@@ -137,9 +136,9 @@ BEGIN
   RAISE LOG 'TrueNamePath Step 2: Updated names table with ENUM types and preferred name constraint';
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 5: Create user_contexts table (core innovation)
--- =============================================================================
+-- ===
 
 -- This table enables user-defined contexts - the key differentiator of TrueNamePath
 -- Users create and own their own contexts instead of using system-wide hardcoded ones
@@ -166,9 +165,9 @@ BEGIN
   RAISE LOG 'TrueNamePath Step 2: Created user_contexts table - core innovation for user-defined contexts';
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 6: Create context_name_assignments table (direct user control)
--- =============================================================================
+-- ===
 
 -- This table allows users to directly assign names to their contexts
 -- Replaces the hardcoded audience-based logic with user-controlled assignments
@@ -195,9 +194,9 @@ BEGIN
   RAISE LOG 'TrueNamePath Step 2: Created context_name_assignments table with referential integrity constraints';
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 7: Create enhanced consents table (GDPR-compliant user-context consent)
--- =============================================================================
+-- ===
 
 -- New consents table based on user-defined contexts instead of hardcoded audiences
 CREATE TABLE public.consents (
@@ -228,9 +227,9 @@ BEGIN
   RAISE LOG 'TrueNamePath Step 2: Created enhanced consents table with user-context relationships';
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 8: Create comprehensive audit log table
--- =============================================================================
+-- ===
 
 -- Enhanced audit trail supporting context-aware tracking
 CREATE TABLE public.audit_log_entries (
@@ -258,9 +257,9 @@ BEGIN
   RAISE LOG 'TrueNamePath Step 2: Created comprehensive audit_log_entries table';
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 9: Create performance indexes
--- =============================================================================
+-- ===
 
 -- Indexes for profiles table
 CREATE INDEX IF NOT EXISTS idx_profiles_id ON public.profiles (id);
@@ -297,9 +296,9 @@ BEGIN
   RAISE LOG 'TrueNamePath Step 2: Created all performance indexes for user-defined context queries';
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 10: Validation and completion
--- =============================================================================
+-- ===
 
 -- Validate schema relationships
 DO $$
@@ -353,9 +352,9 @@ END $$;
 
 COMMIT;
 
--- =============================================================================
+-- ===
 -- POST-MIGRATION NOTES
--- =============================================================================
+-- ===
 
 -- This migration implements the core user-defined context architecture:
 --

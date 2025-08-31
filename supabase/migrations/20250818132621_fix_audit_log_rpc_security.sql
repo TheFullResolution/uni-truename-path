@@ -1,34 +1,32 @@
 -- TrueNamePath: Fix Audit Log RPC Function Security Mode
--- Migration: 20250818132621_fix_audit_log_rpc_security.sql
--- Date: August 18, 2025
 -- Purpose: Fix get_user_audit_log function to use SECURITY INVOKER for proper RLS context
 
--- =============================================================================
+-- ===
 -- ISSUE DESCRIPTION
--- =============================================================================
+-- ===
 -- The get_user_audit_log function was created with SECURITY DEFINER, which causes
 -- auth.uid() to return NULL inside the function. This breaks access to all tables
 -- with RLS policies that depend on auth.uid(), causing the function to fail and
 -- return no data even for authorized users.
 
--- =============================================================================
+-- ===
 -- SOLUTION
--- =============================================================================
+-- ===
 -- Change the function to SECURITY INVOKER so it runs with the caller's privileges,
 -- allowing auth.uid() to work properly with RLS policies. Add explicit 
 -- authorization checks within the function to maintain security.
 
 BEGIN;
 
--- =============================================================================
+-- ===
 -- STEP 1: Drop the existing function with SECURITY DEFINER
--- =============================================================================
+-- ===
 
 DROP FUNCTION IF EXISTS public.get_user_audit_log(uuid, integer);
 
--- =============================================================================
+-- ===
 -- STEP 2: Recreate function with SECURITY INVOKER and authorization checks
--- =============================================================================
+-- ===
 
 CREATE OR REPLACE FUNCTION public.get_user_audit_log(
 p_user_id uuid,
@@ -75,27 +73,27 @@ ORDER BY ale.accessed_at DESC
 LIMIT p_limit;
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 3: Grant execute permission to authenticated users
--- =============================================================================
+-- ===
 
 GRANT EXECUTE ON FUNCTION public.get_user_audit_log(uuid, integer) TO authenticated;
 
 -- Service role maintains full access
 GRANT EXECUTE ON FUNCTION public.get_user_audit_log(uuid, integer) TO service_role;
 
--- =============================================================================
+-- ===
 -- STEP 4: Add helpful comment documenting the fix
--- =============================================================================
+-- ===
 
 COMMENT ON FUNCTION public.get_user_audit_log(uuid, integer) IS 
 'Retrieves audit log entries for a specific user. Users can only view their own audit logs.
 Uses SECURITY INVOKER to maintain proper RLS context and allow auth.uid() to function correctly.
 Fixed in migration 20250818132621 to resolve SECURITY DEFINER RLS interaction issues.';
 
--- =============================================================================
+-- ===
 -- STEP 5: Log the successful fix
--- =============================================================================
+-- ===
 
 DO $$
 BEGIN
@@ -121,9 +119,9 @@ END $$;
 
 COMMIT;
 
--- =============================================================================
+-- ===
 -- POST-MIGRATION NOTES
--- =============================================================================
+-- ===
 
 -- This migration fixes the critical issue where get_user_audit_log() was
 -- failing due to SECURITY DEFINER causing auth.uid() to return NULL.

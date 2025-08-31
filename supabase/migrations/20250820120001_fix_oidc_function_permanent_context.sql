@@ -1,13 +1,12 @@
 -- TrueNamePath: Migration 025 - Fix OIDC Function to Use Permanent Context
--- Date: August 20, 2025  
 -- Purpose: Update complete_signup_with_oidc function to use is_permanent instead of is_default
 -- Status: Production-ready
 
 BEGIN;
 
--- =============================================================================
+-- ===
 -- Update complete_signup_with_oidc function
--- =============================================================================
+-- ===
 
 CREATE OR REPLACE FUNCTION complete_signup_with_oidc(
   p_user_id UUID,
@@ -99,9 +98,9 @@ END $$;
 
 COMMIT;
 
--- =============================================================================
+-- ===
 -- POST-MIGRATION NOTES
--- =============================================================================
+-- ===
 
 -- This migration fixes the complete_signup_with_oidc function:
 --

@@ -1,6 +1,5 @@
 -- TrueNamePath: Step 3 - Vercel Fluid Computing Migration
 -- Phase 1: Helper Functions for Modular Architecture
--- Date: August 11, 2025
 -- Purpose: Extract resolve_name() logic into reusable helper functions for Edge Functions
 
 -- This migration creates modular helper functions that can be used both by the existing
@@ -9,9 +8,9 @@
 
 BEGIN;
 
--- =============================================================================
+-- ===
 -- STEP 1: Create get_active_consent() helper function
--- =============================================================================
+-- ===
 
 -- Helper function to find active consent between users
 -- Returns the context_id if valid consent exists, NULL otherwise
@@ -58,9 +57,9 @@ COMMENT ON FUNCTION public.get_active_consent(uuid, uuid) IS
 'Helper function for resolve_name(): Returns active consent details between users.
 Used by Edge Functions for modular consent checking.';
 
--- =============================================================================
+-- ===
 -- STEP 2: Create get_context_assignment() helper function
--- =============================================================================
+-- ===
 
 -- Helper function to find name assignment for a specific user context
 -- Returns name details if assignment exists, empty result otherwise
@@ -107,9 +106,9 @@ COMMENT ON FUNCTION public.get_context_assignment(uuid, text) IS
 'Helper function for resolve_name(): Returns name assignment for a user-defined context.
 Used by Edge Functions for modular context-specific resolution.';
 
--- =============================================================================
+-- ===
 -- STEP 3: Create get_preferred_name() helper function
--- =============================================================================
+-- ===
 
 -- Helper function to get user's preferred name for fallback scenarios
 -- Returns preferred name details, handles fallback to any available name
@@ -174,9 +173,9 @@ COMMENT ON FUNCTION public.get_preferred_name(uuid) IS
 Prioritizes explicitly preferred names, falls back to LEGAL names if needed.
 Used by Edge Functions for modular fallback resolution.';
 
--- =============================================================================
+-- ===
 -- STEP 4: Create performance indexes for helper functions
--- =============================================================================
+-- ===
 
 -- Index for get_active_consent() performance
 -- Optimizes consent lookup by granter, requester, and status
@@ -200,9 +199,9 @@ CREATE INDEX IF NOT EXISTS idx_names_user_preferred_type
 ON public.names (user_id, is_preferred, name_type, created_at) 
 WHERE is_preferred = true OR name_type IN ('LEGAL', 'PREFERRED');
 
--- =============================================================================
+-- ===
 -- STEP 5: Grant appropriate permissions (temporary for development)
--- =============================================================================
+-- ===
 
 -- Grant execute permissions for authenticated users (API access)
 GRANT EXECUTE ON FUNCTION public.get_active_consent(uuid, uuid) TO authenticated, anon;
@@ -212,9 +211,9 @@ GRANT EXECUTE ON FUNCTION public.get_preferred_name(uuid) TO authenticated, anon
 -- Service role gets full access for Edge Functions
 GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO service_role;
 
--- =============================================================================
+-- ===
 -- STEP 6: Helper Functions Deployed Successfully
--- =============================================================================
+-- ===
 
 DO $$
 BEGIN
@@ -233,9 +232,9 @@ RAISE LOG '✅ Existing resolve_name() function compatibility maintained';
 RAISE LOG '✅ Zero-downtime migration confirmed';
 END $$;
 
--- =============================================================================
+-- ===
 -- STEP 7: Completion status and next steps
--- =============================================================================
+-- ===
 
 -- Log successful completion
 DO $$
@@ -273,9 +272,9 @@ END $$;
 
 COMMIT;
 
--- =============================================================================
+-- ===
 -- POST-MIGRATION NOTES
--- =============================================================================
+-- ===
 
 -- This migration successfully creates modular helper functions that:
 --

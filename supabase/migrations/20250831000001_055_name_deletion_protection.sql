@@ -1,62 +1,21 @@
--- Name Deletion Protection Enhancement - Advanced Context-Aware Protection
--- Migration: 20250831000001_055_name_deletion_protection.sql
--- Purpose: Enhance can_delete_name() function with comprehensive protection against deletion of context-assigned names
--- Date: August 31, 2025
--- Performance: Maintains <3ms validation times with indexed queries
+-- Name Deletion Protection Enhancement
+-- Enhance can_delete_name() function with comprehensive protection against deletion of context-assigned names
 
--- =====================================================
--- OVERVIEW & ENHANCEMENTS
--- =====================================================
-
--- COMPREHENSIVE NAME DELETION PROTECTION:
--- Current function only checks if name is the last remaining name for user.
--- This enhancement adds protection for names assigned to contexts with special visibility or permanence:
---
 -- PROTECTION TYPES IMPLEMENTED:
--- • "last_name": Cannot delete the user's only remaining name (existing protection)
+-- • "last_name": Cannot delete the user's only remaining name
 -- • "public_context": Name is assigned to a context with visibility = 'public'
 -- • "permanent_context": Name is assigned to a context with is_permanent = true
 -- • "none": Name can be safely deleted
---
--- NEW JSON RESPONSE FORMAT:
--- {
---   "can_delete": boolean,
---   "reason": string,
---   "reason_code": string,
---   "protection_type": string,
---   "name_count": integer,
---   "context_info": {
--- "public_contexts": [{"id": "uuid", "context_name": "string"}],
--- "permanent_contexts": [{"id": "uuid", "context_name": "string"}]
---   }
--- }
---
--- VALIDATION ORDER:
--- 1. Ownership verification (name belongs to user)
--- 2. Public context assignment check (via context_oidc_assignments)
--- 3. Permanent context assignment check (via context_oidc_assignments)
--- 4. Last name protection check (existing logic)
--- 5. Return detailed protection information
---
--- Performance: <3ms validation with indexed queries on context_oidc_assignments and user_contexts tables.
 
 -- Log migration start
 DO $$
 BEGIN
-RAISE LOG 'TrueNamePath Name Deletion Protection Enhancement: Starting can_delete_name() function upgrade';
-RAISE LOG 'Migration will add comprehensive context-aware name deletion protection';
-RAISE LOG '  • Public context assignment protection';
-RAISE LOG '  • Permanent context assignment protection';
-RAISE LOG '  • Enhanced JSON response with detailed context information';
-RAISE LOG '  • Maintains existing last name protection';
-RAISE LOG '  • Follows existing function patterns (JSON responses, error handling)';
-RAISE LOG '  • Performance: <3ms validation with indexed queries';
+RAISE LOG 'Name Deletion Protection Enhancement: Starting can_delete_name() function upgrade';
+RAISE LOG 'Migration will add context-aware name deletion protection';
 END
 $$;
 
--- =====================================================
--- SECTION 1: ENHANCED CAN_DELETE_NAME FUNCTION
--- =====================================================
+-- Enhanced can_delete_name function
 
 -- Replace existing function with comprehensive protection logic
 CREATE OR REPLACE FUNCTION public.can_delete_name(p_name_id UUID, p_user_id UUID)
@@ -213,48 +172,13 @@ RETURN jsonb_build_object(
 END;
 $$;
 
--- =====================================================
--- SECTION 2: FUNCTION DOCUMENTATION
--- =====================================================
+-- Function documentation
 
--- Add comprehensive function documentation
 COMMENT ON FUNCTION public.can_delete_name(UUID, UUID) IS 
-'Enhanced name deletion protection function for TrueNamePath (August 31, 2025).
-Validates whether a name can be safely deleted with comprehensive context-aware protection:
+'Enhanced name deletion protection function.
+Validates whether a name can be safely deleted with context-aware protection.';
 
-PROTECTION CHECKS (in order):
-1. Ownership verification - ensures name belongs to requesting user
-2. Public context protection - prevents deletion of names assigned to public contexts
-3. Permanent context protection - prevents deletion of names assigned to permanent contexts  
-4. Last name protection - prevents deletion of user''s only remaining name
-
-RESPONSE FORMAT:
-{
-  "can_delete": boolean,
-  "reason": descriptive explanation,
-  "reason_code": machine-readable code,
-  "protection_type": protection category,
-  "name_count": total user names,
-  "context_info": {
-"public_contexts": array of public contexts using this name,
-"permanent_contexts": array of permanent contexts using this name
-  }
-}
-
-PROTECTION TYPES:
-• "ownership": Name not found or not owned by user
-• "public_context": Name assigned to public visibility contexts
-• "permanent_context": Name assigned to permanent system contexts
-• "last_name": User''s only remaining name (cannot be deleted)
-• "none": Name can be safely deleted
-• "error": Internal validation error occurred
-
-PERFORMANCE: <3ms validation via indexed queries on context_oidc_assignments and user_contexts.
-SECURITY: SECURITY INVOKER - operates with caller permissions for RLS compliance.';
-
--- =====================================================
--- SECTION 3: VALIDATION AND TESTING SETUP
--- =====================================================
+-- Validation and testing setup
 
 -- Create validation function to test enhanced protection logic
 CREATE OR REPLACE FUNCTION public.validate_name_deletion_protection_setup()
@@ -318,64 +242,17 @@ END
 END;
 $$;
 
--- Add validation function documentation
 COMMENT ON FUNCTION public.validate_name_deletion_protection_setup() IS 
-'Validation function to verify enhanced name deletion protection is properly configured.
-Returns JSON with status of function existence, required indexes, and basic functionality test.
-Use for debugging and deployment validation of name deletion protection enhancements.';
+'Validation function to verify enhanced name deletion protection is properly configured.';
 
--- =====================================================
--- SECTION 4: MIGRATION COMPLETION AND SUMMARY
--- =====================================================
-
--- Log successful completion with comprehensive summary
+-- Log successful completion
 DO $$
 DECLARE
 v_validation_result JSONB;
 BEGIN
--- Run validation to confirm everything is working
 SELECT public.validate_name_deletion_protection_setup() INTO v_validation_result;
 
-RAISE LOG '=== Name Deletion Protection Enhancement COMPLETED SUCCESSFULLY ===';
-RAISE LOG 'Migration: 20250831000001_055_name_deletion_protection.sql';
-RAISE LOG 'Date: August 31, 2025';
-RAISE LOG '';
-RAISE LOG 'ENHANCEMENTS IMPLEMENTED:';
-RAISE LOG '✓ Public context assignment protection via context_oidc_assignments';
-RAISE LOG '✓ Permanent context assignment protection via user_contexts.is_permanent';
-RAISE LOG '✓ Enhanced JSON response with detailed context information';
-RAISE LOG '✓ Comprehensive protection type classification system';
-RAISE LOG '✓ Maintains existing last name protection logic';
-RAISE LOG '✓ <3ms performance with indexed query optimization';
-RAISE LOG '✓ Complete error handling and logging';
-RAISE LOG '✓ Validation function for deployment testing';
-RAISE LOG '';
-RAISE LOG 'PROTECTION TYPES AVAILABLE:';
-RAISE LOG '  • ownership: Name ownership validation failed';
-RAISE LOG '  • public_context: Name assigned to public visibility contexts';
-RAISE LOG '  • permanent_context: Name assigned to permanent system contexts';
-RAISE LOG '  • last_name: User''s only remaining name protection';
-RAISE LOG '  • none: Name can be safely deleted';
-RAISE LOG '  • error: Internal validation error occurred';
-RAISE LOG '';
+RAISE LOG 'Name Deletion Protection Enhancement COMPLETED';
 RAISE LOG 'VALIDATION RESULT: %', v_validation_result;
-RAISE LOG '';
-
--- Log performance notes
-RAISE LOG 'PERFORMANCE OPTIMIZATION:';
-RAISE LOG '  • Leverages existing indexes on context_oidc_assignments(user_id, context_id)';
-RAISE LOG '  • Uses indexed queries on user_contexts(visibility, is_permanent)';
-RAISE LOG '  • Early return on ownership failure for security';
-RAISE LOG '  • Efficient JSON aggregation for context information';
-RAISE LOG '  • Target: <3ms validation time for all protection checks';
-RAISE LOG '';
-RAISE LOG 'INTEGRATION NOTES:';
-RAISE LOG '  • Function signature unchanged - maintains API compatibility';
-RAISE LOG '  • Response format enhanced with additional fields';
-RAISE LOG '  • Existing applications continue to work with can_delete boolean';
-RAISE LOG '  • New applications can leverage detailed protection information';
-RAISE LOG '  • SECURITY INVOKER maintains RLS policy compliance';
-RAISE LOG '';
-RAISE LOG 'Enhanced name deletion protection is now active and validated.';
 END
 $$;
