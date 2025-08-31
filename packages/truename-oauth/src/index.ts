@@ -1,16 +1,7 @@
-/**
- * TrueNamePath OAuth Integration Library
- * Shared package for demo applications
- * University Final Project - Academic Implementation
- */
-
-// Main client class
+// TrueNamePath OAuth Integration Library
 export { TrueNameOAuthClient } from './TrueNameOAuthClient.js';
 
-// Storage adapters and utilities
 export { OAuthStorage, LocalStorageAdapter } from './storage.js';
-
-// Authentication utilities
 export {
   generateStateToken,
   validateStateToken,
@@ -20,35 +11,24 @@ export {
   buildAuthUrl,
 } from './auth-utils.js';
 
-// API client functions
 export { fetchClientInfo, resolveOIDCClaims } from './api-client.js';
-
-// SWR Hooks for OAuth token resolution
 export { useOAuthToken } from './hooks/useOAuthToken.js';
 export { useStoredOAuthToken } from './hooks/useStoredOAuthToken.js';
-
-// SWR OAuth Token Fetching utilities
 export {
   generateOAuthCacheKey,
   createOAuthTokenFetcher,
   fetchOAuthToken,
 } from './utils/oauth-token-fetcher.js';
-
-// SWR OAuth Cache Provider utilities
 export {
   createOAuthCacheProvider,
   clearOAuthCache,
 } from './utils/oauth-cache-provider.js';
-
-// SWR Focus-Based Configuration utilities
 export {
   swrFocusConfig,
   createFocusConfig,
   swrHighFrequencyFocusConfig,
   swrLowFrequencyFocusConfig,
 } from './utils/swr-focus-config.js';
-
-// Type definitions - Core types
 export type {
   OAuthConfig,
   OIDCClaims,
@@ -58,8 +38,6 @@ export type {
   ApiResponse,
   OAuthError,
 } from './types.js';
-
-// Type definitions - SWR Cache types
 export type {
   SWRState,
   OAuthCacheKey,
@@ -74,8 +52,6 @@ export type {
   OAuthCacheProvider,
   CacheProviderOptions,
 } from './types/swr-cache.js';
-
-// SWR Cache utility functions
 export {
   isSWRState,
   isOAuthCacheKey,

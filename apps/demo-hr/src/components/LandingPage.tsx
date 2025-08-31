@@ -1,6 +1,5 @@
 /**
- * Landing Page Component - HR Portal Authentication (Refactored for Academic Compliance)
- * Handles OAuth flow initiation for TrueNamePath integration
+ * Landing Page Component
  */
 
 import { oauthClient } from '@/services/oauth';
@@ -32,12 +31,12 @@ setError('Authentication failed');
   return (
 <PageLayout>
   <Stack gap='xl' align='center'>
-{/* Combined Header and Login Card */}
 <Paper
   {...paperStyles}
   maw={{ base: '100%', xs: 400 }}
   mx={{ base: 'sm', xs: 'auto' }}
-  style={{ textAlign: 'center', width: '100%' }}
+  ta='center'
+  w='100%'
 >
   <Stack gap='lg' align='center'>
 <Text size='lg' c='gray.7' fw={500} ta='center'>

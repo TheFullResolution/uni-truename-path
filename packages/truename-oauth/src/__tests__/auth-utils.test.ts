@@ -1,6 +1,4 @@
-// TrueNamePath OAuth Client Library: Auth Utils Unit Tests
-// Date: August 27, 2025
-// Comprehensive test suite for authentication utility functions
+// Auth Utils Tests
 
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import {
@@ -261,7 +259,7 @@ app_name: 'test-app',
 isAuthenticated: true,
 token: token,
 userData: userData,
-expiresAt: null, // Academic simplification
+expiresAt: null,
   });
 });
 

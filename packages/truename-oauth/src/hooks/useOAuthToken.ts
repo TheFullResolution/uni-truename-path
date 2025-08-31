@@ -1,11 +1,4 @@
-/**
- * SWR Hook for OAuth Token Resolution
- *
- * This hook prevents duplicate OAuth resolve requests by using SWR's built-in
- * deduplication feature. It handles React StrictMode gracefully and resolves
- * the "Failed to resolve session info for logging" errors by avoiding
- * duplicate API calls during double-rendering.
- */
+// SWR Hook for OAuth Token Resolution
 
 import useSWR from 'swr';
 import type { OIDCClaims } from '../types.js';
@@ -16,9 +9,7 @@ import {
 } from '../utils/oauth-token-fetcher.js';
 import { swrFocusConfig } from '../utils/swr-focus-config.js';
 
-/**
- * Configuration options for OAuth token resolution
- */
+// Configuration options for OAuth token resolution
 interface UseOAuthTokenOptions extends OAuthTokenFetcherConfig {
   token: string | null;
   enabled?: boolean;
@@ -27,9 +18,7 @@ interface UseOAuthTokenOptions extends OAuthTokenFetcherConfig {
   revalidateOnReconnect?: boolean; // Allow controlling reconnect behavior
 }
 
-/**
- * Return type for useOAuthToken hook
- */
+// Return type for useOAuthToken hook
 interface UseOAuthTokenReturn {
   data: OIDCClaims | undefined;
   error: Error | undefined;
@@ -38,16 +27,7 @@ interface UseOAuthTokenReturn {
   mutate: () => void;
 }
 
-/**
- * SWR hook for OAuth token resolution with focus-based revalidation
- *
- * Uses SWR's built-in deduplication to prevent duplicate requests when
- * React StrictMode causes components to render twice. Now includes focus-based
- * revalidation by default for real-time updates in demo scenarios.
- *
- * @param options - Token, API configuration, and revalidation settings
- * @returns SWR hook results with OAuth claims data
- */
+// SWR hook for OAuth token resolution with focus-based revalidation
 export function useOAuthToken({
   token,
   apiBaseUrl,

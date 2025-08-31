@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  createTheme,
-  rem,
-  MantineThemeOverride,
-  MantineTheme,
-} from '@mantine/core';
+import { createTheme, rem, MantineThemeOverride } from '@mantine/core';
 
 export const theme: MantineThemeOverride = createTheme({
   // Primary brand color scheme matching TrueNamePath logo
@@ -109,22 +104,13 @@ size: 'lg', // Matches max-width: 1200px from wireframe
 TextInput: {
   styles: {
 input: {
-  // Enhanced input styling with brand colors
-  'padding': rem(12),
-  'fontSize': rem(14),
-  'border': '1px solid #ced4da',
-  'borderRadius': rem(6),
-  'transition': 'border-color 0.2s ease, box-shadow 0.2s ease',
-  '&:focus': {
-borderColor: '#4A7FE7',
-outline: 'none',
-boxShadow: `0 0 0 2px rgba(74, 127, 231, 0.2)`,
-  },
+  // Enhanced input styling with theme colors
+  // Let Mantine handle padding to respect leftSection/rightSection
+  fontSize: rem(14),
 },
 label: {
   fontWeight: 500,
   marginBottom: rem(5),
-  color: '#2c3e50',
 },
   },
 },
@@ -133,164 +119,45 @@ PasswordInput: {
   styles: {
 input: {
   // Same as TextInput for consistency
-  'padding': rem(12),
-  'fontSize': rem(14),
-  'border': '1px solid #ced4da',
-  'borderRadius': rem(6),
-  'transition': 'border-color 0.2s ease, box-shadow 0.2s ease',
-  '&:focus': {
-borderColor: '#4A7FE7',
-outline: 'none',
-boxShadow: `0 0 0 2px rgba(74, 127, 231, 0.2)`,
-  },
+  // Let Mantine handle padding to respect leftSection/rightSection
+  fontSize: rem(14),
 },
 label: {
   fontWeight: 500,
   marginBottom: rem(5),
-  color: '#2c3e50',
 },
   },
 },
 
 Button: {
-  styles: (
-theme: MantineTheme,
-props: { variant?: string; color?: string },
-  ) => ({
+  defaultProps: {
+size: 'md',
+  },
+  styles: {
 root: {
-  // Enhanced button styling with brand colors
-  padding: `${rem(12)} ${rem(24)}`,
-  fontSize: rem(14),
-  borderRadius: rem(6),
   fontWeight: 500,
-  cursor: 'pointer',
   transition: 'all 0.2s ease',
-  // Variant-specific styles with brand colors
-  ...(props.variant === 'filled' && {
-'backgroundColor':
-  props.color === 'brand'
-? '#4A7FE7'
-: props.color === 'blue'
-  ? '#3498db'
-  : props.color === 'green'
-? '#27ae60'
-: theme.colors.gray[6],
-'color': 'white',
-'border': 'none',
-'&:hover': {
-  backgroundColor:
-props.color === 'brand'
-  ? '#3366CC'
-  : props.color === 'blue'
-? '#2980b9'
-: props.color === 'green'
-  ? '#229954'
-  : theme.colors.gray[7],
-  transform: 'translateY(-1px)',
-  boxShadow: '0 4px 12px rgba(74, 127, 231, 0.3)',
-},
-  }),
-  ...(props.variant === 'light' && {
-'backgroundColor': 'rgba(74, 127, 231, 0.1)',
-'color': '#4A7FE7',
-'border': 'none',
-'&:hover': {
-  backgroundColor: 'rgba(74, 127, 231, 0.2)',
-},
-  }),
-  ...(props.variant === 'outline' && {
-'backgroundColor': 'transparent',
-'border': `1px solid ${props.color === 'brand' ? '#4A7FE7' : props.color === 'blue' ? '#3498db' : props.color === 'green' ? '#27ae60' : theme.colors.gray[4]}`,
-'color':
-  props.color === 'brand'
-? '#4A7FE7'
-: props.color === 'blue'
-  ? '#3498db'
-  : props.color === 'green'
-? '#27ae60'
-: theme.colors.gray[6],
-'&:hover': {
-  backgroundColor:
-props.color === 'brand'
-  ? 'rgba(74, 127, 231, 0.1)'
-  : props.color === 'blue'
-? 'rgba(52, 152, 219, 0.1)'
-: props.color === 'green'
-  ? 'rgba(39, 174, 96, 0.1)'
-  : theme.colors.gray[0],
-},
-  }),
-},
-  }),
-},
-
-Card: {
-  styles: {
-root: {
-  // Enhanced card styling with subtle brand accents
-  'backgroundColor': 'white',
-  'borderRadius': rem(8),
-  'boxShadow': '0 2px 10px rgba(0, 0, 0, 0.08)',
-  'border': '1px solid rgba(74, 127, 231, 0.08)',
-  'transition': 'all 0.2s ease',
-  '&:hover': {
-boxShadow: '0 4px 20px rgba(74, 127, 231, 0.15)',
-transform: 'translateY(-2px)',
-  },
 },
   },
 },
 
-Title: {
-  styles: {
-root: {
-  color: '#2c3e50',
-  fontWeight: 600,
-},
-  },
-},
+// Let Mantine handle Card styling with built-in variants
 
-Text: {
-  styles: (theme: MantineTheme, props: { variant?: string }) => ({
-root: {
-  color: '#495057',
-  lineHeight: 1.5,
-  // Variant-specific styles
-  ...(props.variant === 'subtitle' && {
-color: '#6c757d',
-fontSize: rem(16),
-fontWeight: 400,
-  }),
-  ...(props.variant === 'dimmed' && {
-color: '#6c757d',
-fontSize: rem(14),
-  }),
-},
-  }),
-},
+// Let Mantine handle Title with theme colors
 
-Divider: {
-  styles: {
-root: {
-  borderColor: '#dee2e6',
-},
-  },
-},
+// Let Mantine handle Text with built-in variants
+
+// Let Mantine handle Divider with theme colors
 
 Checkbox: {
   styles: {
 label: {
   fontSize: rem(14),
-  color: '#495057',
   cursor: 'pointer',
   lineHeight: 1.4,
 },
 input: {
-  'cursor': 'pointer',
-  '&:checked': {
-backgroundColor: '#4A7FE7',
-borderColor: '#4A7FE7',
-  },
+  cursor: 'pointer',
 },
   },
 },

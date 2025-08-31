@@ -190,6 +190,68 @@ timeout: 5000,
 });
   });
 
+  test.describe('Password Change', () => {
+test('should change password and verify authentication with new password', async ({
+  page,
+}) => {
+  console.log('🔐 Testing complete password change flow...');
+
+  // Get authenticated user
+  const testUser = await getOrCreateTestUser(page);
+  const userEmail = testUser.email;
+
+  // Navigate to settings page
+  await page.goto('/dashboard/settings');
+  await expect(page).toHaveURL('/dashboard/settings', { timeout: 15000 });
+
+  // Wait for password form to be available
+  await page.waitForSelector(
+'input[placeholder="Enter your new password"]',
+{ timeout: 10000 },
+  );
+
+  // Change password to new value
+  const newPassword = 'UpdatedPass123';
+  await page.fill(
+'input[placeholder="Enter your new password"]',
+newPassword,
+  );
+  await page.fill(
+'input[placeholder="Confirm your new password"]',
+newPassword,
+  );
+  await page.click('button:has-text("Update Password")');
+
+  // Wait for success notification
+  await page.waitForSelector('.mantine-Notification-root', {
+timeout: 10000,
+  });
+  console.log('✅ Password changed successfully');
+
+  // Log out
+  await ensureLoggedOut(page);
+  console.log('✅ Logged out successfully');
+
+  // Log in with new password
+  await page.goto('/auth/login');
+  await page.waitForSelector('[data-testid="login-email-input"]', {
+timeout: 10000,
+  });
+
+  await page.fill('[data-testid="login-email-input"]', userEmail);
+  await page.fill('[data-testid="login-password-input"]', newPassword);
+  await page.click('[data-testid="login-submit-button"]');
+
+  // Verify successful login and dashboard access
+  await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
+  await page.waitForSelector('[data-testid^="tab-"]', { timeout: 10000 });
+
+  console.log(
+'✅ Successfully logged in with new password and accessed dashboard',
+  );
+});
+  });
+
   test.describe('Unauthenticated Access Tests', () => {
 test('should prevent unauthenticated access', async ({ page }) => {
   // Test unauthenticated access without beforeEach authentication

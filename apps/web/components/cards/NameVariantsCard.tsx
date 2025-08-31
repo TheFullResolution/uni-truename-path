@@ -29,13 +29,7 @@ router.push('/dashboard/connected-apps');
   };
 
   return (
-<Card
-  withBorder
-  radius='md'
-  p='xl'
-  bg='var(--mantine-color-body)'
-  data-testid='connected-apps-card'
->
+<Card withBorder radius='md' p='md' data-testid='connected-apps-card'>
   <Group justify='apart'>
 <div>
   <Text fz='xs' tt='uppercase' fw={700} c='dimmed'>
@@ -57,7 +51,7 @@ Top: {topApp}
 </div>
 <ThemeIcon
   color='blue'
-  size={38}
+  size={40}
   radius='md'
   variant='gradient'
   gradient={{ deg: 0, from: 'blue', to: 'cyan' }}
@@ -68,7 +62,7 @@ Top: {topApp}
   {!loading && connectedApps > 0 && (
 <Button
   variant='light'
-  size='xs'
+  size='sm'
   mt='md'
   fullWidth
   onClick={handleViewAll}

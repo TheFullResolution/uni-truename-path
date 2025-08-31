@@ -168,12 +168,6 @@ variant='light'
 color='red'
 title='Sign In Failed'
 icon={<IconAlertCircle size={16} />}
-styles={{
-  root: {
-backgroundColor: 'rgba(231, 76, 60, 0.1)',
-border: '1px solid rgba(231, 76, 60, 0.3)',
-  },
-}}
   >
 <Stack gap='xs'>
   <Text size='sm'>{errorMessage}</Text>
@@ -196,19 +190,6 @@ border: '1px solid rgba(231, 76, 60, 0.3)',
   data-testid='login-email-input'
   autoComplete='email'
   {...form.getInputProps('email')}
-  styles={(theme) => ({
-label: {
-  fontWeight: 500,
-  marginBottom: theme.spacing.xs,
-  color: theme.colors.gray[8],
-},
-input: {
-  '&:focus': {
-borderColor: theme.colors.blue[5],
-boxShadow: `0 0 0 2px rgba(52, 152, 219, 0.2)`,
-  },
-},
-  })}
   aria-describedby={form.errors.email ? 'email-error' : undefined}
 />
 
@@ -221,19 +202,6 @@ boxShadow: `0 0 0 2px rgba(52, 152, 219, 0.2)`,
   data-testid='login-password-input'
   autoComplete='current-password'
   {...form.getInputProps('password')}
-  styles={(theme) => ({
-label: {
-  fontWeight: 500,
-  marginBottom: theme.spacing.xs,
-  color: theme.colors.gray[8],
-},
-input: {
-  '&:focus': {
-borderColor: theme.colors.blue[5],
-boxShadow: `0 0 0 2px rgba(52, 152, 219, 0.2)`,
-  },
-},
-  })}
   aria-describedby={form.errors.password ? 'password-error' : undefined}
 />
 
@@ -250,16 +218,6 @@ size='md'
 leftSection={
   loading ? <Loader size='xs' color='white' /> : undefined
 }
-style={{
-  'backgroundColor': '#3498db',
-  '&:hover': {
-backgroundColor: '#2980b9',
-  },
-  '&:disabled': {
-backgroundColor: '#95a5a6',
-opacity: 0.7,
-  },
-}}
   >
 {loading ? 'Signing In...' : 'Sign In'}
   </Button>
@@ -267,19 +225,10 @@ opacity: 0.7,
   <Button
 type='button'
 variant='light'
+color='gray'
 disabled={loading}
 onClick={onForgotPassword}
 size='md'
-style={{
-  'backgroundColor': '#6c757d',
-  'color': 'white',
-  '&:hover': {
-backgroundColor: '#5a6268',
-  },
-  '&:disabled': {
-opacity: 0.5,
-  },
-}}
   >
 Forgot Password?
   </Button>
@@ -321,12 +270,6 @@ color='blue'
 disabled={loading}
 onClick={onCreateAccount}
 data-testid='login-create-account-button'
-style={{
-  'backgroundColor': '#3498db',
-  '&:hover': {
-backgroundColor: '#2980b9',
-  },
-}}
   >
 Create Account
   </Button>

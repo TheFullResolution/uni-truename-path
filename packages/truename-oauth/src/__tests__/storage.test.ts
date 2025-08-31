@@ -1,6 +1,4 @@
-// TrueNamePath OAuth Client Library: Storage Unit Tests
-// Date: August 27, 2025
-// Comprehensive test suite for storage adapters and OAuth storage
+// Storage Tests
 
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { LocalStorageAdapter, OAuthStorage } from '../storage.js';

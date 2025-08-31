@@ -104,7 +104,7 @@ color='blue'
   </Alert>
 
   <Group justify='flex-end' mt='md'>
-<Button onClick={handleClose} variant='light'>
+<Button onClick={handleClose} variant='light' size='md'>
   Understood
 </Button>
   </Group>
@@ -191,13 +191,16 @@ active consent(s) will be revoked
   <Button
 onClick={handleClose}
 variant='light'
+size='md'
 disabled={isDeleting}
   >
 Cancel
   </Button>
   <Button
 onClick={handleInitialConfirm}
+variant='filled'
 color='red'
+size='md'
 loading={isDeleting}
 disabled={isDeleting}
 leftSection={<IconTrash size={16} />}
@@ -249,13 +252,16 @@ setForceDeleteConfirmed(event.currentTarget.checked)
   <Button
 onClick={() => setConfirmationStep('initial')}
 variant='light'
+size='md'
 disabled={isDeleting}
   >
 Back
   </Button>
   <Button
 onClick={() => handleFinalConfirm(true)}
+variant='filled'
 color='red'
+size='md'
 disabled={!forceDeleteConfirmed || isDeleting}
 loading={isDeleting}
 leftSection={

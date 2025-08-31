@@ -9,7 +9,7 @@ export function EmptyConnectedApps() {
   <Center>
 <Stack align='center'>
   <ThemeIcon size={60} variant='light' color='gray'>
-<IconPlug size={30} />
+<IconPlug size={24} />
   </ThemeIcon>
   <Text size='lg' fw={500} c='dimmed'>
 No connected apps yet

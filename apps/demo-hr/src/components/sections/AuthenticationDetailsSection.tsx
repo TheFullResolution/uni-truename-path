@@ -1,6 +1,5 @@
 /**
- * Authentication Details Section - Technical OAuth Information
- * Shows authentication metadata and technical details
+ * Authentication Details Section
  */
 
 import React from 'react';

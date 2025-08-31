@@ -1,6 +1,5 @@
 /**
- * Shared Styles Constants - Eliminates Duplicate Inline Styles
- * Academic constraint: Keep simple and focused
+ * Shared Styles Constants
  */
 
 export const paperStyles = {
@@ -11,17 +10,16 @@ export const paperStyles = {
   bg: 'white' as const,
 };
 
+// Moved inline styles to component props for better Mantine integration
 export const cardStyles = {
-  textAlign: 'center' as const,
-  width: '100%',
-  maxWidth: '400px',
+  maxWidth: '400px', // Keep as fallback for specific cases
 };
 
 export const buttonStyles = {
   root: {
 fontSize: '16px',
 fontWeight: 500,
-height: '48px',
+// Let Mantine handle height based on size prop to prevent text cutoff
   },
 };
 
@@ -30,7 +28,6 @@ export const fieldGroupSpacing = {
   wrap: 'nowrap' as const,
 } as const;
 
-// Enhanced employee field configuration for complete OIDC claims display
 export const employeeFields = [
   {
 label: 'Display Name',

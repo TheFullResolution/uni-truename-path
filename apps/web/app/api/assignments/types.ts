@@ -21,28 +21,6 @@ export type UserContext = Tables<'user_contexts'>;
 export type Name = Tables<'names'>;
 
 /**
- * Context OIDC assignment database entity (simplified schema)
- */
-export type ContextOIDCAssignment = Tables<'context_oidc_assignments'>;
-
-/**
- * Simple alias for OIDC assignment (database table)
- */
-export type OIDCAssignment = Tables<'context_oidc_assignments'>;
-
-// =============================================================================
-// Database Query Builders
-// =============================================================================
-
-// =============================================================================
-// API Response Types (snake_case compliant)
-// =============================================================================
-
-// =============================================================================
-// Simplified OIDC Assignment Types (Step 15.7.2)
-// =============================================================================
-
-/**
  * OIDC assignment with joined data from names and contexts tables
  * Uses QueryData pattern for type-safe database queries
  */

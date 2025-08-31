@@ -37,6 +37,7 @@ files: [
 ],
 ignores: [
   'components/server/**', // Convention for server-only components
+  'components/home/**', // Home components are server components
 ],
 rules: {
   'no-restricted-imports': [

@@ -16,21 +16,18 @@ import { IconAlertCircle } from '@tabler/icons-react';
 import { useCallback, useState } from 'react';
 import { z } from 'zod';
 
+import {
+  passwordSchema,
+  validatePassword,
+  validatePasswordConfirmation,
+} from '@/utils/validation/password';
+
 // Validation schema for step 1 signup form (email/password only)
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const signupStep1Schema = z
   .object({
 email: z.string().email({ message: 'Invalid email address' }),
-password: z
-  .string()
-  .min(8, { message: 'Password must be at least 8 characters long' })
-  .regex(/[A-Z]/, {
-message: 'Password must contain at least one uppercase letter',
-  })
-  .regex(/[a-z]/, {
-message: 'Password must contain at least one lowercase letter',
-  })
-  .regex(/[0-9]/, { message: 'Password must contain at least one number' }),
+password: passwordSchema,
 confirmPassword: z.string(),
 agreeToTerms: z.boolean().refine((val) => val === true, {
   message: 'You must agree to the Privacy Policy and Terms of Service',
@@ -83,25 +80,9 @@ validate: {
 const result = z.string().email().safeParse(value);
 return result.success ? null : 'Invalid email address';
   },
-  password: (value) => {
-const result = z
-  .string()
-  .min(8)
-  .regex(/[A-Z]/)
-  .regex(/[a-z]/)
-  .regex(/[0-9]/)
-  .safeParse(value);
-if (!result.success) {
-  return 'Password must be at least 8 characters with uppercase, lowercase, and number';
-}
-return null;
-  },
-  confirmPassword: (value, values) => {
-if (value !== values.password) {
-  return 'Passwords do not match';
-}
-return null;
-  },
+  password: (value) => validatePassword(value),
+  confirmPassword: (value, values) =>
+validatePasswordConfirmation(value, values.password),
   agreeToTerms: (value) => {
 return value
   ? null
@@ -158,19 +139,6 @@ border: '1px solid rgba(231, 76, 60, 0.3)',
   autoComplete='email'
   data-testid='signup-email-input'
   {...form.getInputProps('email')}
-  styles={(theme) => ({
-label: {
-  fontWeight: 500,
-  marginBottom: theme.spacing.xs,
-  color: theme.colors.gray[8],
-},
-input: {
-  '&:focus': {
-borderColor: theme.colors.blue[5],
-boxShadow: `0 0 0 2px rgba(52, 152, 219, 0.2)`,
-  },
-},
-  })}
 />
 
 {/* Password Input */}
@@ -182,19 +150,6 @@ boxShadow: `0 0 0 2px rgba(52, 152, 219, 0.2)`,
   autoComplete='new-password'
   data-testid='signup-password-input'
   {...form.getInputProps('password')}
-  styles={(theme) => ({
-label: {
-  fontWeight: 500,
-  marginBottom: theme.spacing.xs,
-  color: theme.colors.gray[8],
-},
-input: {
-  '&:focus': {
-borderColor: theme.colors.blue[5],
-boxShadow: `0 0 0 2px rgba(52, 152, 219, 0.2)`,
-  },
-},
-  })}
 />
 
 {/* Confirm Password Input */}
@@ -206,19 +161,6 @@ boxShadow: `0 0 0 2px rgba(52, 152, 219, 0.2)`,
   autoComplete='new-password'
   data-testid='signup-confirm-password-input'
   {...form.getInputProps('confirmPassword')}
-  styles={(theme) => ({
-label: {
-  fontWeight: 500,
-  marginBottom: theme.spacing.xs,
-  color: theme.colors.gray[8],
-},
-input: {
-  '&:focus': {
-borderColor: theme.colors.blue[5],
-boxShadow: `0 0 0 2px rgba(52, 152, 219, 0.2)`,
-  },
-},
-  })}
 />
 
 {/* GDPR Consent Checkboxes */}
@@ -314,17 +256,8 @@ color: theme.colors.gray[7],
 </Stack>
 
 {/* GDPR Data Processing Notice */}
-<Alert
-  variant='light'
-  color='blue'
-  styles={{
-root: {
-  backgroundColor: 'rgba(52, 152, 219, 0.1)',
-  border: '1px solid rgba(52, 152, 219, 0.3)',
-},
-  }}
->
-  <Text size='xs' c='dimmed' style={{ lineHeight: 1.4 }}>
+<Alert variant='light' color='blue'>
+  <Text size='xs' c='dimmed' lh={1.4}>
 <Text component='span' fw={500}>
   Data Processing:
 </Text>{' '}
@@ -346,16 +279,6 @@ data-testid='signup-step1-submit'
 leftSection={
   loading ? <Loader size='xs' color='white' /> : undefined
 }
-style={{
-  'backgroundColor': '#3498db',
-  '&:hover': {
-backgroundColor: '#2980b9',
-  },
-  '&:disabled': {
-backgroundColor: '#95a5a6',
-opacity: 0.7,
-  },
-}}
   >
 Continue to Name Setup
   </Button>
@@ -364,19 +287,10 @@ Continue to Name Setup
 <Button
   type='button'
   variant='light'
+  color='gray'
   disabled={loading}
   onClick={onBackToLogin}
   size='md'
-  style={{
-'backgroundColor': '#6c757d',
-'color': 'white',
-'&:hover': {
-  backgroundColor: '#5a6268',
-},
-'&:disabled': {
-  opacity: 0.5,
-},
-  }}
 >
   Back to Sign In
 </Button>

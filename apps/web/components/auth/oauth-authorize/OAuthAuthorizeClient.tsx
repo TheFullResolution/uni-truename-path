@@ -1,8 +1,20 @@
 'use client';
 
-import { useState } from 'react';
-import { Stack, Button, Group, Alert, Text, Radio, Badge } from '@mantine/core';
+import {
+  Stack,
+  Button,
+  Group,
+  Alert,
+  Text,
+  Radio,
+  Badge,
+  Box,
+} from '@mantine/core';
 import { IconCheck, IconX, IconAlertCircle } from '@tabler/icons-react';
+import { useForm } from '@mantine/form';
+import { notifications } from '@mantine/notifications';
+import useSWRMutation from 'swr/mutation';
+import { createMutationFetcher } from '@/utils/swr-fetcher';
 import type { UserContext } from '@/types/database';
 import type {
   OAuthClientRegistryInfo,
@@ -15,6 +27,23 @@ interface OAuthAuthorizeClientProps {
   existingAssignment?: AppContextAssignment;
   returnUrl: string;
   state: string;
+}
+
+// Types for the authorization request and response
+interface AuthorizeRequest {
+  client_id: string;
+  context_id: string;
+  return_url: string;
+  state: string;
+}
+
+interface AuthorizeResponse {
+  redirect_url: string;
+}
+
+// Form values interface
+interface FormValues {
+  contextId: string;
 }
 
 export function OAuthAuthorizeClient({
@@ -31,46 +60,94 @@ contexts.find((c) => c.is_permanent)?.id ||
 contexts[0]?.id ||
 '';
 
-  const [selectedContext, setSelectedContext] = useState(defaultContextId);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const selectedContextData = contexts.find((c) => c.id === selectedContext);
-
-  const handleAuthorize = async () => {
-if (!selectedContext) return;
-
-setIsLoading(true);
-
-try {
-  const response = await fetch('/api/oauth/authorize', {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-credentials: 'include',
-body: JSON.stringify({
-  client_id: app.client_id,
-  context_id: selectedContext,
-  return_url: returnUrl,
-  state,
-}),
+  // Initialize form with useForm hook
+  const form = useForm<FormValues>({
+mode: 'controlled',
+initialValues: {
+  contextId: defaultContextId,
+},
+validate: {
+  contextId: (value) => {
+if (!value) {
+  return 'Please select an identity context';
+}
+// Verify the context exists in the available contexts
+const contextExists = contexts.some((c) => c.id === value);
+if (!contextExists) {
+  return 'Selected context is not available';
+}
+return null;
+  },
+},
   });
 
-  const result = await response.json();
-  if (result.success) {
-window.location.href = result.data.redirect_url;
-  } else {
-throw new Error(result.message || 'Authorization failed');
-  }
-} catch (error) {
-  console.error('Authorization error:', error);
-  // Simple error handling for academic demo
-  alert('Authorization failed. Please try again.');
-} finally {
-  setIsLoading(false);
+  // Use SWR mutation for the authorization request
+  const { trigger: authorize, isMutating: isLoading } = useSWRMutation<
+AuthorizeResponse,
+Error,
+'/api/oauth/authorize',
+AuthorizeRequest
+  >(
+'/api/oauth/authorize',
+createMutationFetcher<AuthorizeResponse, AuthorizeRequest>('POST'),
+{
+  onSuccess: (data) => {
+// Redirect to the OAuth callback URL with authorization code
+window.location.href = data.redirect_url;
+  },
+  onError: (error) => {
+console.error('Authorization error:', error);
+
+// Show error notification
+notifications.show({
+  title: 'Authorization Failed',
+  message:
+error.message ||
+'Failed to authorize the application. Please try again.',
+  color: 'red',
+  icon: <IconX size={16} />,
+  autoClose: 6000,
+});
+  },
+},
+  );
+
+  // Get selected context data for display
+  const selectedContextData = contexts.find(
+(c) => c.id === form.values.contextId,
+  );
+
+  // Handle form submission
+  const handleAuthorize = async () => {
+// Validate form
+const validation = form.validate();
+if (validation.hasErrors) {
+  return;
 }
+
+// Trigger the mutation
+await authorize({
+  client_id: app.client_id,
+  context_id: form.values.contextId,
+  return_url: returnUrl,
+  state,
+});
   };
 
   const handleDeny = () => {
-window.location.href = `${returnUrl}?error=access_denied${state ? `&state=${state}` : ''}`;
+// Show notification about denial
+notifications.show({
+  title: 'Authorization Denied',
+  message: 'You have denied access to this application',
+  color: 'orange',
+  icon: <IconAlertCircle size={16} />,
+  autoClose: 3000,
+});
+
+// Redirect back with error
+setTimeout(() => {
+  window.location.href = `${returnUrl}?error=access_denied${state ? `&state=${state}` : ''}`;
+}, 500);
   };
 
   // Simple context check
@@ -94,8 +171,7 @@ variant='light'
 <Stack gap='lg' data-testid='oauth-authorize-form'>
   {/* Context Selection */}
   <Radio.Group
-value={selectedContext}
-onChange={setSelectedContext}
+{...form.getInputProps('contextId')}
 label='Select Identity Context'
 description='Choose which version of your name information this application will receive'
 required
@@ -124,7 +200,7 @@ borderColor: 'var(--mantine-color-blue-5)',
 >
   <Group wrap='nowrap' align='flex-start'>
 <Radio.Indicator />
-<div style={{ flex: 1 }}>
+<Box flex={1}>
   <Text size='md' fw={500}>
 {context.context_name}
   </Text>
@@ -136,7 +212,7 @@ borderColor: 'var(--mantine-color-blue-5)',
   Currently authorized
 </Badge>
   )}
-</div>
+</Box>
   </Group>
 </Radio.Card>
   ))}
@@ -177,7 +253,7 @@ borderColor: 'var(--mantine-color-blue-5)',
   size='md'
   onClick={handleAuthorize}
   loading={isLoading}
-  disabled={!selectedContext || !selectedContextData}
+  disabled={!form.values.contextId || !selectedContextData}
   leftSection={<IconCheck size={16} />}
   data-testid='oauth-authorize-button'
 >

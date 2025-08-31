@@ -3,6 +3,7 @@
 import type { ContextWithStats } from '@/app/api/contexts/types';
 import { AssignmentModal } from '@/components/contexts/AssignmentModal';
 import { DeleteContextModal } from '@/components/modals/DeleteContextModal';
+import { TabPanel } from '@/components/dashboard/TabPanel';
 import type { AuthenticatedUser } from '@/utils/context';
 import {
   createMutationFetcher,
@@ -18,7 +19,6 @@ import {
   Paper,
   Select,
   Stack,
-  Tabs,
   Text,
   Textarea,
   TextInput,
@@ -350,27 +350,22 @@ setSelectedContextForAssignments(null);
   const isLoading = !contextsResponse && !contextsError;
 
   return (
-<Tabs.Panel value='contexts'>
-  <Stack gap='lg'>
-<div>
-  <Group justify='space-between' mb='md'>
-<Title order={2}>Context Management</Title>
+<TabPanel
+  value='contexts'
+  title='Contexts'
+  description='Manage your identity contexts and name assignments'
+  actions={
 <Button
-  leftSection={<IconPlus size={16} />}
+  leftSection={<IconPlus />}
   onClick={() => setShowAddForm(!showAddForm)}
   variant={showAddForm ? 'light' : 'filled'}
   size='sm'
 >
   {showAddForm ? 'Cancel' : 'Add Context'}
 </Button>
-  </Group>
-
-  <Text size='sm' c='dimmed' mb='lg'>
-Create and manage your custom contexts for different situations.
-Your default context is permanent and cannot be deleted.
-  </Text>
-</div>
-
+  }
+>
+  <Stack gap='lg'>
 {/* Add/Edit Context Form */}
 {showAddForm && (
   <Paper p='md' withBorder>
@@ -421,13 +416,7 @@ Cancel
   <Button
 type='submit'
 loading={isCreating || isUpdating}
-leftSection={
-  editingContext ? (
-<IconEdit size={16} />
-  ) : (
-<IconPlus size={16} />
-  )
-}
+leftSection={editingContext ? <IconEdit /> : <IconPlus />}
 data-testid='context-submit-button'
   >
 {editingContext ? 'Update Context' : 'Create Context'}
@@ -468,7 +457,7 @@ icon={<IconAlertTriangle size={16} />}
 </Text>
 <Button
   onClick={() => setShowAddForm(true)}
-  leftSection={<IconPlus size={16} />}
+  leftSection={<IconPlus />}
   mt='sm'
 >
   Add Context
@@ -513,6 +502,6 @@ setDependencyImpact(null);
   contextName={selectedContextForAssignments?.context_name || ''}
 />
   </Stack>
-</Tabs.Panel>
+</TabPanel>
   );
 }

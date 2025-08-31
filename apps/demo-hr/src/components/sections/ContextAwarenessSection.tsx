@@ -1,6 +1,5 @@
 /**
- * Context Awareness Section - Demonstrates Context-Aware Identity
- * Shows how identity data varies by context and application
+ * Context Awareness Section
  */
 
 import React from 'react';

@@ -28,6 +28,10 @@ import {
   buildBatchRequest,
   hasActualChanges,
 } from '@/utils/assignments';
+import {
+  NOTIFICATION_ERROR_TIMEOUT,
+  NOTIFICATION_NETWORK_ERROR_TIMEOUT,
+} from '@/utils/constants/timeouts';
 import { useBatchAssignments } from '@/utils/swr/assignments-batch';
 
 interface AssignmentDialogProps {
@@ -268,7 +272,7 @@ errorMessage.toLowerCase().includes('timeout');
 
   let title = 'Save Failed';
   let enhancedMessage = errorMessage;
-  let autoClose = 8000;
+  let autoClose = NOTIFICATION_ERROR_TIMEOUT;
 
   if (isConstraintViolation) {
 title = 'Invalid Assignment';
@@ -278,7 +282,7 @@ enhancedMessage =
 title = 'Connection Error';
 enhancedMessage =
   'Unable to save changes due to network issues. Please check your connection and try again.';
-autoClose = 10000;
+autoClose = NOTIFICATION_NETWORK_ERROR_TIMEOUT;
   }
 
   notifications.show({
@@ -302,7 +306,7 @@ message:
   'An unexpected error occurred while saving assignments',
 color: 'red',
 icon: <IconX size={18} />,
-autoClose: 10000,
+autoClose: NOTIFICATION_NETWORK_ERROR_TIMEOUT,
   });
 }
   };

@@ -44,7 +44,11 @@ export async function createAndLoginTestUser(page: Page): Promise<TestUser> {
 
   console.log(`🔐 Creating and logging in test user: ${email}`);
 
-  // Navigate to signup
+  // Use proper logout to ensure clean authentication state
+  console.log('🧹 Ensuring logged out state before signup...');
+  await ensureLoggedOut(page);
+
+  // Navigate to signup - now guaranteed to be logged out
   await page.goto('/auth/signup');
   // Wait for the signup form to be ready
   await page.waitForSelector('[data-testid="signup-email-input"]', {
@@ -158,9 +162,15 @@ await page.waitForSelector('[data-testid="tab-settings"]', {
   timeout: 30000,
 });
 
-const logoutButton = page.getByRole('button', {
-  name: /sign out|logout/i,
-});
+// Try data-testid first (new navigation structure), then fallback to text search
+let logoutButton = page.getByTestId('sign-out-button');
+
+// If data-testid button not found, try the old text-based selector
+if (!(await logoutButton.isVisible({ timeout: 2000 }))) {
+  logoutButton = page.getByRole('button', {
+name: /sign out|logout/i,
+  });
+}
 
 if (await logoutButton.isVisible({ timeout: 5000 })) {
   await logoutButton.click();
@@ -285,6 +295,23 @@ if (isAuth) {
 }
   } catch (error) {
 console.warn('⚠️  Error during logout check, forcing clean state:', error);
+  }
+
+  // Clear all browser storage to ensure truly clean state
+  try {
+await page.evaluate(() => {
+  // Clear localStorage and sessionStorage
+  localStorage.clear();
+  sessionStorage.clear();
+});
+
+// Clear cookies
+const context = page.context();
+await context.clearCookies();
+
+console.log('🧹 Cleared browser storage and cookies');
+  } catch (error) {
+console.warn('⚠️  Error clearing browser storage:', error);
   }
 
   // Always go to login page to ensure clean state

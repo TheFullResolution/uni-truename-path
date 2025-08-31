@@ -6,16 +6,7 @@ import {
   formatSWRError,
   swrFocusConfig,
 } from '@/utils/swr-fetcher';
-import {
-  Grid,
-  Stack,
-  Title,
-  Text,
-  Center,
-  Loader,
-  Alert,
-  Group,
-} from '@mantine/core';
+import { Grid, Stack, Text, Center, Loader, Alert, Group } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
   IconAlertTriangle,
@@ -168,23 +159,12 @@ autoClose: 5000,
 
   return (
 <Stack gap='lg'>
-  <div>
-<Group justify='space-between' align='flex-start'>
-  <div>
-<Title order={2}>Connected Apps</Title>
-<Text size='sm' c='dimmed'>
-  Manage applications that have access to your identity information.
-  You can change contexts or revoke access at any time.
-</Text>
-  </div>
   {lastUpdated && (
-<Group gap='xs' c='dimmed'>
+<Group justify='flex-end' gap='xs' c='dimmed'>
   <IconClock size={14} />
   <Text size='xs'>Updated {lastUpdated.toLocaleTimeString()}</Text>
 </Group>
   )}
-</Group>
-  </div>
 
   {/* Connected Apps List */}
   {isLoading ? (

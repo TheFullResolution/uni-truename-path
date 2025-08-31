@@ -1,46 +1,28 @@
 'use client';
 
-import { useCallback, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import type { Route } from 'next';
-import {
-  Container,
-  Grid,
-  Paper,
-  Title,
-  Text,
-  Box,
-  List,
-  Center,
-  Group,
-} from '@mantine/core';
-import { notifications } from '@mantine/notifications';
-import { IconApi, IconRocket, IconBuilding } from '@tabler/icons-react';
+import { Logo } from '@/components/branding/Logo';
+import { LogoWithText } from '@/components/branding/LogoWithText';
 import { LoginForm } from '@/components/forms/LoginForm';
 import { useAuth } from '@/utils/context';
-import { LogoWithText } from '@/components/branding/LogoWithText';
-import { Logo } from '@/components/branding/Logo';
+import { Box, Center, Container, Paper, Text, Title } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
+import type { Route } from 'next';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useCallback, useEffect } from 'react';
 
 function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isAuthenticated, user, loading } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
 
   // Handle redirect logic
   useEffect(() => {
 if (!loading && isAuthenticated) {
   // User is already authenticated, redirect them
   const returnUrl = searchParams.get('returnUrl') || '/dashboard';
-  notifications.show({
-title: 'Already signed in',
-message: `Welcome back, ${user?.email || 'user'}!`,
-color: 'blue',
-autoClose: 2000,
-  });
-
   router.replace(returnUrl as Route);
 }
-  }, [isAuthenticated, loading, user, router, searchParams]);
+  }, [isAuthenticated, loading, router, searchParams]);
 
   // Handle successful login
   const handleLoginSuccess = useCallback(() => {
@@ -130,113 +112,18 @@ style={{
 </Text>
   </Box>
 
-  {/* Two-column layout */}
-  <Grid gutter={0} style={{ minHeight: '500px' }}>
-{/* Left Panel - Marketing Content */}
-<Grid.Col
-  span={{ base: 12, md: 6 }}
-  style={{
-backgroundColor: '#f8f9fa',
-borderRight: '1px solid #dee2e6',
-  }}
->
-  <Box p='xl'>
-<Title order={2} c='gray.8' mb='xs'>
-  Welcome to TrueNamePath
+  {/* Centered single-column layout */}
+  <Box
+p={{ base: 'xl', md: '3rem' }}
+style={{ maxWidth: '450px', margin: '0 auto' }}
+  >
+<Title order={2} c='gray.8' mb='md' ta='center'>
+  Welcome Back
 </Title>
-<Text c='gray.6' size='lg' mb='lg'>
-  &quot;Context-Aware Identity API for the Modern Web&quot;
+
+<Text size='md' c='gray.6' ta='center' mb='xl'>
+  Sign in to manage your context-aware identity
 </Text>
-
-<Group gap='xs' mb='md'>
-  <IconApi size={20} color='#4A7FE7' />
-  <Title order={3} c='gray.7' size='h4'>
-Enterprise-Ready Identity API
-  </Title>
-</Group>
-<List
-  spacing='xs'
-  size='sm'
-  c='gray.7'
-  mb='xl'
-  styles={{
-itemWrapper: {
-  alignItems: 'flex-start',
-},
-itemIcon: {
-  color: '#4A7FE7',
-  marginTop: '2px',
-},
-  }}
->
-  <List.Item>
-Powered by Supabase with enterprise authentication
-  </List.Item>
-  <List.Item>
-RESTful API with secure cookie-based session management
-  </List.Item>
-  <List.Item>
-Edge Functions for real-time name resolution
-  </List.Item>
-  <List.Item>
-GDPR-compliant with comprehensive audit trails
-  </List.Item>
-</List>
-
-{/* Developer highlight box */}
-<Box
-  style={{
-backgroundColor: 'rgba(74, 127, 231, 0.1)',
-border: '1px solid rgba(74, 127, 231, 0.2)',
-borderRadius: '8px',
-padding: '16px',
-  }}
-  mb='md'
->
-  <Group gap='xs' mb='xs'>
-<IconRocket size={16} color='#4A7FE7' />
-<Text fw={600} size='sm' c='brand.7'>
-  For Developers
-</Text>
-  </Group>
-  <Text size='xs' c='gray.7'>
-RESTful API integration with secure cookie-based sessions.
-Standard claims, no proprietary APIs. Edge Functions handle
-the complexity - you get clean, context-aware names.
-  </Text>
-</Box>
-
-{/* Enterprise highlight box */}
-<Box
-  style={{
-backgroundColor: 'rgba(46, 204, 113, 0.1)',
-border: '1px solid rgba(46, 204, 113, 0.2)',
-borderRadius: '8px',
-padding: '16px',
-  }}
-  mb='xl'
->
-  <Group gap='xs' mb='xs'>
-<IconBuilding size={16} color='#27ae60' />
-<Text fw={600} size='sm' c='green.7'>
-  For Enterprises
-</Text>
-  </Group>
-  <Text size='xs' c='gray.7'>
-Enterprise-ready authentication. GDPR compliant by design.
-Seamless integration with existing infrastructure. No major
-architecture changes required.
-  </Text>
-</Box>
-  </Box>
-</Grid.Col>
-
-{/* Right Panel - Login Form */}
-<Grid.Col span={{ base: 12, md: 6 }}>
-  <Box p='xl'>
-<Title order={2} c='gray.8' mb='xl'>
-  Sign In
-</Title>
 
 {/* Integrated LoginForm component */}
 <LoginForm
@@ -246,8 +133,6 @@ architecture changes required.
   showCreateAccount={true}
 />
   </Box>
-</Grid.Col>
-  </Grid>
 </Paper>
   </Container>
 </Box>

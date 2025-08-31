@@ -1,23 +1,47 @@
 'use client';
 
-import { Group, Paper, Tabs, Text, Title } from '@mantine/core';
-import { IconSettings } from '@tabler/icons-react';
+import { Grid } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
+import {
+  AccountSection,
+  SecuritySection,
+  PrivacySection,
+  DangerZone,
+} from '@/components/settings';
+import { DeleteAccountModal } from '@/components/modals/DeleteAccountModal';
+import { TabPanel } from '@/components/dashboard/TabPanel';
 
 export function SettingsTab() {
+  const [
+deleteModalOpened,
+{ open: openDeleteModal, close: closeDeleteModal },
+  ] = useDisclosure(false);
+
   return (
-<Tabs.Panel value='settings'>
-  <Paper p='xl' shadow='md' radius='lg'>
-<Group gap='sm' mb='md'>
-  <IconSettings size={24} color='#4A7FE7' />
-  <Title order={2} c='gray.8'>
-Account Settings
-  </Title>
-</Group>
-<Text c='gray.6'>
-  Account settings will be implemented in future steps. This will
-  include profile management, security settings, and API key management.
-</Text>
-  </Paper>
-</Tabs.Panel>
+<TabPanel
+  value='settings'
+  title='Account Settings'
+  description='Manage your account preferences and security settings'
+>
+  <Grid gutter='lg'>
+<Grid.Col span={{ base: 12, md: 6 }}>
+  <AccountSection />
+</Grid.Col>
+<Grid.Col span={{ base: 12, md: 6 }}>
+  <SecuritySection />
+</Grid.Col>
+<Grid.Col span={12}>
+  <PrivacySection />
+</Grid.Col>
+<Grid.Col span={12}>
+  <DangerZone onDeleteAccount={openDeleteModal} />
+</Grid.Col>
+  </Grid>
+
+  <DeleteAccountModal
+opened={deleteModalOpened}
+onClose={closeDeleteModal}
+  />
+</TabPanel>
   );
 }

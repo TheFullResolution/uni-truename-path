@@ -2,7 +2,7 @@ import { DashboardStatsResponse } from '@/app/api/dashboard/stats/types';
 import {
   Badge,
   Group,
-  Paper,
+  Card,
   Skeleton,
   Text,
   Title,
@@ -42,9 +42,9 @@ return `${diffDays}d ago`;
   };
 
   return (
-<Paper withBorder radius='md' p='xl' data-testid='oauth-activity-card'>
+<Card withBorder radius='md' p='md' data-testid='oauth-activity-card'>
   <Group gap='sm' mb='md'>
-<IconActivity size={20} color='#4A7FE7' />
+<IconActivity size={20} color='var(--mantine-color-brand-6)' />
 <Title order={3} c='gray.8'>
   OAuth Activity
 </Title>
@@ -67,7 +67,7 @@ return `${diffDays}d ago`;
   ) : (
 <IconX size={14} color='red' />
   )}
-  <Text fz='sm' truncate style={{ maxWidth: '120px' }}>
+  <Text fz='sm' truncate maw='120px'>
 {activity.app_name}
   </Text>
   <Badge size='xs' variant='light' color='blue'>
@@ -101,6 +101,6 @@ data-testid='active-sessions-count'
 ? `${recentActivity.length} recent operations`
 : 'Waiting for first OAuth integration'}
   </Badge>
-</Paper>
+</Card>
   );
 }

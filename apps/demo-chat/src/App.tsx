@@ -10,26 +10,16 @@ import { createOAuthCacheProvider } from '@uni-final/truename-oauth';
 
 /**
  * Demo Chat Application Root Component
- *
- * Configures SWR with persistent cache provider for OAuth token management.
- * Focuses on casual context-aware identity display for chat communication.
  */
 const App: React.FC = () => {
   return (
 <MantineProvider theme={chatTheme}>
   <SWRConfig
 value={{
-  // Custom cache provider: Syncs with localStorage for persistence
   provider: createOAuthCacheProvider,
-
-  // React StrictMode Prevention: 2-second deduplication window
   dedupingInterval: 2000,
-
-  // OAuth Token Configuration: Enable focus-based revalidation
   revalidateOnFocus: true,
   revalidateOnReconnect: false,
-
-  // Academic Simplicity: No automatic retries for OAuth failures
   shouldRetryOnError: false,
   errorRetryCount: 0,
 }}

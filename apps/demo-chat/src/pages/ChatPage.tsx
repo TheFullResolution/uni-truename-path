@@ -1,6 +1,5 @@
 /**
- * ChatPage Component - Context-aware chat interface
- * Displays user identity with CASUAL context emphasis (nickname, preferred_username)
+ * ChatPage Component
  */
 
 import { ChatMessage } from '@/components/ChatMessage';
@@ -37,14 +36,12 @@ export const ChatPage = () => {
   const navigate = useNavigate();
   const { token, clearToken } = useStoredOAuthToken();
 
-  // Handle redirect when no token is present
   useEffect(() => {
 if (!token) {
   navigate('/', { replace: true });
 }
   }, [token, navigate]);
 
-  // Fetch user data using stored token
   const {
 data: userData,
 error,
@@ -68,8 +65,7 @@ return null;
 
   if (isLoading) {
 return (
-  <Box h='100vh' bg='var(--mantine-color-gray-0)'>
-{/* Header Skeleton */}
+  <Box mih='100vh' bg='var(--mantine-color-gray-0)'>
 <Box
   bg='white'
   style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}
@@ -88,13 +84,10 @@ return (
   </Container>
 </Box>
 
-{/* Main Content Skeleton */}
 <Container size='lg' pt='lg'>
   <Stack gap='lg'>
-{/* Chat Interface Skeleton */}
 <Paper shadow='sm' radius='md' p='md'>
   <Stack gap='md'>
-{/* Channel Header Skeleton */}
 <Group justify='space-between'>
   <Group>
 <Skeleton height={24} width={80} />
@@ -106,7 +99,6 @@ return (
 
 <Divider />
 
-{/* Message List Skeleton */}
 <ScrollArea h={400}>
   <Stack gap='md' p='sm'>
 {[...Array(5)].map((_, i) => (
@@ -124,7 +116,6 @@ return (
 
 <Divider />
 
-{/* Message Input Skeleton */}
 <Group gap='xs'>
   <Skeleton height={32} width={32} radius='xl' />
   <Skeleton height={36} style={{ flex: 1 }} />
@@ -133,7 +124,6 @@ return (
   </Stack>
 </Paper>
 
-{/* Identity Context Card Skeleton */}
 <Paper shadow='sm' p='lg' radius='md'>
   <Stack gap='md'>
 <Group>
@@ -155,7 +145,7 @@ return (
 
   if (error || !userData) {
 return (
-  <Box h='100vh' bg='var(--mantine-color-gray-0)' p='xl'>
+  <Box mih='100vh' bg='var(--mantine-color-gray-0)' p='xl'>
 <Container size='md'>
   <Stack gap='md' align='center' ta='center' pt='5rem'>
 <Alert color='red' w='100%'>
@@ -170,9 +160,7 @@ return (
 );
   }
 
-  // Context-aware identity display - Focus on CASUAL context
   const getCasualDisplayName = (claims: OIDCClaims): string => {
-// Prioritize casual identity fields for chat context
 if (claims.nickname) return claims.nickname;
 if (claims.preferred_username) return claims.preferred_username;
 if (claims.given_name) return claims.given_name;
@@ -181,7 +169,6 @@ return claims.name || 'User';
 
   const displayName = getCasualDisplayName(userData);
 
-  // Static mock messages for demonstration
   const mockMessages = [
 {
   id: '1',
@@ -225,11 +212,10 @@ return claims.name || 'User';
 
   return (
 <Box
-  h='100vh'
+  mih='100vh'
   bg='var(--mantine-color-gray-0)'
   data-testid='demo-chat-page'
 >
-  {/* Header */}
   <Box
 bg='white'
 style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}
@@ -243,9 +229,7 @@ alt='ChatSpace Logo'
 w={36}
 h={36}
 fit='contain'
-style={{
-  borderRadius: 'var(--mantine-radius-sm)',
-}}
+radius='sm'
   />
   <Title
 order={2}
@@ -292,13 +276,10 @@ Sign Out
 </Container>
   </Box>
 
-  {/* Main Chat Interface */}
-  <Container size='lg' pt='lg'>
+  <Container size='lg' pt='lg' pb='xl'>
 <Stack gap='lg'>
-  {/* Chat Interface */}
   <Paper shadow='sm' radius='md' p='md'>
 <Stack gap='md'>
-  {/* Channel Header */}
   <Group justify='space-between' wrap='wrap'>
 <Group gap='sm'>
   <Title
@@ -326,7 +307,6 @@ Team Chat
 
   <Divider />
 
-  {/* Message List */}
   <ScrollArea h={400} type='scroll'>
 <Stack gap='md' p='sm'>
   {mockMessages.map((message) => (
@@ -343,7 +323,6 @@ Team Chat
 
   <Divider />
 
-  {/* Message Input (Static - Demo Only) */}
   <Stack gap='xs'>
 <Group gap='xs'>
   <Box hiddenFrom='xs'>
@@ -358,11 +337,6 @@ placeholder={`Message as ${displayName}...`}
 style={{ flex: 1 }}
 size='md'
 disabled
-styles={{
-  input: {
-backgroundColor: 'var(--mantine-color-gray-0)',
-  },
-}}
   />
   <ActionIcon
 size='lg'
@@ -383,7 +357,6 @@ professional contexts.
 </Stack>
   </Paper>
 
-  {/* Identity Context Card */}
   <Paper shadow='sm' p='lg' radius='md'>
 <Stack gap='md'>
   <Group wrap='wrap'>
@@ -399,7 +372,6 @@ professional contexts.
 </Badge>
   </Group>
 
-  {/* Primary Display - Casual Name */}
   <Box>
 <Text size='xs' tt='uppercase' fw={500} c='gray.6' mb={4}>
   Display Name
@@ -419,7 +391,6 @@ professional contexts.
 
   <Divider />
 
-  {/* Identity Breakdown */}
   <Stack gap='xs'>
 <Text size='sm' fw={500} c='gray.7'>
   Available Identity Fields
@@ -540,7 +511,6 @@ auth_time
 </Stack>
   </Paper>
 
-  {/* OIDC Claims Details */}
   <Paper shadow='sm' p='lg' radius='md'>
 <Stack gap='md'>
   <Title

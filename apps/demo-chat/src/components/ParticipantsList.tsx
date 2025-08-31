@@ -1,13 +1,11 @@
 /**
- * ParticipantsList Component - Mock chat participants showcase
- * Demonstrates UserBadge components with various presence states and OIDC claims
+ * ParticipantsList Component
  */
 
 import { Stack, Paper, Title, Text } from '@mantine/core';
 import { OIDCClaims } from '@uni-final/truename-oauth';
 import { UserBadge } from './UserBadge';
 
-// Mock participant data - essential OIDC claims for academic demo
 const mockParticipants: Array<{
   userData: OIDCClaims;
   presence: 'online' | 'away' | 'offline';
@@ -63,7 +61,6 @@ presence: 'online',
 ];
 
 export function ParticipantsList() {
-  // Count participants by presence for summary
   const onlineCount = mockParticipants.filter(
 (p) => p.presence === 'online',
   ).length;

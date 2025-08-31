@@ -26,11 +26,7 @@ export function LogoWithText({ size = 'md', className }: LogoWithTextProps) {
   height={dimensions.height}
   className={className}
   priority
-  style={{
-width: dimensions.width,
-height: dimensions.height,
-objectFit: 'contain',
-  }}
+  style={{ objectFit: 'contain' }}
 />
   );
 }

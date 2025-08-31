@@ -1,6 +1,5 @@
 /**
- * OAuth Callback Handler Component - ChatSpace
- * Processes OAuth callback with token resolution for chat context
+ * OAuth Callback Handler Component
  */
 
 import { useEffect, useRef } from 'react';
@@ -25,14 +24,11 @@ export const CallbackPage = () => {
   const { setToken } = useStoredOAuthToken();
   const hasRedirected = useRef(false);
 
-  // Extract token from callback URL parameters
   const token = (() => {
 const params = new URLSearchParams(location.search);
 return params.get('token');
   })();
 
-  // Use SWR hook for token resolution (prevents duplicate requests)
-  // Enable revalidateOnMount for fresh token resolution in Callback
   const {
 data: userData,
 error,
@@ -44,7 +40,6 @@ revalidateOnMount: true,
 ...oauthConfig,
   });
 
-  // Handle successful authentication redirect in useEffect to avoid render side effects
   useEffect(() => {
 if (userData?.sub && token && !hasRedirected.current) {
   hasRedirected.current = true;
@@ -53,7 +48,6 @@ if (userData?.sub && token && !hasRedirected.current) {
 }
   }, [userData?.sub, token, setToken, navigate]);
 
-  // Simple declarative rendering based on hook states
   if (!token) {
 return (
   <Box
@@ -156,7 +150,6 @@ style={{
   }
 
   if (userData) {
-// Token storage and redirect handled by useEffect
 return (
   <Box
 h='100vh'
@@ -196,7 +189,6 @@ style={{
 );
   }
 
-  // Fallback state
   return (
 <Box
   h='100vh'

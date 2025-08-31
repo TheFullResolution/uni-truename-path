@@ -1,55 +1,26 @@
-/**
- * OAuth Token Fetcher Utility
- *
- * Centralized fetching logic for OAuth token resolution.
- * This utility provides a clean, focused function for SWR to use
- * without additional complexity.
- */
+// OAuth Token Fetcher Utility
 
 import type { OIDCClaims, ApiResponse } from '../types.js';
 
-/**
- * Configuration for OAuth token fetching
- */
 export interface OAuthTokenFetcherConfig {
-  /** Base URL for the TrueNamePath API */
   apiBaseUrl: string;
-  /** Development mode flag (optional, defaults to false) */
   isDevelopment?: boolean;
 }
 
-/**
- * Default configuration values
- */
 const DEFAULT_CONFIG: Partial<OAuthTokenFetcherConfig> = {
   isDevelopment: false,
 };
 
-/**
- * Generates a consistent cache key for OAuth token resolution
- * Uses last 8 characters of token for uniqueness while maintaining privacy
- */
+// Generates a consistent cache key for OAuth token resolution
 export function generateOAuthCacheKey(token: string): string {
   return `oauth-token-${token.slice(-8)}`;
 }
 
-/**
- * Create a configured OAuth token fetcher
- *
- * @param config - Configuration for API base URL and environment
- * @returns Configured fetcher function for use with SWR
- */
+// Create a configured OAuth token fetcher
 export function createOAuthTokenFetcher(config: OAuthTokenFetcherConfig) {
   const finalConfig = { ...DEFAULT_CONFIG, ...config };
 
-  /**
-   * Fetcher function for OAuth token resolution
-   * Designed for use with SWR hooks
-   *
-   * @param token - OAuth Bearer token to resolve
-   * @returns Promise<OIDCClaims> - Resolved OIDC claims from token
-   * @throws Error - If token resolution fails
-   */
+  // Fetcher function for OAuth token resolution
   return async function fetchOAuthToken(token: string): Promise<OIDCClaims> {
 const response = await fetch(
   `${finalConfig.apiBaseUrl}/api/oauth/resolve`,
@@ -84,15 +55,7 @@ return result.data.claims;
   };
 }
 
-/**
- * Direct fetcher function for OAuth token resolution
- * Requires explicit API base URL configuration
- *
- * @param token - OAuth Bearer token to resolve
- * @param apiBaseUrl - Base URL for the TrueNamePath API
- * @returns Promise<OIDCClaims> - Resolved OIDC claims from token
- * @throws Error - If token resolution fails
- */
+// Direct fetcher function for OAuth token resolution
 export async function fetchOAuthToken(
   token: string,
   apiBaseUrl: string,

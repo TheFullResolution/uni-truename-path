@@ -4,6 +4,7 @@ import type { ContextWithStats } from '@/app/api/contexts/types';
 import {
   ActionIcon,
   Badge,
+  Box,
   Button,
   Card,
   Divider,
@@ -67,9 +68,9 @@ export function ContextCard({
   <Stack gap='sm'>
 {/* Header with name and badges */}
 <Group justify='space-between' align='flex-start'>
-  <div style={{ flex: 1 }}>
+  <Box flex={1}>
 <Group gap='xs' align='center' mb={4}>
-  <Text fw={600} size='lg'>
+  <Text size='lg' fw='600'>
 {context.context_name}
   </Text>
 
@@ -84,7 +85,7 @@ export function ContextCard({
 size='sm'
 variant='light'
 color='blue'
-leftSection={<IconLock size={12} />}
+leftSection={<IconLock size={16} />}
   >
 Default
   </Badge>
@@ -109,7 +110,7 @@ Default
 {context.description}
   </Text>
 )}
-  </div>
+  </Box>
 </Group>
 
 {/* Action buttons */}

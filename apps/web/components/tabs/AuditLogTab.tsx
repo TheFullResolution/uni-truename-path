@@ -2,19 +2,17 @@
 
 import type { AuthenticatedUser } from '@/utils/context';
 import { swrFetcher, formatSWRError } from '@/utils/swr-fetcher';
+import { TabPanel } from '@/components/dashboard/TabPanel';
 import {
   Alert,
   Badge,
   Button,
   Card,
   Center,
-  Group,
   Loader,
   Stack,
   Table,
-  Tabs,
   Text,
-  Title,
 } from '@mantine/core';
 import { IconHistory, IconReload, IconAlertCircle } from '@tabler/icons-react';
 import useSWRInfinite from 'swr/infinite';
@@ -160,13 +158,13 @@ return parts.length > 0 ? parts.join(', ') : 'N/A';
   };
 
   return (
-<Tabs.Panel value='audit-log'>
-  <Stack gap='lg'>
-<div>
-  <Group justify='space-between' mb='md'>
-<Title order={2}>App Activity</Title>
+<TabPanel
+  value='audit-log'
+  title='App Activity'
+  description={`Track OAuth application usage, identity resolutions, and context assignments.${totalCount > 0 ? ` (${totalCount} total entries)` : ''}`}
+  actions={
 <Button
-  leftSection={<IconReload size={16} />}
+  leftSection={<IconReload />}
   onClick={handleRefresh}
   variant='light'
   size='sm'
@@ -175,19 +173,9 @@ return parts.length > 0 ? parts.join(', ') : 'N/A';
 >
   Refresh
 </Button>
-  </Group>
-
-  <Text size='sm' c='dimmed' mb='lg'>
-Track OAuth application usage, identity resolutions, and context
-assignments.
-{totalCount > 0 && (
-  <Text component='span' fw={500} ml='xs'>
-({totalCount} total entries)
-  </Text>
-)}
-  </Text>
-</div>
-
+  }
+>
+  <Stack gap='lg'>
 {/* Loading State */}
 {isLoading ? (
   <Center p='xl'>
@@ -203,7 +191,7 @@ Loading audit entries...
   <Alert
 color='red'
 title='Error Loading Audit Log'
-icon={<IconAlertCircle size={16} />}
+icon={<IconAlertCircle />}
   >
 <Text size='sm'>{formatSWRError(error)}</Text>
 <Button
@@ -236,7 +224,7 @@ icon={<IconAlertCircle size={16} />}
 ) : (
   /* Data Table */
   <Card withBorder>
-<Table.ScrollContainer minWidth={800}>
+<Table.ScrollContainer minWidth={600}>
   <Table striped highlightOnHover>
 <Table.Thead>
   <Table.Tr>
@@ -313,6 +301,6 @@ style={{ borderTop: '1px solid var(--mantine-color-gray-3)' }}
   </Card>
 )}
   </Stack>
-</Tabs.Panel>
+</TabPanel>
   );
 }

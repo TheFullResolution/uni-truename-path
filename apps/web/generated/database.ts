@@ -644,6 +644,10 @@ Returns: Json
 Args: Record<PropertyKey, never>
 Returns: string
   }
+  delete_user_account: {
+Args: { p_email_confirmation: string; p_user_id: string }
+Returns: Json
+  }
   generate_oauth_token: {
 Args: Record<PropertyKey, never>
 Returns: string

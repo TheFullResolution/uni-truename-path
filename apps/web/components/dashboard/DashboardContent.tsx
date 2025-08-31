@@ -1,28 +1,16 @@
 'use client';
 
 import type { DashboardStatsResponse } from '@/app/api/dashboard/stats/types';
-import { AuthGuard } from '@/components/auth/AuthGuard';
-import { Logo } from '@/components/branding/Logo';
+import { ClientAppNavigation } from '@/components/layout/ClientAppNavigation';
 import { useAuth } from '@/utils/context';
 import { formatSWRError, swrFetcher } from '@/utils/swr-fetcher';
 import { CACHE_KEYS } from '@/utils/swr-keys';
-import { createLogoutHandler } from '@/utils/utils';
 import type { Route } from 'next';
-import {
-  Box,
-  Button,
-  Container,
-  Group,
-  Paper,
-  Tabs,
-  Text,
-  Title,
-} from '@mantine/core';
+import { Box, Container, Paper, Tabs } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
   IconDashboard,
   IconHistory,
-  IconLogout,
   IconPlug,
   IconSettings,
   IconTags,
@@ -48,7 +36,7 @@ interface DashboardContentProps {
 export function DashboardContent({ initialTab }: DashboardContentProps) {
   const router = useRouter();
   const urlSearchParams = useSearchParams();
-  const { user, logout, loading } = useAuth();
+  const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState<ValidTab>(initialTab);
 
@@ -78,12 +66,6 @@ autoClose: 5000,
   });
 }
   }, [statsError]);
-
-  // Handle logout using utility function
-  const handleLogout = useCallback(
-() => createLogoutHandler(logout, router)(),
-[logout, router],
-  );
 
   // Handle tab changes with URL updates
   const handleTabChange = useCallback(
@@ -120,43 +102,10 @@ router.push(newUrl as Route, { scroll: false });
   );
 
   return (
-<AuthGuard>
-  <Box
-data-testid='dashboard-content'
-style={{
-  minHeight: '100vh',
-  background:
-'linear-gradient(135deg, rgba(74, 127, 231, 0.05) 0%, rgba(195, 217, 247, 0.1) 100%)',
-}}
-  >
+<>
+  <ClientAppNavigation />
+  <Box data-testid='dashboard-content'>
 <Container size='xl' py='md'>
-  {/* Header */}
-  <Paper p='xl' mb='xl' shadow='lg' radius='lg'>
-<Group justify='space-between' align='center'>
-  <Group>
-<Logo size='lg' />
-<Box>
-  <Title order={1} size='h2' c='brand.8'>
-TrueNamePath Dashboard
-  </Title>
-  <Text size='sm' c='gray.6'>
-Context-Aware Identity Management
-  </Text>
-</Box>
-  </Group>
-  <Button
-leftSection={<IconLogout size={16} />}
-variant='light'
-color='red'
-onClick={handleLogout}
-loading={loading}
-disabled={loading}
-  >
-Sign Out
-  </Button>
-</Group>
-  </Paper>
-
   {/* Navigation Tabs */}
   <Paper p='md' mb='xl' shadow='md' radius='lg'>
 <Tabs value={activeTab} onChange={handleTabChange}>
@@ -215,6 +164,6 @@ statsLoading={statsLoading}
   </Paper>
 </Container>
   </Box>
-</AuthGuard>
+</>
   );
 }

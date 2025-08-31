@@ -93,7 +93,7 @@ available for context-aware resolution to function properly.
   )}
 
   <Group justify='flex-end' mt='md'>
-<Button onClick={onClose} variant='light'>
+<Button onClick={onClose} variant='light' size='md'>
   Understood
 </Button>
   </Group>
@@ -160,12 +160,19 @@ available names
 </Alert>
 
 <Group justify='flex-end' mt='md'>
-  <Button onClick={onClose} variant='light' disabled={isDeleting}>
+  <Button
+onClick={onClose}
+variant='light'
+size='md'
+disabled={isDeleting}
+  >
 Cancel
   </Button>
   <Button
 onClick={handleConfirm}
+variant='filled'
 color='red'
+size='md'
 loading={isDeleting}
 disabled={isDeleting}
 leftSection={

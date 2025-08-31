@@ -11,7 +11,7 @@ import { SettingsTabSkeleton } from '@/components/skeletons/SettingsTabSkeleton'
 // Dashboard tab loads immediately as it's the main view
 import { DashboardTab } from '@/components/tabs/DashboardTab';
 import type { AuthenticatedUser } from '@/utils/context';
-import { Box, Card, Text } from '@mantine/core';
+import { Box } from '@mantine/core';
 import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
 import { SWRErrorBoundary } from './SWRErrorBoundary';
@@ -113,16 +113,6 @@ export function DashboardTabs({
 <Suspense fallback={<AuditLogTabSkeleton />}>
   <AuditLogTab user={user} />
 </Suspense>
-
-{/* Footer */}
-<Card p='lg' shadow='sm' withBorder radius='lg' mt='xl'>
-  <Text size='xs' c='dimmed' ta='center'>
-TrueNamePath v1.0.0 - University Final Project (CM3035 Advanced Web
-Design)
-<br />
-Context-Aware Identity Management API Demo
-  </Text>
-</Card>
   </Box>
 </SWRErrorBoundary>
   );

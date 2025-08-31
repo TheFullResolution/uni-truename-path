@@ -28,14 +28,10 @@ justifyContent: isCurrentUser ? 'flex-end' : 'flex-start',
   <Paper
 p='sm'
 radius='md'
-style={{
-  backgroundColor: isCurrentUser
-? 'var(--mantine-color-violet-0)'
-: 'var(--mantine-color-gray-0)',
-  maxWidth: '70%',
-}}
+bg={isCurrentUser ? 'violet.0' : 'gray.0'}
+maw='70%'
   >
-<Stack gap={2}>
+<Stack gap='xs'>
   <Group gap='xs' justify='space-between'>
 <Text size='sm' fw={500} c={isCurrentUser ? 'violet.7' : 'gray.8'}>
   {isCurrentUser ? 'You' : authorName}

@@ -22,6 +22,7 @@ import React, {
   useCallback,
   useMemo,
 } from 'react';
+import { usePathname } from 'next/navigation';
 import { notifications } from '@mantine/notifications';
 import { IconX } from '@tabler/icons-react';
 import {
@@ -61,8 +62,17 @@ preferredName?: string,
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+
+  // Check if we're on a protected route that middleware already authenticated
+  const isProtectedRoute =
+pathname?.startsWith('/dashboard') ||
+pathname?.startsWith('/profile') ||
+pathname?.startsWith('/settings');
+
   const [user, setUser] = useState<AuthenticatedUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  // OPTIMIZATION: Skip loading state for protected routes since middleware already verified auth
+  const [loading, setLoading] = useState(!isProtectedRoute);
   const [error, setError] = useState<AuthErrorCode | null>(null);
 
   // Clear error when user changes
@@ -80,7 +90,8 @@ const initializeAuth = async () => {
   try {
 // OPTIMIZATION: Since middleware handles auth verification, this is primarily
 // for UI state restoration rather than authentication verification
-// Only call getCurrentUser if we're likely to be authenticated (middleware passed)
+// For protected routes, we know user is authenticated via middleware
+// For public routes, we still need to check if user has a session
 const response = await getCurrentUser();
 
 if (mounted) {

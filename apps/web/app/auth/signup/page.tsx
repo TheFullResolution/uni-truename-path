@@ -11,12 +11,11 @@ import {
   Text,
   Box,
   List,
-  Button,
   Center,
   Badge,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconShield, IconTool, IconLock, IconBook } from '@tabler/icons-react';
+import { IconShield, IconLock } from '@tabler/icons-react';
 import {
   SignupStep1Form,
   type SignupStep1Data,
@@ -151,27 +150,6 @@ const loginUrl = returnUrl
 router.push(loginUrl as Route);
   }, [router, searchParams]);
 
-  // Handle privacy policy (placeholder)
-  const handlePrivacyPolicy = useCallback(() => {
-notifications.show({
-  title: 'Privacy Policy',
-  message:
-'Privacy Policy documentation is available in the project repository.',
-  color: 'blue',
-  autoClose: 4000,
-});
-  }, []);
-
-  // Handle API documentation (placeholder)
-  const handleApiDocs = useCallback(() => {
-notifications.show({
-  title: 'API Documentation',
-  message: 'OpenAPI 3.1 documentation will be available after Step 17.',
-  color: 'blue',
-  autoClose: 4000,
-});
-  }, []);
-
   // Show loading state while checking authentication
   if (loading) {
 return (
@@ -229,7 +207,7 @@ style={{
   TrueNamePath
 </Title>
 <Text size='lg' c='gray.7'>
-  Create Your Account
+  Get Started
 </Text>
   </Box>
 
@@ -245,32 +223,31 @@ borderRight: '1px solid #dee2e6',
 >
   <Box p='xl'>
 <Title order={2} c='gray.8' mb='xs'>
-  Your Privacy Matters
+  Create Your Account
 </Title>
-<Text c='gray.6' size='lg' mb='lg'>
-  We believe you should control how your name appears in
-  different contexts.
+<Text c='gray.6' size='lg' mb='xl'>
+  Take control of how your identity appears across different
+  contexts.
 </Text>
 
-{/* Privacy by Design section */}
+{/* Key Benefits */}
 <Box
   style={{
-backgroundColor: 'rgba(74, 127, 231, 0.1)',
-border: '1px solid rgba(74, 127, 231, 0.2)',
-borderRadius: '8px',
-padding: '20px',
+backgroundColor: 'rgba(74, 127, 231, 0.08)',
+border: '1px solid rgba(74, 127, 231, 0.15)',
+borderRadius: '12px',
+padding: '24px',
   }}
   mb='xl'
 >
   <Title order={3} c='brand.7' mb='md' size='h4'>
 <IconShield size={20} style={{ marginRight: '8px' }} />
-What you get:
+What You Get
   </Title>
   <List
-spacing='xs'
+spacing='sm'
 size='sm'
 c='gray.7'
-mb='md'
 styles={{
   itemWrapper: {
 alignItems: 'flex-start',
@@ -281,124 +258,48 @@ marginTop: '2px',
   },
 }}
   >
-<List.Item>Multiple name variants per context</List.Item>
-<List.Item>Granular consent management</List.Item>
-<List.Item>Complete audit trail</List.Item>
-<List.Item>GDPR data portability</List.Item>
-<List.Item>Context-aware name resolution</List.Item>
+<List.Item>Context-aware name management</List.Item>
+<List.Item>Privacy-first design</List.Item>
+<List.Item>Complete control over your identity</List.Item>
   </List>
 </Box>
 
-{/* Privacy by Design section */}
-<Title order={3} c='gray.7' mb='md' size='h4'>
-  <IconLock size={20} style={{ marginRight: '8px' }} />
-  Privacy by Design
-</Title>
-<Text size='sm' c='gray.7' mb='xl'>
-  GDPR compliant from day one. Context detection automatically
-  adapts while you maintain full control over name disclosure.
-  Built-in audit trails for compliance.
-</Text>
-
-{/* Enterprise Security section */}
-<Title order={3} c='gray.7' mb='md' size='h4'>
-  <IconTool size={20} style={{ marginRight: '8px' }} />
-  Enterprise Security
-</Title>
-<Text size='sm' c='gray.7' mb='xl'>
-  Built on Supabase&apos;s enterprise-grade infrastructure with
-  Edge Functions. Standard cookie-based session management means
-  no proprietary integrations required.
-</Text>
-
-{/* Academic Project Badge */}
+{/* Privacy Statement */}
 <Box
   style={{
-backgroundColor: 'rgba(52, 152, 219, 0.1)',
-border: '1px solid rgba(52, 152, 219, 0.2)',
-borderRadius: '8px',
-padding: '16px',
+backgroundColor: 'rgba(46, 204, 113, 0.08)',
+border: '1px solid rgba(46, 204, 113, 0.15)',
+borderRadius: '12px',
+padding: '20px',
   }}
   mb='xl'
 >
+  <Title order={3} c='green.7' mb='sm' size='h5'>
+<IconLock size={18} style={{ marginRight: '8px' }} />
+Your Privacy is Protected
+  </Title>
+  <Text size='sm' c='gray.7'>
+GDPR compliant with full audit trails. You maintain complete
+control over how your name appears in different contexts.
+  </Text>
+</Box>
+
+{/* Academic Project Info */}
+<Box
+  style={{
+backgroundColor: 'rgba(52, 152, 219, 0.08)',
+border: '1px solid rgba(52, 152, 219, 0.15)',
+borderRadius: '12px',
+padding: '16px',
+  }}
+>
   <Badge variant='light' color='blue' size='sm' mb='xs'>
-University Project
+Academic Demo
   </Badge>
   <Text size='xs' c='gray.7'>
-This is a demonstration project for CM3035 Advanced Web
-Design, showcasing context-aware identity management
-capabilities.
+University project demonstrating advanced identity
+management concepts.
   </Text>
-</Box>
-
-{/* Action buttons */}
-<Box>
-  <Title order={3} c='gray.7' mb='md' size='h4'>
-Learn More
-  </Title>
-
-  <Button
-variant='subtle'
-color='gray'
-fullWidth
-mb='xs'
-justify='flex-start'
-leftSection={<IconShield size={16} />}
-onClick={handlePrivacyPolicy}
-styles={{
-  root: {
-'height': 'auto',
-'padding': '12px 16px',
-'whiteSpace': 'normal',
-'&:hover': {
-  backgroundColor: '#e9ecef',
-},
-  },
-  inner: {
-justifyContent: 'flex-start',
-  },
-}}
-  >
-<Box style={{ textAlign: 'left' }}>
-  <Text fw={600} size='sm'>
-View Privacy Policy
-  </Text>
-  <Text size='xs' c='gray.6'>
-GDPR-compliant privacy practices
-  </Text>
-</Box>
-  </Button>
-
-  <Button
-variant='subtle'
-color='gray'
-fullWidth
-justify='flex-start'
-leftSection={<IconBook size={16} />}
-onClick={handleApiDocs}
-styles={{
-  root: {
-'height': 'auto',
-'padding': '12px 16px',
-'whiteSpace': 'normal',
-'&:hover': {
-  backgroundColor: '#e9ecef',
-},
-  },
-  inner: {
-justifyContent: 'flex-start',
-  },
-}}
-  >
-<Box style={{ textAlign: 'left' }}>
-  <Text fw={600} size='sm'>
-API Documentation
-  </Text>
-  <Text size='xs' c='gray.6'>
-RESTful API with secure session management
-  </Text>
-</Box>
-  </Button>
 </Box>
   </Box>
 </Grid.Col>

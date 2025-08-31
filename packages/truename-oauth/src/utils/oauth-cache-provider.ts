@@ -1,9 +1,4 @@
-/**
- * OAuth Cache Provider for SWR
- *
- * Simple cache provider that persists OAuth data to localStorage.
- * OAuth data changes once per session, so no complex syncing is needed.
- */
+// OAuth Cache Provider for SWR
 
 import type {
   OAuthCacheKey,
@@ -15,11 +10,7 @@ import type {
 } from '../types/swr-cache.js';
 import { isOAuthCacheEntry } from '../types/swr-cache.js';
 
-/**
- * Creates a simple cache that restores once and saves on each set()
- */
 function createOAuthCache(): Cache<OIDCClaims> {
-  // Restore from localStorage once on initialization
   const internalMap = new Map<string, SWRState<OIDCClaims>>();
 
   if (typeof window !== 'undefined') {
@@ -29,13 +20,11 @@ try {
 const parsedData: SerializedCacheEntries = JSON.parse(stored);
 const validEntries = parsedData.filter(isOAuthCacheEntry);
 
-// Restore valid entries to the map
 validEntries.forEach(([key, value]) => {
   internalMap.set(key, value);
 });
   }
 } catch {
-  // Clear corrupted cache
   localStorage.removeItem('swr-oauth-cache');
 }
   }
@@ -80,12 +69,7 @@ delete(key: string): void {
   };
 }
 
-/**
- * Creates a cache provider function that persists OAuth data to localStorage
- *
- * @param _cache - SWR's readonly cache (unused in this implementation)
- * @returns SWR-compatible cache that implements the standard Cache interface
- */
+// Creates a cache provider function that persists OAuth data to localStorage
 export function createOAuthCacheProvider(
   _cache: Readonly<Cache>,
 ): Cache<OIDCClaims> {
@@ -93,10 +77,7 @@ export function createOAuthCacheProvider(
   return createOAuthCache();
 }
 
-/**
- * Clears OAuth cache from localStorage
- * Used during logout to ensure clean state
- */
+// Clears OAuth cache from localStorage
 export function clearOAuthCache(): void {
   if (typeof window !== 'undefined') {
 // Clear SWR OAuth cache - this is the single source of OAuth data

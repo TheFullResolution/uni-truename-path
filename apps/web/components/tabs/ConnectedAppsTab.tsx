@@ -1,12 +1,16 @@
 'use client';
 
 import { ConnectedAppsPanel } from '@/components/dashboard/connected-apps/ConnectedAppsPanel';
-import { Tabs } from '@mantine/core';
+import { TabPanel } from '@/components/dashboard/TabPanel';
 
 export function ConnectedAppsTab() {
   return (
-<Tabs.Panel value='connected-apps'>
+<TabPanel
+  value='connected-apps'
+  title='Connected Applications'
+  description='Manage OAuth applications that have access to your identity information'
+>
   <ConnectedAppsPanel />
-</Tabs.Panel>
+</TabPanel>
   );
 }

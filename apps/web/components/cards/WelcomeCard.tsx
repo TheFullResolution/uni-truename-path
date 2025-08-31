@@ -1,5 +1,5 @@
 import {
-  Paper,
+  Card,
   Group,
   Box,
   Title,
@@ -27,21 +27,20 @@ month: 'long',
 : 'Unknown';
 
   return (
-<Paper withBorder radius='md' p='xl'>
+<Card withBorder radius='md' p='md'>
   <Group gap='md' mb='xl'>
 <Box
+  className='icon-gradient-container'
+  w={60}
+  h={60}
   style={{
-width: 60,
-height: 60,
 borderRadius: '50%',
-background:
-  'linear-gradient(135deg, rgba(74, 127, 231, 0.1) 0%, rgba(195, 217, 247, 0.2) 100%)',
 display: 'flex',
 alignItems: 'center',
 justifyContent: 'center',
   }}
 >
-  <IconPlug size={24} color='#4A7FE7' />
+  <IconPlug size={24} color='var(--mantine-color-brand-6)' />
 </Box>
 <Box>
   <Title order={2} c='gray.8' mb='xs'>
@@ -104,6 +103,6 @@ Total API Usage
   </Text>
 )}
   </Group>
-</Paper>
+</Card>
   );
 }

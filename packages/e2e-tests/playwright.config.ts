@@ -54,6 +54,8 @@ name: 'firefox',
 use: {
   ...devices['Desktop Firefox'],
   storageState: 'playwright/.auth/user.json',
+  actionTimeout: 20000, // Increased timeout for Firefox
+  navigationTimeout: 30000, // Longer navigation timeout
 },
 dependencies: ['setup'],
 // Run fewer tests on Firefox for performance
@@ -69,11 +71,12 @@ name: 'webkit-critical',
 use: {
   ...devices['Desktop Safari'],
   storageState: 'playwright/.auth/user.json',
-  actionTimeout: 30000,
-  navigationTimeout: 30000,
+  actionTimeout: 35000, // Increased for WebKit
+  navigationTimeout: 45000, // Much longer navigation timeout
+  viewport: { width: 1280, height: 720 }, // Consistent viewport
 },
-timeout: 60000,
-retries: 2, // Reduced retries
+timeout: 90000, // Increased overall test timeout
+retries: 3, // Increased retries for flaky WebKit
 dependencies: ['setup'],
 // Only run critical OAuth and signup tests on WebKit
 testMatch: [

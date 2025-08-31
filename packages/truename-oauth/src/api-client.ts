@@ -1,7 +1,4 @@
-/**
- * API Client Functions for OAuth Integration
- * Academic constraint: Each function ≤30 lines
- */
+// API Client Functions for OAuth Integration
 
 import type { ClientInfo, OIDCClaims, ApiResponse } from './types.js';
 

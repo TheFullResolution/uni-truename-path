@@ -23,7 +23,7 @@ return `${rate.toFixed(1)}%`;
   };
 
   return (
-<Card withBorder radius='md' p='xl' bg='var(--mantine-color-body)'>
+<Card withBorder radius='md' p='md'>
   <Text fz='xs' tt='uppercase' fw={700} c='dimmed'>
 OAuth Performance Metrics
   </Text>

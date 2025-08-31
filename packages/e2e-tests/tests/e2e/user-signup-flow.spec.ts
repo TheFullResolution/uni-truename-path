@@ -78,6 +78,9 @@ await expect(assignmentBadge).toBeVisible();
   });
 
   test('should validate required form fields', async ({ page }) => {
+// Clean state
+await ensureLoggedOut(page);
+
 await page.goto('/auth/signup');
 
 // Test Step 1 validation by submitting empty form
@@ -97,6 +100,9 @@ expect(errorCount).toBeGreaterThan(0);
   });
 
   test('should validate password confirmation', async ({ page }) => {
+// Clean state
+await ensureLoggedOut(page);
+
 const uniqueId = Date.now();
 const testEmail = `validation${uniqueId}@e2etest.local`;
 

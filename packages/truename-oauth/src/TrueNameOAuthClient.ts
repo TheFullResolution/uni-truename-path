@@ -1,7 +1,4 @@
-/**
- * TrueNamePath OAuth Client - Main Integration Class
- * Academic constraint: Each method ≤30 lines
- */
+// TrueNamePath OAuth Client - Main Integration Class
 
 import type {
   OAuthConfig,

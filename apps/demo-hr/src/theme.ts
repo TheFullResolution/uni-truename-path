@@ -2,84 +2,70 @@ import { createTheme, rem, MantineThemeOverride } from '@mantine/core';
 
 /**
  * Traditional Corporate HR Theme
- * Designed for Fortune 500 HR environments with warm, formal, traditional corporate styling
- * Complete departure from modern tech aesthetics - uses warm corporate colors with classic styling
- *
- * Key Distinctions from TrueNamePath:
- * - Colors: Warm burgundy/gold/forest vs cool blue/green
- * - Typography: Serif headings vs modern sans-serif
- * - Styling: Traditional/formal vs modern/minimal
- * - Philosophy: Corporate/government vs tech startup
  */
 export const hrTheme: MantineThemeOverride = createTheme({
-  // Corporate burgundy as primary
   primaryColor: 'corporate',
 
   colors: {
-// Corporate Primary - Deep Burgundy/Maroon palette
 corporate: [
-  '#faf6f7', // Lightest - page backgrounds
-  '#f0e6e9', // Light - card backgrounds
-  '#e1c5cd', // Light-medium - subtle accents
-  '#d2a4b1', // Medium - disabled states
-  '#c38395', // Medium-dark - secondary elements
-  '#8B2635', // Primary - main corporate burgundy
-  '#7a2230', // Dark - hover states
-  '#691e2a', // Darker - pressed states
-  '#581a24', // Very dark - borders
-  '#47161e', // Darkest - high contrast text
+  '#faf6f7',
+  '#f0e6e9',
+  '#e1c5cd',
+  '#d2a4b1',
+  '#c38395',
+  '#8B2635',
+  '#7a2230',
+  '#691e2a',
+  '#581a24',
+  '#47161e',
 ],
 
-// Corporate Secondary - Warm Gold/Amber palette
 gold: [
-  '#fcf9f4', // Lightest - backgrounds
-  '#f7f0e6', // Light - hover states
-  '#ede0c7', // Light-medium - subtle highlights
-  '#e3d0a8', // Medium - secondary elements
-  '#d9c089', // Medium-dark - interactive elements
-  '#D4A574', // Primary - warm corporate gold
-  '#bf9567', // Dark - hover states
-  '#aa855a', // Darker - pressed states
-  '#95754d', // Very dark - text on light
-  '#806540', // Darkest - high contrast
+  '#fcf9f4',
+  '#f7f0e6',
+  '#ede0c7',
+  '#e3d0a8',
+  '#d9c089',
+  '#D4A574',
+  '#bf9567',
+  '#aa855a',
+  '#95754d',
+  '#806540',
 ],
 
-// Corporate Tertiary - Deep Forest Green palette
 forest: [
-  '#f6f8f6', // Lightest - backgrounds
-  '#e9ede9', // Light - subtle accents
-  '#d3dbd4', // Light-medium - borders
-  '#bdc9be', // Medium - secondary elements
-  '#a7b7a8', // Medium-dark - interactive states
-  '#2C5530', // Primary - deep forest green
-  '#274b2b', // Dark - hover states
-  '#224126', // Darker - pressed states
-  '#1d3721', // Very dark - text on light
-  '#182d1c', // Darkest - high contrast
+  '#f6f8f6',
+  '#e9ede9',
+  '#d3dbd4',
+  '#bdc9be',
+  '#a7b7a8',
+  '#2C5530',
+  '#274b2b',
+  '#224126',
+  '#1d3721',
+  '#182d1c',
 ],
 
-// Warm professional grays - cream and brown tones
 gray: [
-  '#faf9f7', // Warm cream background
-  '#f2f0ed', // Light warm backgrounds
-  '#e6e2dc', // Warm borders
-  '#d7d1c8', // Input borders
-  '#c4bbb0', // Disabled states
-  '#998c7c', // Secondary text - warm brown
-  '#6b5d50', // Primary text - darker brown
-  '#4a3f36', // Dark text - rich brown
-  '#33291f', // Very dark - deep brown
-  '#1f1611', // Darkest - almost black brown
+  '#faf9f7',
+  '#f2f0ed',
+  '#e6e2dc',
+  '#d7d1c8',
+  '#c4bbb0',
+  '#998c7c',
+  '#6b5d50',
+  '#4a3f36',
+  '#33291f',
+  '#1f1611',
 ],
 
-// Muted traditional status colors
 green: [
   '#f2f6f2',
   '#e0eae0',
   '#c8d8c8',
   '#b0c6b0',
   '#98b498',
-  '#4a7c59', // Success - muted forest green
+  '#4a7c59',
   '#3f6b4d',
   '#345a41',
   '#294935',
@@ -92,7 +78,7 @@ red: [
   '#dbc8c8',
   '#c9b0b0',
   '#b79898',
-  '#8b4513', // Error - warm brown-red
+  '#8b4513',
   '#7a3d11',
   '#69350f',
   '#582d0d',
@@ -100,11 +86,10 @@ red: [
 ],
   },
 
-  // Traditional corporate typography - serif for headings, professional sans for body
   fontFamily: '"Source Sans Pro", -apple-system, system-ui, sans-serif',
   headings: {
 fontFamily: 'Georgia, "Times New Roman", Times, serif',
-fontWeight: '500', // Traditional - not bold
+fontWeight: '500',
 sizes: {
   h1: { fontSize: rem(32), lineHeight: '1.2' },
   h2: { fontSize: rem(26), lineHeight: '1.3' },
@@ -115,7 +100,6 @@ sizes: {
 },
   },
 
-  // Traditional structured spacing
   spacing: {
 xs: rem(6),
 sm: rem(12),
@@ -124,33 +108,31 @@ lg: rem(24),
 xl: rem(32),
   },
 
-  // Minimal rounded corners for traditional/formal appearance
   radius: {
-xs: rem(2), // Very minimal
-sm: rem(3), // Traditional forms
-md: rem(4), // Conservative
-lg: rem(6), // Maximum for formal
-xl: rem(8), // Only for special cases
+xs: rem(2),
+sm: rem(3),
+md: rem(4),
+lg: rem(6),
+xl: rem(8),
   },
 
-  // Component overrides for traditional corporate styling
   components: {
 Container: {
   defaultProps: {
-size: 'lg', // More content per screen
+size: 'lg',
   },
 },
 
 Button: {
   defaultProps: {
-radius: 'sm', // Minimal rounding
+radius: 'sm',
   },
   styles: {
 root: {
   'fontWeight': 500,
   'fontSize': rem(14),
-  'padding': `${rem(10)} ${rem(20)}`,
-  'transition': 'all 0.2s ease', // smoother transition
+  // Let Mantine handle padding to respect leftSection/rightSection
+  'transition': 'all 0.2s ease',
   'textTransform': 'none',
   'fontFamily': '"Source Sans Pro", sans-serif',
   '&:not(:disabled):hover': {
@@ -158,7 +140,7 @@ transform: 'translateY(-1px)',
 boxShadow: '0 4px 8px var(--mantine-color-corporate-1)',
   },
   '&:focusVisible': {
-outline: '2px solid var(--mantine-color-gold-5)', // gold focus ring
+outline: '2px solid var(--mantine-color-gold-5)',
 outlineOffset: '2px',
   },
 },
@@ -167,16 +149,16 @@ outlineOffset: '2px',
 
 Card: {
   defaultProps: {
-radius: 'sm', // Minimal rounding
-shadow: 'xs', // Subtle shadow
+radius: 'sm',
+shadow: 'xs',
+withBorder: true,
   },
   styles: {
 root: {
-  'backgroundColor': 'var(--mantine-color-gray-0)', // Warm cream
-  'border': '1px solid var(--mantine-color-gray-3)', // Visible border
-  'transition': 'border-color 0.15s ease', // No transform animations
+  'backgroundColor': 'var(--mantine-color-gray-0)',
+  'transition': 'border-color 0.15s ease',
   '&:hover': {
-borderColor: 'var(--mantine-color-gray-4)', // Subtle border change only
+borderColor: 'var(--mantine-color-gray-4)',
   },
 },
   },
@@ -185,7 +167,7 @@ borderColor: 'var(--mantine-color-gray-4)', // Subtle border change only
 Title: {
   styles: {
 root: {
-  color: 'var(--mantine-color-corporate-5)', // Corporate burgundy for headings
+  color: 'var(--mantine-color-corporate-5)',
   fontFamily: 'Georgia, "Times New Roman", Times, serif',
   fontWeight: '500',
 },
@@ -195,7 +177,7 @@ root: {
 Text: {
   styles: {
 root: {
-  color: 'var(--mantine-color-gray-6)', // Warm brown text
+  color: 'var(--mantine-color-gray-6)',
   lineHeight: 1.5,
   fontFamily: '"Source Sans Pro", sans-serif',
 },
@@ -204,18 +186,18 @@ root: {
 
 TextInput: {
   defaultProps: {
-radius: 'sm', // Traditional form styling
+radius: 'sm',
   },
   styles: {
 input: {
   'fontSize': rem(14),
-  'padding': rem(12),
+  // Let Mantine handle padding to respect leftSection/rightSection
   'backgroundColor': 'var(--mantine-color-white)',
   'border': '1px solid var(--mantine-color-gray-3)',
   'fontFamily': '"Source Sans Pro", sans-serif',
   '&:focus': {
-borderColor: 'var(--mantine-color-corporate-5)', // Corporate burgundy focus
-boxShadow: '0 0 0 1px var(--mantine-color-corporate-1)', // Subtle focus
+borderColor: 'var(--mantine-color-corporate-5)',
+boxShadow: '0 0 0 1px var(--mantine-color-corporate-1)',
   },
 },
 label: {
@@ -236,7 +218,7 @@ root: {
   textTransform: 'uppercase' as const,
   letterSpacing: '0.75px',
   fontFamily: '"Source Sans Pro", sans-serif',
-  borderRadius: rem(3), // Minimal rounding
+  borderRadius: rem(3),
 },
   },
 },
@@ -244,11 +226,11 @@ root: {
 Paper: {
   defaultProps: {
 radius: 'sm',
+withBorder: true,
   },
   styles: {
 root: {
   backgroundColor: 'var(--mantine-color-gray-0)',
-  border: '1px solid var(--mantine-color-gray-3)',
 },
   },
 },
@@ -284,11 +266,11 @@ th: {
   fontWeight: 600,
   textTransform: 'uppercase',
   letterSpacing: '0.5px',
-  padding: `${rem(12)} ${rem(16)}`,
+  // Let Mantine handle responsive padding
   borderBottom: '2px solid var(--mantine-color-gray-3)',
 },
 td: {
-  padding: `${rem(10)} ${rem(16)}`,
+  // Let Mantine handle responsive padding
   fontSize: rem(14),
   color: 'var(--mantine-color-gray-6)',
   borderBottom: '1px solid var(--mantine-color-gray-2)',
@@ -297,7 +279,6 @@ td: {
 },
   },
 
-  // Traditional breakpoints
   breakpoints: {
 xs: '32em',
 sm: '48em',

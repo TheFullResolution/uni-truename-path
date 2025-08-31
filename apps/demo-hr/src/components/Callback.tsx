@@ -1,7 +1,5 @@
 /**
- * OAuth Callback Handler Component - Simplified Declarative Architecture
- * Processes OAuth callback using declarative rendering with our two-hook architecture.
- * Token storage and user data fetching are handled by separate SWR hooks.
+ * OAuth Callback Handler Component
  */
 
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -18,14 +16,11 @@ export const Callback = () => {
   const { setToken } = useStoredOAuthToken();
   const redirectHandledRef = useRef(false);
 
-  // Extract token from callback URL parameters
   const token = (() => {
 const params = new URLSearchParams(location.search);
 return params.get('token');
   })();
 
-  // Use SWR hook for token resolution (prevents duplicate requests)
-  // Enable revalidateOnMount for fresh token resolution in Callback
   const {
 data: userData,
 error,
@@ -33,11 +28,10 @@ isLoading,
   } = useOAuthToken({
 token,
 enabled: !!token,
-revalidateOnMount: true, // Fresh tokens need to be resolved
+revalidateOnMount: true,
 ...oauthConfig,
   });
 
-  // Handle token storage and redirect in useEffect to avoid side effects during render
   useEffect(() => {
 if (userData?.sub && token && !redirectHandledRef.current) {
   redirectHandledRef.current = true;
@@ -45,8 +39,6 @@ if (userData?.sub && token && !redirectHandledRef.current) {
   navigate('/dashboard', { replace: true });
 }
   }, [userData?.sub, token, setToken, navigate]);
-
-  // Simple declarative rendering based on hook states
   if (!token) {
 return (
   <PageLayout>
@@ -105,7 +97,6 @@ return (
   }
 
   if (userData) {
-// Token storage and redirect handled by useEffect
 return (
   <PageLayout>
 <Paper {...paperStyles} style={cardStyles}>
@@ -128,7 +119,6 @@ return (
 );
   }
 
-  // Fallback state
   return (
 <PageLayout>
   <Paper {...paperStyles} style={cardStyles}>

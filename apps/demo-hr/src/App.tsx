@@ -10,27 +10,16 @@ import { createOAuthCacheProvider } from '@uni-final/truename-oauth';
 
 /**
  * Demo HR Application Root Component
- *
- * Configures SWR with persistent cache provider for OAuth token management.
- * Combines request deduplication (React StrictMode fix) with localStorage
- * persistence for academic demonstration of proper cache management.
  */
 const App: React.FC = () => {
   return (
 <MantineProvider theme={hrTheme}>
   <SWRConfig
 value={{
-  // Custom cache provider: Syncs with localStorage for persistence
   provider: createOAuthCacheProvider,
-
-  // React StrictMode Prevention: 2-second deduplication window
   dedupingInterval: 2000,
-
-  // OAuth Token Configuration: Enable focus-based revalidation
   revalidateOnFocus: true,
   revalidateOnReconnect: false,
-
-  // Academic Simplicity: No automatic retries for OAuth failures
   shouldRetryOnError: false,
   errorRetryCount: 0,
 }}

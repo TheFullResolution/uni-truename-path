@@ -22,7 +22,7 @@ export function AuditLogTabSkeleton() {
 
 {/* Table Section */}
 <Card withBorder>
-  <Table.ScrollContainer minWidth={800}>
+  <Table.ScrollContainer minWidth={600}>
 <Table striped highlightOnHover>
   <Table.Thead>
 <Table.Tr>

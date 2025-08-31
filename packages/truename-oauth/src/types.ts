@@ -1,16 +1,10 @@
-/**
- * OAuth Integration Types for TrueNamePath Demo Applications
- * University Final Project - Academic Implementation
- */
-
-// OAuth Configuration for initializing the client
+// OAuth Integration Types for TrueNamePath Demo Applications
 export interface OAuthConfig {
   appName: string;
   apiBaseUrl: string;
   callbackUrl: string;
 }
 
-// OIDC Claims object returned from TrueNamePath
 export interface OIDCClaims {
   sub: string;
   name: string;
@@ -25,7 +19,6 @@ export interface OIDCClaims {
   app_name: string;
 }
 
-// Client information from OAuth registry
 export interface ClientInfo {
   client_id: string;
   display_name: string;
@@ -33,7 +26,6 @@ export interface ClientInfo {
   publisher_domain: string;
 }
 
-// Authentication state combining token and user data
 export interface AuthState {
   isAuthenticated: boolean;
   token: string | null;
@@ -41,7 +33,6 @@ export interface AuthState {
   expiresAt: number | null;
 }
 
-// Storage adapter interface for flexibility
 export interface StorageAdapter {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
@@ -49,12 +40,10 @@ export interface StorageAdapter {
   clear(): void;
 }
 
-// API response wrapper for error handling with discriminated union
 export type ApiResponse<T> =
   | { success: true; data: T; message?: string }
   | { success: false; error: string; message?: string };
 
-// OAuth flow error types
 export type OAuthError =
   | 'invalid_token'
   | 'no_context_assigned'

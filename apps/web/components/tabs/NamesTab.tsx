@@ -1,6 +1,7 @@
 'use client';
 
 import { DeleteNameModal } from '@/components/modals/DeleteNameModal';
+import { TabPanel } from '@/components/dashboard/TabPanel';
 import type { AuthenticatedUser } from '@/utils/context';
 import type { Tables } from '@/generated/database';
 
@@ -18,7 +19,6 @@ import {
   Group,
   Paper,
   Stack,
-  Tabs,
   Text,
   TextInput,
   Title,
@@ -225,13 +225,13 @@ setEditText('');
   const isLoading = !namesResponse && !namesError;
 
   return (
-<Tabs.Panel value='names'>
-  <Stack gap='lg'>
-<div>
-  <Group justify='space-between' mb='md'>
-<Title order={2}>Name Variants</Title>
+<TabPanel
+  value='names'
+  title='Name Variants'
+  description='Manage your name variants and their usage across different contexts'
+  actions={
 <Button
-  leftSection={<IconPlus size={16} />}
+  leftSection={<IconPlus />}
   onClick={() => setShowAddForm(!showAddForm)}
   variant={showAddForm ? 'light' : 'filled'}
   size='sm'
@@ -239,14 +239,9 @@ setEditText('');
 >
   {showAddForm ? 'Cancel' : 'Add Name'}
 </Button>
-  </Group>
-
-  <Text size='sm' c='dimmed' mb='lg'>
-Manage your name variants. OIDC properties are now assigned at the
-context level for OAuth compatibility.
-  </Text>
-</div>
-
+  }
+>
+  <Stack gap='lg'>
 {/* Add Name Form */}
 {showAddForm && (
   <Paper p='md' withBorder>
@@ -275,7 +270,7 @@ Cancel
   <Button
 type='submit'
 loading={isCreating}
-leftSection={<IconPlus size={16} />}
+leftSection={<IconPlus />}
 data-testid='add-name-button'
   >
 Add Name
@@ -316,7 +311,7 @@ icon={<IconAlertTriangle size={16} />}
 </Text>
 <Button
   onClick={() => setShowAddForm(true)}
-  leftSection={<IconPlus size={16} />}
+  leftSection={<IconPlus />}
   mt='sm'
 >
   Add Name
@@ -329,14 +324,14 @@ icon={<IconAlertTriangle size={16} />}
 {names.map((name: Tables<'names'>) => (
   <Card key={name.id} p='md' withBorder>
 <Group justify='space-between'>
-  <Group style={{ flex: 1 }}>
+  <Group grow>
 {editingName?.id === name.id ? (
   // Edit mode
-  <Group style={{ flex: 1 }} gap='xs'>
+  <Group gap='xs' grow>
 <TextInput
   value={editText}
   onChange={(e) => setEditText(e.target.value)}
-  style={{ flex: 1 }}
+  flex={1}
   data-testid='edit-name-input'
   onKeyDown={(e) => {
 if (e.key === 'Enter') {
@@ -423,6 +418,6 @@ setDeleteReason('');
   isDefaultContextName={deleteReason.toLowerCase().includes('default')}
 />
   </Stack>
-</Tabs.Panel>
+</TabPanel>
   );
 }

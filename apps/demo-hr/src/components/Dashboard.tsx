@@ -1,8 +1,5 @@
 /**
  * Dashboard Component - Professional HR Employee Portal
- * Enhanced for Step 16.4.4 - Complete OIDC Claims Display with Professional HR Layout
- * Simplified to use two-hook architecture with clean SWR token management
- * Demonstrates context-aware identity management in corporate environment
  */
 
 import { useNavigate } from 'react-router-dom';
@@ -38,7 +35,6 @@ import { oauthConfig } from '@/services/oauth';
 export const Dashboard = () => {
   const navigate = useNavigate();
 
-  // Two-hook architecture: token management + data fetching
   const { token, clearToken } = useStoredOAuthToken();
   const {
 data: userData,
@@ -52,7 +48,6 @@ enabled: !!token,
 ...oauthConfig,
   });
 
-  // Handle navigation in effect to avoid render-phase side effects
   useEffect(() => {
 if (!token && !isLoading) {
   navigate('/', { replace: true });
@@ -60,18 +55,16 @@ if (!token && !isLoading) {
   }, [token, isLoading, navigate]);
 
   const handleLogout = () => {
-clearToken(); // Clear token via SWR
-clearOAuthCache(); // Clear cache provider storage
+clearToken();
+clearOAuthCache();
 navigate('/', { replace: true });
   };
 
-  // Simple conditional rendering without side effects
   if (!token && !isLoading) {
-return null; // Effect will handle navigation
+return null;
   }
 
   if (error) {
-// Show error state instead of immediate navigation
 return (
   <PageLayout>
 <Paper {...paperStyles} style={cardStyles}>
@@ -156,7 +149,6 @@ return (
   return (
 <PageLayout size='md' centered={false}>
   <Stack gap='xl' data-testid='demo-hr-dashboard'>
-{/* Header with Welcome Message */}
 <Group justify='space-between' align='flex-start'>
   <Stack gap='xs'>
 <Title order={1} c='corporate.5' fz={{ base: 'xl', sm: '2rem' }}>
@@ -165,7 +157,7 @@ return (
 <Group gap='sm' align='center'>
   <IconUserCheck
 size={20}
-color='var(--mantine-color-corporate-5)'
+style={{ color: 'var(--mantine-color-corporate-5)' }}
   />
   <Text
 size='lg'
@@ -201,7 +193,6 @@ Welcome, {userData.given_name}!
   </Group>
 </Group>
 
-{/* Context Notice */}
 <Alert
   variant='light'
   color='corporate'
@@ -213,8 +204,6 @@ You are viewing your identity as configured for the{' '}
 context-aware identity management in enterprise environments.
   </Text>
 </Alert>
-
-{/* Main Content Sections */}
 <Stack gap='lg'>
   <EmployeeProfileSection userData={userData} />
   <Group align='flex-start' grow preventGrowOverflow>

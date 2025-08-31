@@ -26,11 +26,7 @@ export function Logo({ size = 'md', className }: LogoProps) {
   height={dimensions}
   className={className}
   priority
-  style={{
-width: dimensions,
-height: dimensions,
-objectFit: 'contain',
-  }}
+  style={{ objectFit: 'contain' }}
 />
   );
 }

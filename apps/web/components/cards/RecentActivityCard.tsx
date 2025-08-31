@@ -4,7 +4,7 @@ import { DashboardStatsResponse } from '@/app/api/dashboard/stats/types';
 import {
   Badge,
   Group,
-  Paper,
+  Card,
   Skeleton,
   Stack,
   Text,
@@ -71,9 +71,9 @@ return action;
   };
 
   return (
-<Paper withBorder radius='md' p='xl'>
+<Card withBorder radius='md' p='md'>
   <Group gap='sm' mb='md'>
-<IconActivity size={20} color='#4A7FE7' />
+<IconActivity size={20} color='var(--mantine-color-brand-6)' />
 <Title order={3} c='gray.8'>
   Recent OAuth Operations
 </Title>
@@ -120,6 +120,6 @@ return action;
   ))}
 </Stack>
   )}
-</Paper>
+</Card>
   );
 }

@@ -1,7 +1,4 @@
-/**
- * Storage Adapter Implementation for OAuth Data Persistence
- * Academic constraint: Each function ≤15 lines
- */
+// Storage Adapter Implementation for OAuth Data Persistence
 
 import type { StorageAdapter, OIDCClaims } from './types.js';
 
@@ -18,7 +15,7 @@ try {
 try {
   localStorage.setItem(key, value);
 } catch {
-  // Silent fail for academic simplicity
+  // Silent fail
 }
   }
 
@@ -26,7 +23,7 @@ try {
 try {
   localStorage.removeItem(key);
 } catch {
-  // Silent fail for academic simplicity
+  // Silent fail
 }
   }
 
@@ -34,7 +31,7 @@ try {
 try {
   localStorage.clear();
 } catch {
-  // Silent fail for academic simplicity
+  // Silent fail
 }
   }
 }

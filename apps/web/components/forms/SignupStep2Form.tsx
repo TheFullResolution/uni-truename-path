@@ -150,12 +150,6 @@ variant='light'
 color='red'
 title='Account Creation Error'
 icon={<IconAlertCircle size={16} />}
-styles={{
-  root: {
-backgroundColor: 'rgba(231, 76, 60, 0.1)',
-border: '1px solid rgba(231, 76, 60, 0.3)',
-  },
-}}
   >
 <Text size='sm'>{displayError}</Text>
   </Alert>
@@ -171,19 +165,6 @@ border: '1px solid rgba(231, 76, 60, 0.3)',
   autoComplete='given-name'
   data-testid='signup-given-name-input'
   {...form.getInputProps('given_name')}
-  styles={(theme) => ({
-label: {
-  fontWeight: 500,
-  marginBottom: theme.spacing.xs,
-  color: theme.colors.gray[8],
-},
-input: {
-  '&:focus': {
-borderColor: theme.colors.blue[5],
-boxShadow: `0 0 0 2px rgba(52, 152, 219, 0.2)`,
-  },
-},
-  })}
 />
 
 {/* Family Name Input (Required) */}
@@ -195,19 +176,6 @@ boxShadow: `0 0 0 2px rgba(52, 152, 219, 0.2)`,
   autoComplete='family-name'
   data-testid='signup-family-name-input'
   {...form.getInputProps('family_name')}
-  styles={(theme) => ({
-label: {
-  fontWeight: 500,
-  marginBottom: theme.spacing.xs,
-  color: theme.colors.gray[8],
-},
-input: {
-  '&:focus': {
-borderColor: theme.colors.blue[5],
-boxShadow: `0 0 0 2px rgba(52, 152, 219, 0.2)`,
-  },
-},
-  })}
 />
 
 {/* Display Name Input (Optional) */}
@@ -218,19 +186,6 @@ boxShadow: `0 0 0 2px rgba(52, 152, 219, 0.2)`,
   autoComplete='name'
   data-testid='signup-display-name-input'
   {...form.getInputProps('display_name')}
-  styles={(theme) => ({
-label: {
-  fontWeight: 500,
-  marginBottom: theme.spacing.xs,
-  color: theme.colors.gray[8],
-},
-input: {
-  '&:focus': {
-borderColor: theme.colors.blue[5],
-boxShadow: `0 0 0 2px rgba(52, 152, 219, 0.2)`,
-  },
-},
-  })}
 />
 
 {/* Nickname Input (Optional) */}
@@ -241,19 +196,6 @@ boxShadow: `0 0 0 2px rgba(52, 152, 219, 0.2)`,
   autoComplete='nickname'
   data-testid='signup-nickname-input'
   {...form.getInputProps('nickname')}
-  styles={(theme) => ({
-label: {
-  fontWeight: 500,
-  marginBottom: theme.spacing.xs,
-  color: theme.colors.gray[8],
-},
-input: {
-  '&:focus': {
-borderColor: theme.colors.blue[5],
-boxShadow: `0 0 0 2px rgba(52, 152, 219, 0.2)`,
-  },
-},
-  })}
 />
 
 {/* Preferred Username Input (Optional) */}
@@ -264,19 +206,6 @@ boxShadow: `0 0 0 2px rgba(52, 152, 219, 0.2)`,
   autoComplete='username'
   data-testid='signup-preferred-username-input'
   {...form.getInputProps('preferred_username')}
-  styles={(theme) => ({
-label: {
-  fontWeight: 500,
-  marginBottom: theme.spacing.xs,
-  color: theme.colors.gray[8],
-},
-input: {
-  '&:focus': {
-borderColor: theme.colors.blue[5],
-boxShadow: `0 0 0 2px rgba(52, 152, 219, 0.2)`,
-  },
-},
-  })}
 />
 
 {/* OIDC Information Notice */}
@@ -290,7 +219,7 @@ root: {
 },
   }}
 >
-  <Text size='xs' c='dimmed' style={{ lineHeight: 1.4 }}>
+  <Text size='xs' c='dimmed' lh={1.4}>
 <Text component='span' fw={500}>
   OIDC Compliance:
 </Text>{' '}
@@ -317,16 +246,6 @@ leftSection={
 <IconCheck size={16} />
   )
 }
-style={{
-  'backgroundColor': '#27ae60',
-  '&:hover': {
-backgroundColor: '#229954',
-  },
-  '&:disabled': {
-backgroundColor: '#95a5a6',
-opacity: 0.7,
-  },
-}}
   >
 {loading ? 'Creating Account...' : 'Complete Registration'}
   </Button>
@@ -334,21 +253,10 @@ opacity: 0.7,
   <Button
 type='button'
 variant='outline'
+color='gray'
 disabled={loading}
 onClick={onBack}
 size='md'
-style={{
-  'borderColor': '#6c757d',
-  'color': '#6c757d',
-  '&:hover': {
-backgroundColor: '#f8f9fa',
-borderColor: '#5a6268',
-color: '#5a6268',
-  },
-  '&:disabled': {
-opacity: 0.5,
-  },
-}}
   >
 Back
   </Button>

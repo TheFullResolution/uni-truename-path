@@ -1,6 +1,5 @@
 /**
- * Employee Profile Section - Professional HR Display
- * Shows employee profile information with context awareness
+ * Employee Profile Section
  */
 
 import React from 'react';
@@ -33,7 +32,10 @@ export const EmployeeProfileSection: React.FC<EmployeeProfileSectionProps> = ({
   <Stack gap='lg'>
 <Group justify='space-between' align='center'>
   <Group gap='sm'>
-<IconUser size={24} color='var(--mantine-color-corporate-5)' />
+<IconUser
+  size={24}
+  style={{ color: 'var(--mantine-color-corporate-5)' }}
+/>
 <Title order={2} c='corporate.5'>
   Employee Profile
 </Title>
@@ -72,7 +74,10 @@ data-testid={`demo-hr-${field.key.replace('_', '-')}`}
 </Stack>
 
 <Group gap='sm' align='center' mt='sm'>
-  <IconBriefcase size={16} color='var(--mantine-color-gold-5)' />
+  <IconBriefcase
+size={16}
+style={{ color: 'var(--mantine-color-gold-5)' }}
+  />
   <Text size='sm' c='gray.6' fw={500}>
 Displaying identity data for {userData.context_name} context
   </Text>

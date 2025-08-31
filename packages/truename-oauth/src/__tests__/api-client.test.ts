@@ -1,6 +1,4 @@
-// TrueNamePath OAuth Client Library: API Client Unit Tests
-// Date: August 27, 2025
-// Comprehensive test suite for API client functions
+// API Client Tests
 
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { fetchClientInfo, resolveOIDCClaims } from '../api-client.js';

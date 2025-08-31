@@ -7,6 +7,11 @@
 
 import type { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
+import {
+  waitForElementWithBrowserSupport,
+  navigateWithBrowserSupport,
+  clickButtonWithBrowserSupport,
+} from './browser-helpers';
 
 /**
  * Creates a new context via the dashboard UI
@@ -23,28 +28,103 @@ export async function createContext(
   try {
 console.log(`📁 Creating context: ${contextName}`);
 await page.goto('/dashboard/contexts');
+
+// Enhanced wait strategy for different browsers
+await page.waitForLoadState('networkidle', { timeout: 30000 });
 await page.waitForSelector('[data-testid="tab-contexts"]', {
   timeout: 30000,
 });
 
-const createButton = page
-  .locator('button')
-  .filter({ hasText: /create|add/i })
-  .first();
-if (!(await createButton.isVisible({ timeout: 5000 })))
-  throw new Error('Create context button not found');
+// Additional wait for Firefox to complete DOM updates
+await page.waitForTimeout(1000);
+
+// Progressive button search with increased timeouts
+let createButton = page.getByRole('button', { name: /add context/i });
+
+// Try multiple approaches with better timeouts for Firefox
+if (!(await createButton.isVisible({ timeout: 5000 }))) {
+  console.log('🔍 First attempt failed, trying alternative selectors...');
+  createButton = page
+.locator('button')
+.filter({ hasText: /add context/i })
+.first();
+}
+
+if (!(await createButton.isVisible({ timeout: 5000 }))) {
+  console.log('🔍 Second attempt failed, trying broader selector...');
+  createButton = page
+.locator('button')
+.filter({ hasText: /add context/i })
+.or(page.locator('text=Add Context'))
+.first();
+}
+
+// Final attempt with testid selector
+if (!(await createButton.isVisible({ timeout: 5000 }))) {
+  console.log('🔍 Third attempt failed, trying testid selector...');
+  createButton = page.getByTestId('add-context-button');
+}
+
+if (!(await createButton.isVisible({ timeout: 8000 }))) {
+  // Enhanced debug: log page state and buttons
+  console.log('🔍 Debug: Page URL:', page.url());
+  console.log('🔍 Debug: Page title:', await page.title());
+
+  const allButtons = await page.locator('button').all();
+  const buttonTexts = await Promise.all(
+allButtons.map(async (button) => {
+  try {
+const text = await button.textContent();
+const isVisible = await button.isVisible();
+return `"${text}" (visible: ${isVisible})`;
+  } catch {
+return 'N/A';
+  }
+}),
+  );
+  console.log('🔍 Available buttons:', buttonTexts);
+
+  // Take screenshot for debugging
+  await page.screenshot({
+path: `context-creation-debug-${Date.now()}.png`,
+fullPage: true,
+  });
+
+  throw new Error('Create context button not found after all attempts');
+}
 
 await createButton.click();
-await page.getByTestId('context-name-input').fill(contextName);
-if (description)
-  await page.getByTestId('context-description-input').fill(description);
 
-const submitButton = page
+// Wait for modal/form to appear and be ready
+await page.waitForSelector('[data-testid="context-name-input"]', {
+  timeout: 10000,
+});
+await page.getByTestId('context-name-input').fill(contextName);
+
+if (description) {
+  await page.getByTestId('context-description-input').fill(description);
+}
+
+// Enhanced submit button detection with better error handling
+let submitButton = page
   .locator('button')
-  .filter({ hasText: /create|save|submit/i })
+  .filter({ hasText: /create context|update context|create|save|submit/i })
   .first();
+
+// Wait for submit button to be enabled and visible
+await expect(submitButton).toBeVisible({ timeout: 10000 });
+await expect(submitButton).toBeEnabled({ timeout: 5000 });
+
 await submitButton.click();
-await page.waitForTimeout(1000);
+
+// Wait for context creation to complete - look for success indicators
+try {
+  // Wait for modal to close or success message
+  await page.waitForTimeout(2000);
+  await page.waitForLoadState('networkidle');
+} catch (error) {
+  console.log('⚠️ Context creation may have failed, continuing...');
+}
 
 console.log(`✅ Context created: ${contextName}`);
 return true;

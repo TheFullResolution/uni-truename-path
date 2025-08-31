@@ -12,13 +12,7 @@ import {
 
 export function DashboardSkeleton() {
   return (
-<Box
-  style={{
-minHeight: '100vh',
-background:
-  'linear-gradient(135deg, rgba(74, 127, 231, 0.05) 0%, rgba(195, 217, 247, 0.1) 100%)',
-  }}
->
+<Box bg='gray.0'>
   <Container size='xl' py='md'>
 {/* Header Skeleton */}
 <Paper p='xl' mb='xl' shadow='lg' radius='lg'>
@@ -103,7 +97,7 @@ background:
 {[...Array(3)].map((_, i) => (
   <Group key={i} mb='md'>
 <Skeleton height={40} width={40} radius='md' />
-<Box style={{ flex: 1 }}>
+<Box flex={1}>
   <Skeleton height={16} width='70%' mb='xs' />
   <Skeleton height={12} width='50%' />
 </Box>

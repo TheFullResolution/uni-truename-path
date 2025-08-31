@@ -1,6 +1,5 @@
 import { Avatar, Badge, Box, Group, Text, Stack } from '@mantine/core';
 import { OIDCClaims } from '@uni-final/truename-oauth';
-import './UserBadge.css';
 
 interface UserBadgeProps {
   userData: OIDCClaims;
@@ -13,7 +12,6 @@ export function UserBadge({
   showPresence = true,
   presenceStatus = 'online',
 }: UserBadgeProps) {
-  // Context-aware casual name resolution (same logic as ChatPage)
   const getCasualName = (claims: OIDCClaims): string => {
 if (claims.nickname) return claims.nickname;
 if (claims.preferred_username) return claims.preferred_username;
@@ -23,7 +21,6 @@ return claims.name || 'User';
 
   const displayName = getCasualName(userData);
 
-  // Presence colors
   const presenceColors = {
 online: 'green.5',
 away: 'orange.5',
@@ -33,46 +30,34 @@ offline: 'gray.4',
   return (
 <Group gap='sm' align='center'>
   <Box style={{ position: 'relative' }}>
-<Avatar
-  name={displayName}
-  color='electric'
-  size='sm'
-  style={{
-backgroundColor: 'var(--mantine-color-electric-1)',
-color: 'var(--mantine-color-electric-7)',
-fontWeight: 600,
-  }}
-/>
+<Avatar name={displayName} color='electric' size='sm' />
 {showPresence && (
   <Box
+w={12}
+h={12}
 style={{
   position: 'absolute',
   bottom: -2,
   right: -2,
-  width: 12,
-  height: 12,
   borderRadius: '50%',
   backgroundColor: `var(--mantine-color-${presenceColors[presenceStatus].replace('.', '-')})`,
   border: '2px solid white',
-  ...(presenceStatus === 'online' && {
-animation: 'pulse-presence 2s infinite',
-  }),
 }}
   />
 )}
   </Box>
-  <Stack gap={2}>
-<Text size='xs' fw={600} c='electric.7' style={{ lineHeight: 1.2 }}>
+  <Stack gap='xs'>
+<Text size='xs' fw={600} c='electric.7' lh={1.2}>
   {displayName}
 </Text>
-<Group gap={4} align='center'>
+<Group gap='xs' align='center'>
   <Badge
 size='xs'
 variant='light'
 color='teal'
 tt='uppercase'
 fw={700}
-style={{ fontSize: '10px' }}
+fz='10px'
   >
 {userData.context_name || 'DEFAULT'}
   </Badge>

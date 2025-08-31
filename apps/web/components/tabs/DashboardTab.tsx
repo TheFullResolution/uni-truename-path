@@ -6,8 +6,9 @@ import { ConnectedAppsCard } from '@/components/cards/NameVariantsCard';
 import { OAuthActivityCard } from '@/components/cards/PrivacyScoreCard';
 import { RecentActivityCard } from '@/components/cards/RecentActivityCard';
 import { WelcomeCard } from '@/components/cards/WelcomeCard';
+import { TabPanel } from '@/components/dashboard/TabPanel';
 import type { AuthenticatedUser } from '@/utils/context';
-import { Grid, Tabs } from '@mantine/core';
+import { Grid } from '@mantine/core';
 
 interface DashboardTabProps {
   user: AuthenticatedUser | null;
@@ -21,7 +22,7 @@ export function DashboardTab({
   statsLoading,
 }: DashboardTabProps) {
   return (
-<Tabs.Panel value='dashboard'>
+<TabPanel value='dashboard' title='Overview'>
   <Grid>
 {/* Welcome Card */}
 <Grid.Col span={12}>
@@ -61,6 +62,6 @@ loading={statsLoading}
   />
 </Grid.Col>
   </Grid>
-</Tabs.Panel>
+</TabPanel>
   );
 }

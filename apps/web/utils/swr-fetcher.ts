@@ -41,15 +41,15 @@ throw new Error(result.message || 'API request failed');
 
 /**
  * Factory function to create type-safe mutation fetchers for different HTTP methods
- * Supports POST, PUT, DELETE with cookie-based authentication and full type safety
+ * Supports POST, PUT, DELETE, PATCH with cookie-based authentication and full type safety
  *
  * @template TResponse - Type of the response data expected from the API
  * @template TArg - Type of the argument/body data to send with the request
- * @param method - HTTP method (POST, PUT, DELETE)
+ * @param method - HTTP method (POST, PUT, DELETE, PATCH)
  * @returns Type-safe SWR mutation fetcher function
  */
 export function createMutationFetcher<TResponse = unknown, TArg = unknown>(
-  method: 'POST' | 'PUT' | 'DELETE' = 'POST',
+  method: 'POST' | 'PUT' | 'DELETE' | 'PATCH' = 'POST',
 ) {
   return async (url: string, { arg }: { arg?: TArg }): Promise<TResponse> => {
 const response = await fetch(url, {

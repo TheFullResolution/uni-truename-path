@@ -57,7 +57,7 @@ export function SettingsTabSkeleton() {
 
   {[1, 2, 3].map((item) => (
 <Group key={item} justify='space-between' p='md'>
-  <Stack gap='xs' style={{ flex: 1 }}>
+  <Stack gap='xs' flex={1}>
 <Skeleton height={18} width='60%' radius='sm' />
 <Skeleton height={14} width='80%' radius='sm' />
   </Stack>
@@ -74,7 +74,7 @@ export function SettingsTabSkeleton() {
 
   {[1, 2, 3, 4].map((item) => (
 <Group key={item} justify='space-between' p='md'>
-  <Stack gap='xs' style={{ flex: 1 }}>
+  <Stack gap='xs' flex={1}>
 <Skeleton height={18} width='55%' radius='sm' />
 <Skeleton height={14} width='75%' radius='sm' />
   </Stack>

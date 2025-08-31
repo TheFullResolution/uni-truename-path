@@ -50,7 +50,7 @@ export function ContextsTabSkeleton() {
   <Card key={item} p='md' withBorder radius='md'>
 <Stack gap='sm'>
   <Group justify='space-between' align='flex-start'>
-<Stack gap='xs' style={{ flex: 1 }}>
+<Stack gap='xs' flex={1}>
   <Skeleton height={20} width='70%' radius='sm' />
   <Skeleton height={16} width='90%' radius='sm' />
   <Skeleton height={14} width='40%' radius='sm' />

@@ -1,5 +1,6 @@
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
+import './globals.css';
 import React from 'react';
 import {
   MantineProvider,
@@ -10,6 +11,7 @@ import { Notifications } from '@mantine/notifications';
 import { ModalsProvider } from '@mantine/modals';
 import { theme } from '../utils/theme';
 import { AuthProvider } from '../utils/context';
+import { SharedFooter } from '@/components/layout/SharedFooter';
 
 export const metadata = {
   title: 'TrueNamePath - Context-Aware Identity Management',
@@ -52,11 +54,29 @@ export default function RootLayout({
   content='minimum-scale=1, initial-scale=1, width=device-width, user-scalable=no'
 />
   </head>
-  <body>
+  <body
+style={{
+  margin: 0,
+  padding: 0,
+  minHeight: '100vh',
+  display: 'flex',
+  flexDirection: 'column',
+}}
+  >
 <MantineProvider theme={theme}>
   <ModalsProvider>
 <Notifications />
-<AuthProvider>{children}</AuthProvider>
+<AuthProvider>
+  <main
+style={{
+  flex: 1,
+  backgroundColor: 'var(--mantine-color-gray-0)',
+}}
+  >
+{children}
+  </main>
+  <SharedFooter />
+</AuthProvider>
   </ModalsProvider>
 </MantineProvider>
   </body>

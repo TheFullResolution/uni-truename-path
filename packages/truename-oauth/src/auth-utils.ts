@@ -1,7 +1,4 @@
-/**
- * Authentication Utilities for OAuth Flow
- * Academic constraint: Each function ≤15 lines
- */
+// Authentication Utilities for OAuth Flow
 
 import type { AuthState } from './types.js';
 import type { OAuthStorage } from './storage.js';
@@ -41,7 +38,7 @@ export function getAuthState(storage: OAuthStorage): AuthState {
 isAuthenticated: token !== null && userData !== null,
 token,
 userData,
-expiresAt: null, // Academic simplification - 2h tokens sufficient for demos
+expiresAt: null,
   };
 }
 
