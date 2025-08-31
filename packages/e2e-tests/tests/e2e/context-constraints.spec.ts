@@ -88,16 +88,22 @@ await testContextCard
   .locator('[data-testid="edit-assignments-button"]')
   .click();
 
-// Wait for assignment modal
-await expect(page.getByText('Edit Assignments')).toBeVisible();
+// Wait for assignment modal with specific context name
+await expect(
+  page.getByText('Edit Assignments - Test Work Context'),
+).toBeVisible();
 
 // Verify basic OIDC properties have assignments (not "Not assigned")
 const oidcProperties = ['Name', 'Given Name', 'Family Name'];
 
 for (const property of oidcProperties) {
-  const propertyRow = page.locator('table tbody tr').filter({
-hasText: property,
-  });
+  // Use exact text matching to avoid matching substring properties
+  const propertyCell = page
+.locator('table')
+.getByText(property, { exact: true });
+
+  // Find the parent row and check it doesn't contain "Not assigned"
+  const propertyRow = propertyCell.locator('xpath=ancestor::tr');
 
   // Check that property has an assignment (doesn't show "Not assigned")
   await expect(propertyRow).not.toContainText('Not assigned');
@@ -107,7 +113,10 @@ console.log(
   '✅ Context auto-population verified - OIDC properties populated',
 );
 
-// Close modal
-await page.getByRole('button', { name: 'Cancel' }).click();
+// Close modal - target the Cancel button in the modal specifically
+await page
+  .getByLabel('Edit Assignments - Test Work')
+  .getByRole('button', { name: 'Cancel' })
+  .click();
   });
 });

@@ -1,37 +1,25 @@
 'use client';
 
 import { ConnectedApp } from '@/types/oauth';
-import { UserContext } from '@/types/database';
-import { swrFetcher } from '@/utils/swr-fetcher';
+import { ContextWithStats } from '@/app/api/contexts/types';
 import { Badge, Card, Divider, Group, Stack, Text } from '@mantine/core';
-import { useAuth } from '@/utils/context';
-import useSWR from 'swr';
-import { ContextAssignmentDropdown } from './ContextAssignmentDropdown';
+import { ContextSelectorFiltered } from './ContextSelectorFiltered';
 import { AppRevocationButton } from './AppRevocationButton';
 
 interface ConnectedAppCardProps {
   app: ConnectedApp;
-  onRevoke?: (clientId: string) => Promise<void>;
-  onContextChange?: (clientId: string, newContextId: string) => Promise<void>;
+  availableContexts: ContextWithStats[];
+  onRevalidate?: () => void;
 }
 
 export function ConnectedAppCard({
   app,
-  onRevoke,
-  onContextChange,
+  availableContexts,
+  onRevalidate,
 }: ConnectedAppCardProps) {
-  const { user } = useAuth();
   const lastUsed = app.last_used_at
 ? new Date(app.last_used_at).toLocaleDateString()
 : 'Never';
-
-  // Fetch user contexts for the dropdown
-  const { data: contextsResponse } = useSWR<UserContext[]>(
-user?.id ? '/api/contexts' : null,
-swrFetcher,
-  );
-
-  const availableContexts = contextsResponse || [];
 
   return (
 <Card p='md' withBorder>
@@ -49,16 +37,22 @@ swrFetcher,
 </Group>
 
 <Group justify='space-between' align='center'>
-  <ContextAssignmentDropdown
-clientId={app.client_id}
-currentContextId={app.context_id}
-availableContexts={availableContexts}
-onChange={onContextChange}
-  />
+  <Stack gap={2}>
+<ContextSelectorFiltered
+  clientId={app.client_id}
+  currentContextId={app.context_id}
+  availableContexts={availableContexts}
+  appName={app.display_name}
+  onRevalidate={onRevalidate}
+/>
+<Text size='xs' c='dimmed'>
+  Complete contexts only
+</Text>
+  </Stack>
   <AppRevocationButton
 clientId={app.client_id}
 appName={app.display_name}
-onRevoked={(clientId) => onRevoke?.(clientId)}
+onRevalidate={onRevalidate}
   />
 </Group>
 

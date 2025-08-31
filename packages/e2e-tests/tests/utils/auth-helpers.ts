@@ -70,9 +70,20 @@ timeout: 30000,
   await page.getByTestId('signup-display-name-input').fill(name);
   await page.getByTestId('signup-step2-submit').click();
 
-  // Verify successful signup and redirect to dashboard
+  // Verify successful signup and redirect to login page with success message
+  await expect(page).toHaveURL('/auth/login?signup=success', {
+timeout: 15000,
+  });
+  console.log(`✅ Successfully created test user: ${email}, now logging in...`);
+
+  // Now perform manual login
+  await page.getByTestId('login-email-input').fill(email);
+  await page.getByTestId('login-password-input').fill(password);
+  await page.getByTestId('login-submit-button').click();
+
+  // Verify successful login and redirect to dashboard
   await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
-  console.log(`✅ Successfully created and logged in test user: ${email}`);
+  console.log(`✅ Successfully logged in test user: ${email}`);
 
   return {
 email,
@@ -93,59 +104,72 @@ export async function createTestContext(
   console.log(`📁 Creating test context: ${name}`);
 
   await page.goto('/dashboard/contexts');
-  // Wait for contexts page to load
+
+  // Enhanced wait strategy for different browsers
+  await page.waitForLoadState('networkidle', { timeout: 30000 });
   await page.waitForSelector('[data-testid="tab-contexts"]', {
 timeout: 30000,
   });
 
-  // Check if we're already on the contexts page or need to navigate
-  const currentUrl = page.url();
-  if (!currentUrl.includes('/contexts')) {
-await page.getByTestId('tab-contexts').click();
-  }
-
-  // Look for create context button (may have different text/selectors)
-  const createButton = page
-.locator('button')
-.filter({ hasText: /create|add/i })
-.first();
-  if (await createButton.isVisible({ timeout: 5000 })) {
-await createButton.click();
-
-// Use specific test ID instead of generic label
-await page.getByTestId('context-name-input').fill(name);
-
-// Submit
-const submitButton = page
-  .locator('button')
-  .filter({ hasText: /create|save|submit/i })
-  .first();
-await submitButton.click();
-
-// Wait for success notification or context to appear in the list
-try {
-  // Wait for either success notification or the context to appear
-  await Promise.race([
-page.waitForSelector('text=Context Created', { timeout: 5000 }),
-page.waitForSelector('text=Context created successfully', {
-  timeout: 5000,
-}),
-  ]);
-
-  // Additional wait to ensure the context list has been updated
+  // Additional wait for DOM updates to complete
   await page.waitForTimeout(1000);
 
-  console.log(`✅ Created test context: ${name}`);
-} catch (error) {
-  console.log(
-`⚠️  Context creation may have failed or taken longer than expected: ${error}`,
-  );
-}
-  } else {
-console.log(
-  `⚠️  Could not find create context button, context may already exist`,
-);
+  // Progressive button search with increased timeouts (same as working createContext)
+  let createButton = page.getByRole('button', { name: /add context/i });
+
+  // Try multiple approaches with better timeouts
+  if (!(await createButton.isVisible({ timeout: 5000 }))) {
+console.log('🔍 First attempt failed, trying alternative selectors...');
+createButton = page
+  .locator('button')
+  .filter({ hasText: /add context/i })
+  .first();
   }
+
+  if (!(await createButton.isVisible({ timeout: 5000 }))) {
+console.log('🔍 Second attempt failed, trying broader selector...');
+createButton = page
+  .locator('button')
+  .filter({ hasText: /add context/i })
+  .or(page.locator('text=Add Context'))
+  .first();
+  }
+
+  // Final attempt with testid selector
+  if (!(await createButton.isVisible({ timeout: 5000 }))) {
+console.log('🔍 Third attempt failed, trying testid selector...');
+createButton = page.getByTestId('add-context-button');
+  }
+
+  if (!(await createButton.isVisible({ timeout: 8000 }))) {
+throw new Error(`Create context button not found for context: ${name}`);
+  }
+
+  await createButton.click();
+
+  // Wait for modal/form to appear and be ready
+  await page.waitForSelector('[data-testid="context-name-input"]', {
+timeout: 10000,
+  });
+  await page.getByTestId('context-name-input').fill(name);
+
+  // Submit with better button detection
+  let submitButton = page
+.locator('button')
+.filter({ hasText: /create context|update context|create|save|submit/i })
+.first();
+
+  // Wait for submit button to be enabled and visible
+  await expect(submitButton).toBeVisible({ timeout: 10000 });
+  await expect(submitButton).toBeEnabled({ timeout: 5000 });
+
+  await submitButton.click();
+
+  // Wait for context creation to complete
+  await page.waitForTimeout(2000);
+  await page.waitForLoadState('networkidle');
+
+  console.log(`✅ Created test context: ${name}`);
 }
 
 /**

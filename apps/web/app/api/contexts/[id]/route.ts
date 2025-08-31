@@ -24,7 +24,7 @@ const UpdateContextSchema = z.object({
 .nullable()
 .transform((str) => str?.trim() || null)
 .optional(),
-  visibility: z.enum(['public', 'restricted', 'private']).optional(),
+  // visibility field removed - simplified context model
 });
 
 const handlePut: AuthenticatedHandler = async (request, context) => {
@@ -81,7 +81,7 @@ return createErrorResponse(
 );
   }
 
-  // Prevent renaming permanent contexts
+  // Prevent renaming permanent contexts (Public context)
   if (
 existing.is_permanent &&
 body.context_name &&
@@ -89,7 +89,7 @@ body.context_name !== existing.context_name
   ) {
 return createErrorResponse(
   ErrorCodes.VALIDATION_ERROR,
-  'Cannot rename the default context',
+  'Cannot rename the Public context',
   context.requestId,
   {
 current_name: existing.context_name,
@@ -99,54 +99,11 @@ attempted_name: body.context_name,
 );
   }
 
-  // Prevent changing visibility of default context from public
-  if (
-existing.is_permanent &&
-body.visibility &&
-body.visibility !== 'public'
-  ) {
-return createErrorResponse(
-  ErrorCodes.VALIDATION_ERROR,
-  'Default context must always be public',
-  context.requestId,
-  {
-current_visibility: existing.visibility,
-attempted_visibility: body.visibility,
-constraint:
-  'Default context (is_permanent=true) must have visibility=public',
-  },
-  context.timestamp,
-);
-  }
+  // Visibility validation removed - contexts are now validated by completeness only
+  // The Public context (is_permanent=true) is the only "public" context
+  // All other contexts are regular contexts validated by OIDC property assignments
 
-  // If changing visibility to public or private, check completeness
-  if (body.visibility && ['public', 'private'].includes(body.visibility)) {
-const { data: completenessResult } = await context.supabase.rpc(
-  'get_context_completeness_status',
-  { p_context_id: contextId },
-);
-
-const completenessStatus = completenessResult as unknown as {
-  is_complete: boolean;
-  missing_properties?: string[];
-};
-
-if (!completenessStatus?.is_complete) {
-  return createErrorResponse(
-ErrorCodes.VALIDATION_ERROR,
-`Cannot make context ${body.visibility}. Missing required OIDC properties: ${completenessStatus?.missing_properties?.join(', ') || 'unknown'}`,
-context.requestId,
-{
-  missing_properties: completenessStatus?.missing_properties || [],
-  required_properties: ['name', 'given_name', 'family_name'],
-  completeness_status: completenessResult,
-},
-context.timestamp,
-  );
-}
-  }
-
-  // Build update object with only provided fields
+  // Build update object with only provided fields (visibility removed)
   const updateData: Record<string, unknown> = {
 updated_at: new Date().toISOString(),
   };
@@ -157,9 +114,7 @@ updateData.context_name = body.context_name;
   if (body.description !== undefined) {
 updateData.description = body.description;
   }
-  if (body.visibility !== undefined) {
-updateData.visibility = body.visibility;
-  }
+  // visibility field removed from updates
 
   // Update context
   const { data: updated } = await context.supabase
@@ -206,15 +161,15 @@ return createErrorResponse(
 );
   }
 
-  // Prevent deletion of permanent contexts
+  // Prevent deletion of permanent contexts (Public context)
   if (existing.is_permanent) {
 return createErrorResponse(
   ErrorCodes.VALIDATION_ERROR,
-  'Cannot delete the default context',
+  'Cannot delete the Public context',
   context.requestId,
   {
 context_name: existing.context_name,
-suggestion: 'Default context cannot be deleted as it is permanent',
+suggestion: 'Public context cannot be deleted as it is permanent',
   },
   context.timestamp,
 );
@@ -222,26 +177,19 @@ suggestion: 'Default context cannot be deleted as it is permanent',
 
   // Check dependencies if not forcing
   if (!force) {
-const [{ count: assignments }, { count: consents }] = await Promise.all([
-  context.supabase
-.from('context_name_assignments')
-.select('*', { count: 'exact', head: true })
-.eq('context_id', contextId),
-  context.supabase
-.from('consents')
-.select('*', { count: 'exact', head: true })
-.eq('context_id', contextId)
-.eq('status', 'GRANTED'),
-]);
+const { count: appAssignments } = await context.supabase
+  .from('app_context_assignments')
+  .select('*', { count: 'exact', head: true })
+  .eq('context_id', contextId);
 
-if ((assignments || 0) > 0 || (consents || 0) > 0) {
+if ((appAssignments || 0) > 0) {
   return createSuccessResponse(
 {
   context: existing,
   requires_force: true,
   impacts: {
-name_assignments: assignments || 0,
-active_consents: consents || 0,
+name_assignments: 0, // Legacy field, no longer used
+active_consents: appAssignments || 0, // Now represents app assignments
   },
   message: 'Use ?force=true to delete with dependencies',
 },

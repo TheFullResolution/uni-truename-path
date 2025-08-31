@@ -15,11 +15,7 @@ export type Profile = Tables<'profiles'>;
 export type Name = Tables<'names'>;
 export type UserContext = Tables<'user_contexts'>;
 
-export type Assignment = Tables<'context_name_assignments'>;
-export type Consent = Tables<'consents'>;
-
 // OAuth table shortcuts
-export type OAuthApplication = Tables<'oauth_applications'>;
 export type OAuthClientRegistry = Tables<'oauth_client_registry'>;
 export type OAuthSession = Tables<'oauth_sessions'>;
 
@@ -44,12 +40,12 @@ permanent_contexts: Array<{
   };
 }
 
-// Name assignments response interface
+// Name assignments response interface (visibility removed - simplified model)
 export interface NameAssignmentsResponse {
   assignments: Array<{
 context_id: string;
 context_name: string;
-visibility: 'public' | 'private' | 'restricted';
+// visibility removed - contexts are now validated by completeness only
 is_permanent: boolean;
 oidc_property: string;
   }>;

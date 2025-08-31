@@ -14,7 +14,14 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 
 // Import generated database types directly
-import type { Tables, TablesInsert, TablesUpdate } from '@/generated/database';
+import type { TablesInsert, TablesUpdate } from '@/generated/database';
+
+// Import enhanced types from the co-located types file
+import type {
+  NamesResponseData,
+  NameWithAssignments,
+  NameAssignment,
+} from './types';
 
 /**
  * Request body validation schema for name creation
@@ -62,20 +69,7 @@ const QueryParamsSchema = z.object({
 }),
 });
 
-/**
- * API Response interface for GET endpoint
- */
-interface NamesResponseData {
-  names: Tables<'names'>[];
-  total: number;
-  metadata: {
-retrieval_timestamp: string;
-filter_applied?: {
-  limit?: number;
-};
-userId: string;
-  };
-}
+// NamesResponseData interface now imported from types file
 
 type QueryParams = z.infer<typeof QueryParamsSchema>;
 
@@ -124,23 +118,24 @@ return createErrorResponse(
 
   const authenticatedUserId = user.id;
 
-  // 3. Database query with authenticated client
-  let query = supabase
+  // 3. Database query with authenticated client - Enhanced with assignment data
+  // First get the names with proper filtering and ordering
+  let namesQuery = supabase
 .from('names')
 .select('*')
 .eq('user_id', authenticatedUserId);
 
   // Apply optional filters
   if (validatedQueryParams.limit) {
-query = query.limit(validatedQueryParams.limit);
+namesQuery = namesQuery.limit(validatedQueryParams.limit);
   }
 
   // Order by preferred status and creation date
-  query = query
+  namesQuery = namesQuery
 .order('is_preferred', { ascending: false })
 .order('created_at', { ascending: false });
 
-  const { data: namesData, error: queryError } = await query;
+  const { data: namesData, error: queryError } = await namesQuery;
 
   if (queryError) {
 console.error(`Database Query Error [${requestId}]:`, {
@@ -161,13 +156,67 @@ return createErrorResponse(
 );
   }
 
-  // 4. Use database results directly
+  // 4. Get assignments for all names in a single query
   const nameVariants = namesData || [];
+  let nameVariantsWithAssignments: NameWithAssignments[] = nameVariants;
+
+  if (nameVariants.length > 0) {
+const nameIds = nameVariants.map((name) => name.id);
+
+// Fetch all assignments for these names in one query
+const { data: assignments, error: assignmentsError } = await supabase
+  .from('context_oidc_assignments')
+  .select(
+`
+name_id,
+context_id,
+oidc_property,
+user_contexts!inner (
+  id,
+  context_name,
+  is_permanent
+)
+  `,
+  )
+  .in('name_id', nameIds)
+  .eq('user_id', authenticatedUserId);
+
+if (assignmentsError) {
+  console.error(`Assignments Query Error [${requestId}]:`, {
+error: assignmentsError.message,
+code: assignmentsError.code,
+details: assignmentsError.details,
+  });
+  // Continue without assignments rather than failing the entire request
+}
+
+// Group assignments by name_id for efficient lookup
+const assignmentsByNameId = new Map<string, NameAssignment[]>();
+(assignments || []).forEach((assignment) => {
+  const nameId = assignment.name_id;
+  if (!assignmentsByNameId.has(nameId)) {
+assignmentsByNameId.set(nameId, []);
+  }
+
+  assignmentsByNameId.get(nameId)!.push({
+context_id: assignment.context_id,
+context_name: assignment.user_contexts.context_name,
+is_permanent: assignment.user_contexts.is_permanent ?? false,
+oidc_property: assignment.oidc_property,
+  });
+});
+
+// Enhance names with assignment data
+nameVariantsWithAssignments = nameVariants.map((name) => ({
+  ...name,
+  assignments: assignmentsByNameId.get(name.id) || [],
+}));
+  }
 
   // 5. Success response with comprehensive metadata
   const responseData: NamesResponseData = {
-names: nameVariants,
-total: nameVariants.length,
+names: nameVariantsWithAssignments,
+total: nameVariantsWithAssignments.length,
 metadata: {
   retrieval_timestamp: timestamp,
   filter_applied: {
@@ -181,7 +230,14 @@ limit: validatedQueryParams.limit,
 endpoint: '/api/names',
 method: 'GET',
 authenticatedUserId: authenticatedUserId.substring(0, 8) + '...',
-totalNames: nameVariants.length,
+totalNames: nameVariantsWithAssignments.length,
+namesWithAssignments: nameVariantsWithAssignments.filter(
+  (n) => n.assignments && n.assignments.length > 0,
+).length,
+totalAssignments: nameVariantsWithAssignments.reduce(
+  (total, name) => total + (name.assignments?.length || 0),
+  0,
+),
 filtersApplied: Object.keys(validatedQueryParams).filter(
   (key) => validatedQueryParams[key as keyof QueryParams] !== undefined,
 ).length,

@@ -211,7 +211,17 @@ await page.getByTestId('signup-family-name-input').fill('Account');
 await page.getByTestId('signup-display-name-input').fill('New Account');
 await page.getByTestId('signup-step2-submit').click();
 
-// Should successfully create new account and reach dashboard
+// Should successfully create new account and redirect to login
+await expect(page).toHaveURL('/auth/login?signup=success', {
+  timeout: 15000,
+});
+
+// Now login with the new account
+await page.getByTestId('login-email-input').fill(deletedEmail);
+await page.getByTestId('login-password-input').fill('NewPassword123!');
+await page.getByTestId('login-submit-button').click();
+
+// Verify successful login and dashboard access
 await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
 console.log(
   `✅ Successfully created new account with previously deleted email: ${deletedEmail}`,

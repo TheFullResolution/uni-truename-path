@@ -41,12 +41,13 @@ export function DashboardContent({ initialTab }: DashboardContentProps) {
   const [activeTab, setActiveTab] = useState<ValidTab>(initialTab);
 
   // SWR data fetching for dashboard statistics
+  // Use user.id instead of user.profile.id since the API works with auth user ID
   const {
 data: dashboardStats,
 error: statsError,
 isLoading: statsLoading,
   } = useSWR<DashboardStatsResponse>(
-user?.profile?.id ? CACHE_KEYS.STATS : null,
+user?.id ? CACHE_KEYS.STATS : null,
 swrFetcher,
   );
 

@@ -1,6 +1,7 @@
 import { useRouter } from 'next/navigation';
 import { notifications } from '@mantine/notifications';
 import type { Route } from 'next';
+import { clearAllSWRCache } from '../swr/cache-utils';
 
 /**
  * Utility function for creating a logout handler with a specific logout function
@@ -18,6 +19,10 @@ try {
   const result = await logout();
 
   if (!result.error) {
+// Clear SWR cache as additional safety measure
+// (Note: AuthProvider logout already does this, but this provides extra safety)
+await clearAllSWRCache();
+
 notifications.show({
   title: 'Signed out successfully',
   message: 'You have been signed out of TrueNamePath',

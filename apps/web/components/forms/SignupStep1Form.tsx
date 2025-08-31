@@ -12,8 +12,7 @@ import {
   TextInput,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { IconAlertCircle } from '@tabler/icons-react';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { z } from 'zod';
 
 import {
@@ -62,11 +61,9 @@ export function SignupStep1Form({
   showBackToLogin = true,
   loading = false,
 }: SignupStep1FormProps) {
-  const [submitError, setSubmitError] = useState<string | null>(null);
-
-  // Use Mantine form with custom Zod validation
+  // Use Mantine form with controlled mode for better state management
   const form = useForm<SignupStep1Data>({
-mode: 'uncontrolled',
+mode: 'controlled',
 initialValues: {
   email: '',
   password: '',
@@ -97,8 +94,7 @@ return value
   });
 
   const handleSubmit = useCallback(
-async (values: SignupStep1Data) => {
-  setSubmitError(null);
+(values: SignupStep1Data) => {
   onStepComplete(values);
 },
 [onStepComplete],
@@ -110,24 +106,6 @@ async (values: SignupStep1Data) => {
 <Text size='lg' fw={600} c='gray.8' mb='md'>
   Step 1: Account Setup
 </Text>
-
-{/* Error Alert */}
-{submitError && (
-  <Alert
-variant='light'
-color='red'
-title='Validation Error'
-icon={<IconAlertCircle size={16} />}
-styles={{
-  root: {
-backgroundColor: 'rgba(231, 76, 60, 0.1)',
-border: '1px solid rgba(231, 76, 60, 0.3)',
-  },
-}}
-  >
-<Text size='sm'>{submitError}</Text>
-  </Alert>
-)}
 
 {/* Email Input */}
 <TextInput

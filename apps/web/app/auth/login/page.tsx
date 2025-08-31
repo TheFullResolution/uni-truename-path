@@ -9,11 +9,16 @@ import { notifications } from '@mantine/notifications';
 import type { Route } from 'next';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect } from 'react';
+import { IconCheck } from '@tabler/icons-react';
+import { Alert } from '@mantine/core';
 
 function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, loading } = useAuth();
+
+  // Check if user just completed signup
+  const isFromSignup = searchParams.get('signup') === 'success';
 
   // Handle redirect logic
   useEffect(() => {
@@ -118,11 +123,33 @@ p={{ base: 'xl', md: '3rem' }}
 style={{ maxWidth: '450px', margin: '0 auto' }}
   >
 <Title order={2} c='gray.8' mb='md' ta='center'>
-  Welcome Back
+  {isFromSignup ? 'Welcome to TrueNamePath!' : 'Welcome Back'}
 </Title>
 
+{isFromSignup && (
+  <Alert
+variant='light'
+color='green'
+icon={<IconCheck size={16} />}
+mb='xl'
+styles={{
+  root: {
+backgroundColor: 'rgba(46, 204, 113, 0.1)',
+border: '1px solid rgba(46, 204, 113, 0.3)',
+  },
+}}
+  >
+<Text size='sm' fw={500}>
+  Account created successfully! Please log in with your new
+  credentials.
+</Text>
+  </Alert>
+)}
+
 <Text size='md' c='gray.6' ta='center' mb='xl'>
-  Sign in to manage your context-aware identity
+  {isFromSignup
+? 'Use your email and password to sign in'
+: 'Sign in to manage your context-aware identity'}
 </Text>
 
 {/* Integrated LoginForm component */}

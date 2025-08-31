@@ -58,7 +58,5 @@ export {
 export {
   validate_context_ownership,
   validate_name_ownership,
-  validate_assignment_ownership,
   handle_database_error,
-  check_assignment_exists,
 } from './resource-validators';

@@ -136,164 +136,6 @@ referencedColumns: ["id"]
   },
 ]
   }
-  audit_log_entries_backup_cleanup: {
-Row: {
-  accessed_at: string | null
-  action: Database["public"]["Enums"]["audit_action"] | null
-  backup_created_at: string | null
-  context_id: string | null
-  details: Json | null
-  id: number | null
-  requester_user_id: string | null
-  resolved_name_id: string | null
-  source_ip: unknown | null
-  target_user_id: string | null
-}
-Insert: {
-  accessed_at?: string | null
-  action?: Database["public"]["Enums"]["audit_action"] | null
-  backup_created_at?: string | null
-  context_id?: string | null
-  details?: Json | null
-  id?: number | null
-  requester_user_id?: string | null
-  resolved_name_id?: string | null
-  source_ip?: unknown | null
-  target_user_id?: string | null
-}
-Update: {
-  accessed_at?: string | null
-  action?: Database["public"]["Enums"]["audit_action"] | null
-  backup_created_at?: string | null
-  context_id?: string | null
-  details?: Json | null
-  id?: number | null
-  requester_user_id?: string | null
-  resolved_name_id?: string | null
-  source_ip?: unknown | null
-  target_user_id?: string | null
-}
-Relationships: []
-  }
-  consents: {
-Row: {
-  context_id: string
-  created_at: string
-  expires_at: string | null
-  granted_at: string | null
-  granter_user_id: string
-  id: string
-  requester_user_id: string
-  revoked_at: string | null
-  status: Database["public"]["Enums"]["consent_status"]
-  updated_at: string | null
-}
-Insert: {
-  context_id: string
-  created_at?: string
-  expires_at?: string | null
-  granted_at?: string | null
-  granter_user_id: string
-  id?: string
-  requester_user_id: string
-  revoked_at?: string | null
-  status?: Database["public"]["Enums"]["consent_status"]
-  updated_at?: string | null
-}
-Update: {
-  context_id?: string
-  created_at?: string
-  expires_at?: string | null
-  granted_at?: string | null
-  granter_user_id?: string
-  id?: string
-  requester_user_id?: string
-  revoked_at?: string | null
-  status?: Database["public"]["Enums"]["consent_status"]
-  updated_at?: string | null
-}
-Relationships: [
-  {
-foreignKeyName: "consents_context_id_fkey"
-columns: ["context_id"]
-isOneToOne: false
-referencedRelation: "user_contexts"
-referencedColumns: ["id"]
-  },
-  {
-foreignKeyName: "consents_granter_user_id_fkey"
-columns: ["granter_user_id"]
-isOneToOne: false
-referencedRelation: "profiles"
-referencedColumns: ["id"]
-  },
-  {
-foreignKeyName: "consents_requester_user_id_fkey"
-columns: ["requester_user_id"]
-isOneToOne: false
-referencedRelation: "profiles"
-referencedColumns: ["id"]
-  },
-]
-  }
-  context_name_assignments: {
-Row: {
-  context_id: string
-  created_at: string
-  id: string
-  is_primary: boolean | null
-  name_id: string
-  oidc_property:
-| Database["public"]["Enums"]["oidc_property_enum"]
-| null
-  user_id: string
-}
-Insert: {
-  context_id: string
-  created_at?: string
-  id?: string
-  is_primary?: boolean | null
-  name_id: string
-  oidc_property?:
-| Database["public"]["Enums"]["oidc_property_enum"]
-| null
-  user_id: string
-}
-Update: {
-  context_id?: string
-  created_at?: string
-  id?: string
-  is_primary?: boolean | null
-  name_id?: string
-  oidc_property?:
-| Database["public"]["Enums"]["oidc_property_enum"]
-| null
-  user_id?: string
-}
-Relationships: [
-  {
-foreignKeyName: "context_name_assignments_context_id_fkey"
-columns: ["context_id"]
-isOneToOne: false
-referencedRelation: "user_contexts"
-referencedColumns: ["id"]
-  },
-  {
-foreignKeyName: "context_name_assignments_name_id_fkey"
-columns: ["name_id"]
-isOneToOne: false
-referencedRelation: "names"
-referencedColumns: ["id"]
-  },
-  {
-foreignKeyName: "context_name_assignments_user_id_fkey"
-columns: ["user_id"]
-isOneToOne: false
-referencedRelation: "profiles"
-referencedColumns: ["id"]
-  },
-]
-  }
   context_oidc_assignments: {
 Row: {
   context_id: string
@@ -346,39 +188,6 @@ referencedColumns: ["id"]
   },
 ]
   }
-  name_disclosure_log: {
-Row: {
-  audience: string | null
-  disclosed_at: string
-  id: number
-  name_disclosed: string | null
-  name_id: string | null
-  profile_id: string | null
-  purpose: string | null
-  requested_by: string | null
-}
-Insert: {
-  audience?: string | null
-  disclosed_at?: string
-  id?: number
-  name_disclosed?: string | null
-  name_id?: string | null
-  profile_id?: string | null
-  purpose?: string | null
-  requested_by?: string | null
-}
-Update: {
-  audience?: string | null
-  disclosed_at?: string
-  id?: number
-  name_disclosed?: string | null
-  name_id?: string | null
-  profile_id?: string | null
-  purpose?: string | null
-  requested_by?: string | null
-}
-Relationships: []
-  }
   names: {
 Row: {
   created_at: string
@@ -419,42 +228,6 @@ referencedRelation: "profiles"
 referencedColumns: ["id"]
   },
 ]
-  }
-  oauth_applications: {
-Row: {
-  app_name: string
-  app_type: string | null
-  created_at: string
-  description: string | null
-  display_name: string
-  id: string
-  is_active: boolean | null
-  redirect_uri: string
-  updated_at: string | null
-}
-Insert: {
-  app_name: string
-  app_type?: string | null
-  created_at?: string
-  description?: string | null
-  display_name: string
-  id?: string
-  is_active?: boolean | null
-  redirect_uri: string
-  updated_at?: string | null
-}
-Update: {
-  app_name?: string
-  app_type?: string | null
-  created_at?: string
-  description?: string | null
-  display_name?: string
-  id?: string
-  is_active?: boolean | null
-  redirect_uri?: string
-  updated_at?: string | null
-}
-Relationships: []
   }
   oauth_client_registry: {
 Row: {
@@ -560,7 +333,6 @@ Row: {
   is_permanent: boolean | null
   updated_at: string | null
   user_id: string
-  visibility: Database["public"]["Enums"]["context_visibility"]
 }
 Insert: {
   context_name: string
@@ -570,7 +342,6 @@ Insert: {
   is_permanent?: boolean | null
   updated_at?: string | null
   user_id: string
-  visibility?: Database["public"]["Enums"]["context_visibility"]
 }
 Update: {
   context_name?: string
@@ -580,7 +351,6 @@ Update: {
   is_permanent?: boolean | null
   updated_at?: string | null
   user_id?: string
-  visibility?: Database["public"]["Enums"]["context_visibility"]
 }
 Relationships: [
   {
@@ -656,10 +426,6 @@ Returns: Json
 Args: Record<PropertyKey, never>
 Returns: string
   }
-  get_context_completeness_status: {
-Args: { p_context_id: string }
-Returns: Json
-  }
   get_oauth_dashboard_stats: {
 Args: { p_profile_id: string }
 Returns: Json
@@ -675,18 +441,6 @@ Returns: {
   resolved_name: string
 }[]
   }
-  grant_consent: {
-Args: { p_granter_user_id: string; p_requester_user_id: string }
-Returns: boolean
-  }
-  is_context_complete: {
-Args: { p_context_id: string }
-Returns: boolean
-  }
-  jsonb_object_keys_count: {
-Args: { obj: Json }
-Returns: number
-  }
   log_app_usage: {
 Args: {
   p_action: string
@@ -700,22 +454,9 @@ Args: {
 }
 Returns: number
   }
-  request_consent: {
-Args: {
-  p_context_name: string
-  p_expires_at?: string
-  p_granter_user_id: string
-  p_requester_user_id: string
-}
-Returns: string
-  }
   resolve_oauth_oidc_claims: {
 Args: { p_session_token: string }
 Returns: Json
-  }
-  revoke_consent: {
-Args: { p_granter_user_id: string; p_requester_user_id: string }
-Returns: boolean
   }
   validate_name_deletion_protection_setup: {
 Args: Record<PropertyKey, never>
@@ -729,8 +470,6 @@ Enums: {
 | "CONSENT_REVOKED"
 | "CONTEXT_CREATED"
 | "CONSENT_REQUESTED"
-  consent_status: "PENDING" | "GRANTED" | "REVOKED" | "EXPIRED"
-  context_visibility: "public" | "restricted" | "private"
   oidc_property:
 | "given_name"
 | "family_name"
@@ -884,8 +623,6 @@ Enums: {
 "CONTEXT_CREATED",
 "CONSENT_REQUESTED",
   ],
-  consent_status: ["PENDING", "GRANTED", "REVOKED", "EXPIRED"],
-  context_visibility: ["public", "restricted", "private"],
   oidc_property: [
 "given_name",
 "family_name",

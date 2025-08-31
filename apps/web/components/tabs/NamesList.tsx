@@ -4,13 +4,12 @@ import { ProtectedNameWarning } from '@/components/modals/ProtectedNameWarning';
 import { NameReplacementGuideModal } from '@/components/modals/NameReplacementGuideModal';
 import { DeleteNameModal } from '@/components/modals/DeleteNameModal';
 import {
-  useNameAssignments,
-  getVisibilityBadgeColor,
   isNameProtected,
   getAssignmentCount,
 } from '@/hooks/useNameAssignments';
 import type { Tables } from '@/generated/database';
 import type { CanDeleteNameResponse } from '@/types/database';
+import type { NameAssignment } from '@/app/api/names/types';
 
 import {
   ActionIcon,
@@ -33,16 +32,15 @@ import {
   IconCheck,
   IconX,
   IconShield,
-  IconUsers,
-  IconLock,
   IconEye,
 } from '@tabler/icons-react';
 import { useState } from 'react';
 
 type Name = Tables<'names'>;
+type NameWithAssignments = Name & { assignments?: NameAssignment[] };
 
 interface NamesListProps {
-  names: Name[];
+  names: NameWithAssignments[];
   isLoading: boolean;
   error: Error | null;
   editingName: Name | null;
@@ -68,6 +66,7 @@ interface NamesListProps {
  */
 function NameCard({
   name,
+  assignments,
   editingName,
   editText,
   isUpdating,
@@ -79,6 +78,7 @@ function NameCard({
   onDelete,
 }: {
   name: Name;
+  assignments?: NameAssignment[];
   editingName: Name | null;
   editText: string;
   isUpdating: boolean;
@@ -89,23 +89,14 @@ function NameCard({
   onSetEditText: (text: string) => void;
   onDelete: (name: Name) => void;
 }) {
-  const {
-data: assignmentsData,
-error: assignmentsError,
-isLoading: assignmentsLoading,
-  } = useNameAssignments(name.id);
-  const assignments = assignmentsData?.assignments || [];
-  const isProtected = isNameProtected(assignments);
-  const assignmentCount = getAssignmentCount(assignments);
+  // Use passed assignments or fallback to empty array
+  const nameAssignments = assignments || [];
+  const isProtected = isNameProtected(nameAssignments);
+  const assignmentCount = getAssignmentCount(nameAssignments);
 
-  // Group assignments by visibility for badge display
-  const visibilityGroups = assignments.reduce(
-(acc, assignment) => {
-  acc[assignment.visibility] = (acc[assignment.visibility] || 0) + 1;
-  return acc;
-},
-{} as Record<'public' | 'private' | 'restricted', number>,
-  );
+  // For backward compatibility, treat undefined assignments as loading
+  const assignmentsLoading = assignments === undefined;
+  const assignmentsError = null; // No error state since data comes from parent
 
   return (
 <Card
@@ -184,7 +175,7 @@ if (e.key === 'Enter') {
   <Text size='sm' c='red'>
 Failed to load assignments
   </Text>
-) : assignments.length > 0 ? (
+) : nameAssignments.length > 0 ? (
   <Group gap='xs'>
 {/* Total assignment count */}
 <Badge
@@ -195,37 +186,6 @@ Failed to load assignments
 >
   {assignmentCount} assignment{assignmentCount !== 1 ? 's' : ''}
 </Badge>
-
-{/* Visibility badges */}
-{visibilityGroups.public > 0 && (
-  <Badge
-size='sm'
-color={getVisibilityBadgeColor('public')}
-variant='light'
-leftSection={<IconUsers size={12} />}
-  >
-{visibilityGroups.public} public
-  </Badge>
-)}
-{visibilityGroups.private > 0 && (
-  <Badge
-size='sm'
-color={getVisibilityBadgeColor('private')}
-variant='light'
-leftSection={<IconLock size={12} />}
-  >
-{visibilityGroups.private} private
-  </Badge>
-)}
-{visibilityGroups.restricted > 0 && (
-  <Badge
-size='sm'
-color={getVisibilityBadgeColor('restricted')}
-variant='light'
-  >
-{visibilityGroups.restricted} restricted
-  </Badge>
-)}
   </Group>
 ) : (
   <Text size='sm' c='dimmed'>
@@ -364,6 +324,7 @@ above
   <NameCard
 key={name.id}
 name={name}
+assignments={name.assignments}
 editingName={editingName}
 editText={editText}
 isUpdating={isUpdating}

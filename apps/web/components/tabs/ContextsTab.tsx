@@ -17,7 +17,6 @@ import {
   Group,
   Loader,
   Paper,
-  Select,
   Stack,
   Text,
   Textarea,
@@ -37,7 +36,7 @@ interface ContextsTabProps {
   user: AuthenticatedUser | null;
 }
 
-// Simplified context form schema after Step 15.4 migration
+// Simplified context form schema - no visibility field needed
 const contextSchema = z.object({
   context_name: z
 .string()
@@ -49,17 +48,9 @@ const contextSchema = z.object({
 .string()
 .max(500, 'Description cannot exceed 500 characters')
 .optional(),
-  visibility: z.enum(['public', 'restricted', 'private']).default('restricted'),
 });
 
 type ContextFormData = z.infer<typeof contextSchema>;
-
-// Visibility options for the dropdown
-const visibilityOptions = [
-  { value: 'public', label: 'Public (visible to everyone)' },
-  { value: 'restricted', label: 'Restricted (limited visibility)' },
-  { value: 'private', label: 'Private (hidden/disabled)' },
-] as const;
 
 export function ContextsTab({ user }: ContextsTabProps) {
   const [showAddForm, setShowAddForm] = useState(false);
@@ -200,7 +191,6 @@ notifications.show({
 initialValues: {
   context_name: '',
   description: '',
-  visibility: 'restricted',
 },
 validate: {
   context_name: (value) => {
@@ -208,16 +198,6 @@ const result = contextSchema.shape.context_name.safeParse(value);
 return result.success
   ? null
   : result.error.issues[0]?.message || 'Invalid context name';
-  },
-  visibility: (value) => {
-// Ensure permanent contexts remain public
-if (editingContext?.is_permanent && value !== 'public') {
-  return 'Default contexts must remain public';
-}
-const result = contextSchema.shape.visibility.safeParse(value);
-return result.success
-  ? null
-  : result.error.issues[0]?.message || 'Invalid visibility';
   },
 },
   });
@@ -251,9 +231,6 @@ setEditingContext(context);
 form.setValues({
   context_name: context.context_name,
   description: context.description || '',
-  visibility: context.is_permanent
-? 'public'
-: context.visibility || 'restricted',
 });
 setShowAddForm(true);
   };
@@ -388,20 +365,6 @@ setSelectedContextForAssignments(null);
   rows={3}
   data-testid='context-description-input'
   {...form.getInputProps('description')}
-/>
-
-<Select
-  label='Visibility'
-  placeholder='Select visibility level'
-  data={visibilityOptions}
-  disabled={editingContext?.is_permanent === true}
-  description={
-editingContext?.is_permanent === true
-  ? 'Default contexts must remain public'
-  : 'Control who can see and use this context'
-  }
-  data-testid='context-visibility-select'
-  {...form.getInputProps('visibility')}
 />
 
 <Group justify='flex-end'>

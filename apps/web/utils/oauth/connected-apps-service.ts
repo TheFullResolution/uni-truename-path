@@ -74,13 +74,12 @@ return { data: null, error: assignError };
 return { data: [], error: null };
   }
 
-  // Get client registry info
+  // Get client registry info (maintain stable order)
   const clientIds = assignments.map((a) => a.client_id);
   const { data: clients, error: clientError } = await supabase
 .from('oauth_client_registry')
 .select('client_id, display_name, publisher_domain, last_used_at')
-.in('client_id', clientIds)
-.order('last_used_at', { ascending: false, nullsFirst: false });
+.in('client_id', clientIds);
 
   if (clientError) {
 return { data: null, error: clientError };

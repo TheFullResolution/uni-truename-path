@@ -119,7 +119,6 @@ oidc_property,
 user_contexts!inner (
   id,
   context_name,
-  visibility,
   is_permanent
 )
   `,
@@ -142,7 +141,6 @@ timestamp,
 const transformedAssignments = (assignments || []).map((assignment) => ({
   context_id: assignment.context_id,
   context_name: assignment.user_contexts.context_name,
-  visibility: assignment.user_contexts.visibility,
   is_permanent: assignment.user_contexts.is_permanent ?? false,
   oidc_property: assignment.oidc_property,
 }));

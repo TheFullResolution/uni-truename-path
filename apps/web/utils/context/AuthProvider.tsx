@@ -27,7 +27,6 @@ import { notifications } from '@mantine/notifications';
 import { IconX } from '@tabler/icons-react';
 import {
   signInWithPassword,
-  signUpWithPassword,
   signOut,
   getCurrentUser,
   sessionUtils,
@@ -38,17 +37,26 @@ import {
   type AuthErrorCode,
 } from '../auth/client'; // ✅ Import from client-safe exports
 import type { Session } from '@supabase/supabase-js';
-import { createClient } from '../supabase/client';
+
+// OIDC signup data interface
+export interface SignupData {
+  email: string;
+  password: string;
+  confirmPassword: string;
+  agreeToTerms: boolean;
+  consentToProcessing: boolean;
+  allowMarketing?: boolean;
+  given_name: string;
+  family_name: string;
+  display_name?: string;
+  nickname?: string;
+  preferred_username?: string;
+}
 
 interface AuthContextType {
   user: AuthenticatedUser | null;
   login: (email: string, password: string) => Promise<AuthResponse>;
-  signup: (
-email: string,
-password: string,
-legalName: string,
-preferredName?: string,
-  ) => Promise<AuthResponse>;
+  signup: (signupData: SignupData) => Promise<AuthResponse>;
   logout: () => Promise<{ error: string | null }>;
   loading: boolean;
   isAuthenticated: boolean;
@@ -237,77 +245,56 @@ setLoading(false);
   );
 
   const signup = useCallback(
-async (
-  email: string,
-  password: string,
-  legalName: string,
-  preferredName?: string,
-): Promise<AuthResponse> => {
+async (signupData: SignupData): Promise<AuthResponse> => {
   setLoading(true);
   setError(null);
 
   try {
-const authResponse = await signUpWithPassword(email, password);
+// Use the new API endpoint instead of direct Supabase calls
+const response = await fetch('/api/auth/signup', {
+  method: 'POST',
+  headers: {
+'Content-Type': 'application/json',
+  },
+  body: JSON.stringify(signupData),
+});
 
-if (authResponse.error) {
-  setError(authResponse.error.code);
+const result = await response.json();
+
+if (!response.ok || result.status !== 'success') {
+  // Handle API error response
+  const errorCode =
+result.data?.code === 'VALIDATION_ERROR'
+  ? 'VALIDATION_ERROR'
+  : result.data?.code === 'AUTHENTICATION_FAILED'
+? 'AUTHENTICATION_FAILED'
+: 'AUTHENTICATION_FAILED';
+
+  const errorMessage = result.message || 'Signup failed';
+
+  const authResponse: AuthResponse = {
+user: null,
+error: {
+  code: errorCode as AuthErrorCode,
+  message: errorMessage,
+},
+  };
+  setError(errorCode as AuthErrorCode);
   return authResponse;
 }
 
-if (!authResponse.user) {
-  const errorResponse: AuthResponse = {
-user: null,
-error: {
-  code: 'AUTHENTICATION_FAILED',
-  message: 'Signup succeeded but no user returned',
-},
-  };
-  setError('AUTHENTICATION_FAILED');
-  return errorResponse;
-}
+// Success - account created! Return success without establishing session
+// User will need to log in manually on the login page
+const userData = result.data.user;
+const responseUser: AuthenticatedUser = {
+  id: userData.id,
+  email: userData.email,
+};
 
-// Create name variants using database-direct approach
-try {
-  const supabase = createClient();
-
-  // Create primary name (always required)
-  await supabase.from('names').insert({
-user_id: authResponse.user.id,
-name_text: legalName,
-oidc_property_type: 'name',
-oidc_properties: {
-  verified: true,
-  source: 'signup_form',
-  oidc_version: '1.0',
-},
-is_preferred: !preferredName, // legal is preferred if no preferred name provided
-source: 'signup_form',
-  });
-
-  // Create preferred username if provided
-  if (preferredName && preferredName.trim() !== legalName.trim()) {
-await supabase.from('names').insert({
-  user_id: authResponse.user.id,
-  name_text: preferredName,
-  oidc_property_type: 'preferred_username',
-  oidc_properties: {
-verified: true,
-source: 'signup_form',
-oidc_version: '1.0',
-  },
-  is_preferred: true, // preferred name is the preferred one
-  source: 'signup_form',
-});
-  }
-} catch (nameError) {
-  // Non-blocking name creation - signup succeeds even if names fail
-  console.warn('Name creation during signup failed:', nameError);
-}
-
-setUser(authResponse.user);
-setError(null);
-
-return authResponse;
+return {
+  user: responseUser,
+  error: null,
+};
   } catch (err) {
 const errorResponse: AuthResponse = {
   user: null,

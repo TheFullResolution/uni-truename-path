@@ -64,9 +64,18 @@ async function performSignupFlow(
   await page.getByTestId('signup-step2-submit').click();
   console.log('✅ Completed signup step 2 (OIDC properties)');
 
-  // Verify automatic redirect back to OAuth authorization
+  // Verify signup redirect to login page with success message (may include returnUrl)
+  await expect(page).toHaveURL(new RegExp('/auth/login\\?signup=success'));
+  console.log('✅ Signup completed, now on login page');
+
+  // Perform manual login to complete authentication
+  await page.getByTestId('login-email-input').fill(signupData.email);
+  await page.getByTestId('login-password-input').fill(signupData.password);
+  await page.getByTestId('login-submit-button').click();
+
+  // Verify automatic redirect back to OAuth authorization after login
   await expect(page).toHaveURL(new RegExp('/auth/oauth-authorize'));
-  console.log('✅ Automatically redirected back to OAuth authorization page');
+  console.log('✅ Logged in and redirected back to OAuth authorization page');
 }
 
 /**

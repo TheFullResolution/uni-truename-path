@@ -101,8 +101,7 @@ error: null,
   });
 
   const clientsQueryBuilder = mockQueryBuilder();
-  clientsQueryBuilder.in.mockReturnValue(clientsQueryBuilder);
-  clientsQueryBuilder.order.mockResolvedValue({
+  clientsQueryBuilder.in.mockResolvedValue({
 data: mockClients,
 error: null,
   });

@@ -39,7 +39,15 @@ await page.getByTestId('signup-display-name-input').fill('TestDisplay');
 // Leave nickname and preferred_username empty intentionally
 await page.getByTestId('signup-step2-submit').click();
 
-// 4. Verify dashboard redirect
+// 4. Verify signup redirect to login page with success message
+await expect(page).toHaveURL('/auth/login?signup=success');
+
+// 5. Now perform manual login to access dashboard
+await page.getByTestId('login-email-input').fill(testEmail);
+await page.getByTestId('login-password-input').fill('TestPass123!');
+await page.getByTestId('login-submit-button').click();
+
+// 6. Verify successful login and dashboard access
 await expect(page).toHaveURL('/dashboard');
 
 // Verify database triggers created names from signup form

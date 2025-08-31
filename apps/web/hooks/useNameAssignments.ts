@@ -29,7 +29,6 @@ retrieval_timestamp: string;
 export interface NameAssignment {
   context_id: string;
   context_name: string;
-  visibility: 'public' | 'private' | 'restricted';
   is_permanent: boolean;
   oidc_property: string;
 }
@@ -91,51 +90,4 @@ export function getAssignmentCount(
   assignments: NameAssignment[] | undefined,
 ): number {
   return assignments?.length ?? 0;
-}
-
-/**
- * Helper function to get visibility badge color based on assignment visibility
- *
- * @param visibility - The visibility level of the assignment
- * @returns Mantine color string for badge styling
- */
-export function getVisibilityBadgeColor(
-  visibility: 'public' | 'private' | 'restricted',
-): string {
-  switch (visibility) {
-case 'public':
-  return 'green';
-case 'private':
-  return 'blue';
-case 'restricted':
-  return 'gray';
-default:
-  return 'gray';
-  }
-}
-
-/**
- * Helper function to group assignments by visibility for display
- *
- * @param assignments - The assignments array from useNameAssignments
- * @returns Object with assignments grouped by visibility level
- */
-export function groupAssignmentsByVisibility(
-  assignments: NameAssignment[] | undefined,
-) {
-  if (!assignments) {
-return { public: [], private: [], restricted: [] };
-  }
-
-  return assignments.reduce(
-(groups, assignment) => {
-  groups[assignment.visibility].push(assignment);
-  return groups;
-},
-{
-  public: [] as NameAssignment[],
-  private: [] as NameAssignment[],
-  restricted: [] as NameAssignment[],
-},
-  );
 }

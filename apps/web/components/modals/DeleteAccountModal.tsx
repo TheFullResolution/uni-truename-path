@@ -21,6 +21,7 @@ import { notifications } from '@mantine/notifications';
 import { useAuth } from '@/utils/context/AuthProvider';
 import { createClient } from '@/utils/supabase/client';
 import { NOTIFICATION_ACCOUNT_DELETED_TIMEOUT } from '@/utils/constants/timeouts';
+import { clearAllSWRCache } from '@/utils/swr/cache-utils';
 
 interface DeleteAccountModalProps {
   opened: boolean;
@@ -94,6 +95,9 @@ await supabase.auth.signOut();
 // Continue with redirect even if signOut fails
 // Client-side signOut failure is non-critical since server already handled the signout
   }
+
+  // Clear all SWR cache to prevent data leakage
+  await clearAllSWRCache();
 
   // Close modal and redirect (use replace to prevent back navigation)
   handleClose();

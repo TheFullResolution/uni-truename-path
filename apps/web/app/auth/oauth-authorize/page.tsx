@@ -18,7 +18,7 @@ import type {
   AppContextAssignment,
   OAuthClientRegistryInfo,
 } from '@/app/api/oauth/types';
-import type { UserContext } from '@/types/database';
+import type { ContextWithStats } from '@/app/api/contexts/types';
 import { createClient } from '@/utils/supabase/server';
 import {
   lookupExistingClient,
@@ -36,7 +36,7 @@ interface AuthorizeParams {
 
 interface PageData {
   client: OAuthClientRegistryInfo;
-  contexts: UserContext[];
+  contexts: ContextWithStats[];
   existingAssignment: AppContextAssignment | null;
   authorizeParams: AuthorizeParams;
   user: { id: string; email?: string };
@@ -106,25 +106,42 @@ throw new Error(
 async function fetchUserContexts(
   supabase: SupabaseClient,
   userId: string,
-): Promise<UserContext[]> {
-  const { data: contexts, error } = await supabase
-.from('user_contexts')
-.select('*')
-.eq('user_id', userId)
-.order('created_at', { ascending: true });
+): Promise<ContextWithStats[]> {
+  try {
+// Use the centralized utility with OAuth-specific options
+const { fetchContextsWithStats } = await import('@/utils/server/contexts');
 
-  if (error) {
-throw new Error(`Failed to fetch user contexts: ${error.message}`);
-  }
+const contextsWithStats = await fetchContextsWithStats(supabase, userId, {
+  useAppAssignments: false, // Use context_oidc_assignments to show new contexts
+  sortOrder: 'asc', // OAuth page uses ascending order
+});
 
-  // For new users with no contexts yet, this is handled by the fallback in assignContextToClient
-  if (!contexts || contexts.length === 0) {
-console.log(
-  `No contexts found for user ${userId} - may be new user with signup trigger still processing`,
+if (!contextsWithStats || contextsWithStats.length === 0) {
+  console.log(
+`No contexts found for user ${userId} - may be new user with signup trigger still processing`,
+  );
+  return [];
+}
+
+// Apply OAuth-specific filtering server-side for security
+const { filterAvailableContexts } = await import(
+  '@/utils/contexts/filtering'
+);
+const filteredContexts = filterAvailableContexts(contextsWithStats);
+
+// For new users with no contexts yet, this is handled by the fallback in assignContextToClient
+if (!filteredContexts || filteredContexts.length === 0) {
+  console.log(
+`No available contexts found for user ${userId} after OAuth filtering - contexts may be incomplete or restricted`,
+  );
+}
+
+return filteredContexts || [];
+  } catch (error) {
+throw new Error(
+  `Failed to fetch user contexts: ${error instanceof Error ? error.message : 'Unknown error'}`,
 );
   }
-
-  return contexts || [];
 }
 
 async function fetchAppAssignment(

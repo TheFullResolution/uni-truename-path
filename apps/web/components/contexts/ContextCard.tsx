@@ -28,32 +28,6 @@ interface ContextCardProps {
   onEditAssignments?: (context: ContextWithStats) => void;
 }
 
-function getVisibilityBadgeColor(visibility: string): string {
-  switch (visibility) {
-case 'public':
-  return 'green';
-case 'restricted':
-  return 'yellow';
-case 'private':
-  return 'red';
-default:
-  return 'gray';
-  }
-}
-
-function getVisibilityLabel(visibility: string): string {
-  switch (visibility) {
-case 'public':
-  return 'Public';
-case 'restricted':
-  return 'Restricted';
-case 'private':
-  return 'Private';
-default:
-  return 'Unknown';
-  }
-}
-
 export function ContextCard({
   context,
   onEdit,
@@ -61,8 +35,6 @@ export function ContextCard({
   onEditAssignments,
 }: ContextCardProps) {
   const isPermanent = context.is_permanent === true;
-  const visibilityColor = getVisibilityBadgeColor(context.visibility);
-  const visibilityLabel = getVisibilityLabel(context.visibility);
 
   const contextTestId = context.context_name.toLowerCase().replace(/\s+/g, '-');
 
@@ -108,17 +80,10 @@ data-testid='assignment-count-badge'
 
   {/* Completeness Indicator */}
   <ContextCompletenessIndicator
-isComplete={context.is_complete}
+completionStatus={context.completion_status}
 assignmentCount={context.oidc_assignment_count}
-totalRequiredProperties={3} // name, given_name, family_name
-totalOptionalProperties={4} // nickname, display_name, preferred_username, middle_name
 missingProperties={context.missing_properties}
   />
-
-  {/* Visibility Badge */}
-  <Badge size='sm' variant='light' color={visibilityColor}>
-{visibilityLabel}
-  </Badge>
 </Group>
 
 {/* Description */}

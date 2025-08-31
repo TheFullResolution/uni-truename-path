@@ -10,9 +10,16 @@ import {
   TextInput,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
-import { useCallback, useState } from 'react';
+import { IconCheck, IconX } from '@tabler/icons-react';
+import { useCallback } from 'react';
 import { z } from 'zod';
+import useSWRMutation from 'swr/mutation';
+import { notifications } from '@mantine/notifications';
+import { useRouter, useSearchParams } from 'next/navigation';
+import type { Route } from 'next';
+
+import { createMutationFetcher, formatSWRError } from '@/utils/swr-fetcher';
+import type { SignupStep1Data } from './SignupStep1Form';
 
 // Validation schema for step 2 signup form (OIDC name properties)
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -54,27 +61,25 @@ const signupStep2Schema = z.object({
 export type SignupStep2Data = z.infer<typeof signupStep2Schema>;
 
 interface SignupStep2FormProps {
-  /** Called when step 2 is successfully completed */
-  onComplete: (data: SignupStep2Data) => Promise<void>;
+  /** Step 1 data (email, password, consent) */
+  step1Data: SignupStep1Data;
+  /** Called when signup is successfully completed (optional - form redirects internally) */
+  onComplete?: () => void;
   /** Called when user clicks "Back" to step 1 */
   onBack: () => void;
-  /** Loading state during account creation */
-  loading?: boolean;
-  /** Error message to display */
-  error?: string | null;
 }
 
 export function SignupStep2Form({
-  onComplete,
+  step1Data,
+  onComplete: _onComplete, // eslint-disable-line @typescript-eslint/no-unused-vars
   onBack,
-  loading = false,
-  error = null,
 }: SignupStep2FormProps) {
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  // Use Mantine form with custom Zod validation
+  // Use Mantine form with controlled mode
   const form = useForm<SignupStep2Data>({
-mode: 'uncontrolled',
+mode: 'controlled',
 initialValues: {
   given_name: '',
   family_name: '',
@@ -115,21 +120,53 @@ return result.success
 },
   });
 
-  const handleSubmit = useCallback(
-async (values: SignupStep2Data) => {
-  setSubmitError(null);
-  try {
-await onComplete(values);
-  } catch (err) {
-const errorMessage =
-  err instanceof Error ? err.message : 'An unexpected error occurred';
-setSubmitError(errorMessage);
-  }
+  // Clean SWR mutation for signup - redirect to login on success
+  const { trigger: submitSignup, isMutating: loading } = useSWRMutation(
+'/api/auth/signup',
+createMutationFetcher('POST'),
+{
+  onSuccess: () => {
+notifications.show({
+  title: 'Account Created Successfully!',
+  message: 'Please log in with your new account',
+  color: 'green',
+  icon: <IconCheck size={16} />,
+  autoClose: 5000,
+});
+
+// Preserve returnUrl parameter if present (for OAuth flows)
+const returnUrl = searchParams.get('returnUrl');
+const loginUrl = returnUrl
+  ? `/auth/login?signup=success&returnUrl=${encodeURIComponent(returnUrl)}`
+  : '/auth/login?signup=success';
+
+router.push(loginUrl as Route);
+  },
+  onError: (error) => {
+const errorMessage = formatSWRError(error);
+notifications.show({
+  title: 'Account Creation Failed',
+  message: errorMessage,
+  color: 'red',
+  icon: <IconX size={16} />,
+  autoClose: 6000,
+});
+  },
 },
-[onComplete],
   );
 
-  const displayError = error || submitError;
+  const handleSubmit = useCallback(
+async (values: SignupStep2Data) => {
+  // Combine step 1 and step 2 data for complete signup request
+  const signupData = {
+...step1Data,
+...values,
+  };
+
+  await submitSignup(signupData);
+},
+[step1Data, submitSignup],
+  );
 
   return (
 <form onSubmit={form.onSubmit(handleSubmit)} noValidate>
@@ -143,17 +180,7 @@ setSubmitError(errorMessage);
   identity management.
 </Text>
 
-{/* Error Alert */}
-{displayError && (
-  <Alert
-variant='light'
-color='red'
-title='Account Creation Error'
-icon={<IconAlertCircle size={16} />}
-  >
-<Text size='sm'>{displayError}</Text>
-  </Alert>
-)}
+{/* Error handling is done via notifications in useSWRMutation */}
 
 {/* Given Name Input (Required) */}
 <TextInput

@@ -394,16 +394,40 @@ variant='light'
 );
   }
 
+  // Additional safety check to prevent race conditions
+  if (!namesData || !assignmentsData) {
+return (
+  <Stack gap='md'>
+<Text size='sm' c='dimmed'>
+  Assign name variants to OIDC properties for this context. Required
+  properties for the default context cannot be unassigned.
+</Text>
+
+<Center p='md'>
+  <Stack align='center' gap='sm'>
+<Loader size='md' />
+<Text size='sm' c='dimmed'>
+  Loading assignments...
+</Text>
+  </Stack>
+</Center>
+  </Stack>
+);
+  }
+
   const names = namesData?.names || [];
 
-  // Create dropdown options with "None" option
-  const nameOptions = [
-{ value: '', label: 'None' },
-...names.map((name) => ({
-  value: name.id,
-  label: name.name_text,
-})),
-  ];
+  // Create dropdown options with "None" option - ensure it's always an array
+  const nameOptions =
+names.length > 0
+  ? [
+  { value: '', label: 'None' },
+  ...names.map((name) => ({
+value: name.id,
+label: name.name_text,
+  })),
+]
+  : [{ value: '', label: 'None' }];
 
   // Calculate assignment summary
   const assignedPropertiesCount = OIDC_PROPERTIES.filter(
@@ -485,8 +509,8 @@ value={currentValue}
 onChange={(value) => handlePropertyChange(property, value)}
 data={
   isRequired
-? nameOptions.filter((opt) => opt.value !== '')
-: nameOptions
+? (nameOptions || []).filter((opt) => opt.value !== '')
+: nameOptions || []
 }
 placeholder='Select a name'
 size='sm'

@@ -15,7 +15,7 @@ import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
 import useSWRMutation from 'swr/mutation';
 import { createMutationFetcher } from '@/utils/swr-fetcher';
-import type { UserContext } from '@/types/database';
+import type { ContextWithStats } from '@/app/api/contexts/types';
 import type {
   OAuthClientRegistryInfo,
   AppContextAssignment,
@@ -23,7 +23,7 @@ import type {
 
 interface OAuthAuthorizeClientProps {
   app: OAuthClientRegistryInfo;
-  contexts: UserContext[];
+  contexts: ContextWithStats[];
   existingAssignment?: AppContextAssignment;
   returnUrl: string;
   state: string;
@@ -150,19 +150,44 @@ setTimeout(() => {
 }, 500);
   };
 
-  // Simple context check
+  // Enhanced context availability check for OAuth filtering
   if (!contexts?.length) {
 return (
   <Alert
 icon={<IconAlertCircle size={16} />}
-title='No Contexts Available'
-color='red'
+title='No Complete Contexts Available'
+color='orange'
 variant='light'
+data-testid='oauth-no-contexts-alert'
   >
-<Text size='md'>
-  You need at least one identity context to authorize applications.
-  Please set up your contexts in your dashboard first.
-</Text>
+<Stack gap='sm'>
+  <Text size='md'>
+No contexts are available for OAuth authorization. This may be
+because:
+  </Text>
+  <Box component='ul' ml='md'>
+<Box component='li'>
+  <Text size='sm'>
+Your contexts are incomplete (missing name assignments)
+  </Text>
+</Box>
+<Box component='li'>
+  <Text size='sm'>
+Your contexts are marked as restricted or private
+  </Text>
+</Box>
+<Box component='li'>
+  <Text size='sm'>
+You haven&apos;t created any identity contexts yet
+  </Text>
+</Box>
+  </Box>
+  <Text size='sm' c='dimmed' mt='xs'>
+Please visit your dashboard to complete your contexts or create new
+ones. OAuth applications can only access complete, public contexts
+for security reasons.
+  </Text>
+</Stack>
   </Alert>
 );
   }

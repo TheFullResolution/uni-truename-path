@@ -73,32 +73,19 @@ return createSuccessResponse(
 );
   }
 
-  // Check dependencies
-  const [{ count: assignments }, { count: consents }] = await Promise.all([
-context.supabase
-  .from('context_name_assignments')
-  .select('*', { count: 'exact', head: true })
-  .eq('context_id', contextId),
-context.supabase
-  .from('consents')
-  .select('*', { count: 'exact', head: true })
-  .eq('context_id', contextId)
-  .eq('status', 'GRANTED'),
-  ]);
+  // Check if any OAuth apps are using this context
+  const { count: appAssignments } = await context.supabase
+.from('app_context_assignments')
+.select('*', { count: 'exact', head: true })
+.eq('context_id', contextId);
 
-  const nameAssignmentCount = assignments || 0;
-  const activeConsentCount = consents || 0;
-  const hasDependencies = nameAssignmentCount > 0 || activeConsentCount > 0;
+  const appAssignmentCount = appAssignments || 0;
+  const hasDependencies = appAssignmentCount > 0;
 
   const details: string[] = [];
-  if (nameAssignmentCount > 0) {
+  if (appAssignmentCount > 0) {
 details.push(
-  `${nameAssignmentCount} name assignment${nameAssignmentCount === 1 ? '' : 's'} will be removed`,
-);
-  }
-  if (activeConsentCount > 0) {
-details.push(
-  `${activeConsentCount} active consent${activeConsentCount === 1 ? '' : 's'} will be revoked`,
+  `${appAssignmentCount} connected app${appAssignmentCount === 1 ? '' : 's'} will be disconnected`,
 );
   }
 
@@ -107,8 +94,8 @@ can_delete: true,
 requires_force: hasDependencies,
 impact: hasDependencies
   ? {
-  name_assignments: nameAssignmentCount,
-  active_consents: activeConsentCount,
+  name_assignments: 0, // Legacy field, no longer used
+  active_consents: appAssignmentCount, // Now represents app assignments
   details,
 }
   : undefined,

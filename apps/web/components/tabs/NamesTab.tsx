@@ -6,6 +6,7 @@ import { AddNameForm } from '@/components/tabs/AddNameForm';
 import type { AuthenticatedUser } from '@/utils/context';
 import type { Tables } from '@/generated/database';
 import type { CanDeleteNameResponse } from '@/types/database';
+import type { NamesResponseData } from '@/app/api/names/types';
 
 type Name = Tables<'names'>;
 import {
@@ -187,7 +188,7 @@ setEditingName(null);
 setEditText('');
   };
 
-  const names = (namesResponse as { names: Name[] } | undefined)?.names || [];
+  const names = (namesResponse as NamesResponseData | undefined)?.names || [];
   const isLoading = !namesResponse && !namesError;
 
   return (

@@ -12,8 +12,3 @@ export type {
   BatchAssignmentOptions,
   UseBatchAssignmentsReturn,
 } from './assignments-batch';
-
-// Export context completeness utilities
-export { useContextCompleteness } from './context-completeness';
-
-export type { CompletenessResponse } from './context-completeness';

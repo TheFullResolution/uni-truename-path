@@ -1,6 +1,6 @@
 'use client';
 
-import { ConnectedAppsPanel } from '@/components/dashboard/connected-apps/ConnectedAppsPanel';
+import { ConnectedAppsPanel } from '@/components/connected-apps/ConnectedAppsPanel';
 import { TabPanel } from '@/components/dashboard/TabPanel';
 
 export function ConnectedAppsTab() {

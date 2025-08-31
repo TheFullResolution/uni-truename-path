@@ -10,7 +10,32 @@ export const getNamesQuery = (userId: string) =>
 .eq('user_id', userId)
 .order('created_at', { ascending: false });
 
+// Enhanced query for names with assignments (for optimized frontend usage)
+export const getNamesWithAssignmentsQuery = (userId: string) =>
+  createClient()
+.from('names')
+.select(
+  `
+  *,
+  context_oidc_assignments!left (
+context_id,
+oidc_property,
+user_contexts!inner (
+  id,
+  context_name,
+  is_permanent
+)
+  )
+`,
+)
+.eq('user_id', userId)
+.order('is_preferred', { ascending: false })
+.order('created_at', { ascending: false });
+
 export type NamesQueryResult = QueryData<ReturnType<typeof getNamesQuery>>;
+export type NamesWithAssignmentsQueryResult = QueryData<
+  ReturnType<typeof getNamesWithAssignmentsQuery>
+>;
 
 // Request types (simplified, snake_case to match existing API patterns)
 export interface CreateNameRequest {
@@ -37,9 +62,22 @@ locale?: string;
   };
 }
 
+// Assignment data for enhanced names response
+export interface NameAssignment {
+  context_id: string;
+  context_name: string;
+  is_permanent: boolean;
+  oidc_property: string;
+}
+
+// Enhanced name object with optional assignments
+export interface NameWithAssignments extends Tables<'names'> {
+  assignments?: NameAssignment[];
+}
+
 // Response types
 export interface NamesResponseData {
-  names: Tables<'names'>[];
+  names: NameWithAssignments[];
   total: number;
   metadata: {
 retrieval_timestamp: string;

@@ -1,57 +1,53 @@
 'use client';
 
-import { Badge, Group, Text, Tooltip } from '@mantine/core';
-import { IconCheck, IconExclamationMark, IconX } from '@tabler/icons-react';
+import { Badge, Text, Tooltip } from '@mantine/core';
+import { IconCheck, IconAlertTriangle, IconX } from '@tabler/icons-react';
+import type { ContextCompletionStatus } from '@/utils/contexts/completeness';
 
 interface ContextCompletenessIndicatorProps {
-  isComplete: boolean;
+  completionStatus: ContextCompletionStatus;
   assignmentCount: number;
-  totalRequiredProperties: number; // Always 3 (name, given_name, family_name)
-  totalOptionalProperties: number; // 4 (nickname, display_name, preferred_username, middle_name)
   missingProperties?: string[];
   className?: string;
 }
 
-function getCompletenessColor(
-  assignmentCount: number,
-  totalRequiredProperties: number,
-  totalProperties: number,
-): string {
-  if (assignmentCount < totalRequiredProperties) {
-return 'red'; // Missing required properties
+function getCompletenessColor(status: ContextCompletionStatus): string {
+  switch (status) {
+case 'invalid':
+  return 'red';
+case 'partial':
+  return 'yellow';
+case 'complete':
+  return 'green';
+default:
+  return 'gray';
   }
-  if (assignmentCount >= totalProperties) {
-return 'green'; // All properties assigned
-  }
-  return 'yellow'; // Has all required, missing some optional
 }
 
-function getCompletenessIcon(
-  assignmentCount: number,
-  totalRequiredProperties: number,
-  totalProperties: number,
-) {
-  if (assignmentCount < totalRequiredProperties) {
-return <IconX size={14} />; // Incomplete (missing required)
+function getCompletenessIcon(status: ContextCompletionStatus) {
+  switch (status) {
+case 'invalid':
+  return <IconX size={14} />;
+case 'partial':
+  return <IconAlertTriangle size={14} />;
+case 'complete':
+  return <IconCheck size={14} />;
+default:
+  return null;
   }
-  if (assignmentCount >= totalProperties) {
-return <IconCheck size={14} />; // Complete
-  }
-  return <IconExclamationMark size={14} />; // Partial (has required, missing optional)
 }
 
-function getCompletenessLabel(
-  assignmentCount: number,
-  totalRequiredProperties: number,
-  totalProperties: number,
-): string {
-  if (assignmentCount < totalRequiredProperties) {
-return 'Incomplete';
-  }
-  if (assignmentCount >= totalProperties) {
-return 'Complete';
-  }
+function getCompletenessLabel(status: ContextCompletionStatus): string {
+  switch (status) {
+case 'invalid':
+  return 'Invalid';
+case 'partial':
   return 'Partial';
+case 'complete':
+  return 'Complete';
+default:
+  return 'Unknown';
+  }
 }
 
 function formatMissingProperties(missingProperties: string[] = []): string {
@@ -77,74 +73,45 @@ middle_name: 'Middle Name',
 }
 
 export function ContextCompletenessIndicator({
-  isComplete,
+  completionStatus,
   assignmentCount,
-  totalRequiredProperties,
-  totalOptionalProperties,
   missingProperties = [],
   className,
 }: ContextCompletenessIndicatorProps) {
-  const totalProperties = totalRequiredProperties + totalOptionalProperties;
+  const completenessColor = getCompletenessColor(completionStatus);
+  const completenessIcon = getCompletenessIcon(completionStatus);
+  const completenessLabel = getCompletenessLabel(completionStatus);
 
-  // Use the isComplete prop directly if available, otherwise fall back to calculation
-  const actualIsComplete =
-isComplete ?? assignmentCount >= totalRequiredProperties;
-
-  const completenessColor = actualIsComplete
-? getCompletenessColor(
-assignmentCount,
-totalRequiredProperties,
-totalProperties,
-  )
-: 'red';
-
-  const completenessIcon = actualIsComplete
-? getCompletenessIcon(
-assignmentCount,
-totalRequiredProperties,
-totalProperties,
-  )
-: getCompletenessIcon(
-assignmentCount,
-totalRequiredProperties,
-totalProperties,
+  // Separate required and optional missing properties
+  const requiredProperties = ['name', 'given_name', 'family_name'];
+  const missingRequired = missingProperties.filter((p) =>
+requiredProperties.includes(p),
   );
-
-  const completenessLabel = actualIsComplete
-? getCompletenessLabel(
-assignmentCount,
-totalRequiredProperties,
-totalProperties,
-  )
-: 'Incomplete';
-
-  const requiredCount = Math.min(assignmentCount, totalRequiredProperties);
-  const optionalCount = Math.max(0, assignmentCount - totalRequiredProperties);
+  const missingOptional = missingProperties.filter(
+(p) => !requiredProperties.includes(p),
+  );
 
   const tooltipContent = (
 <div>
   <Text size='sm' fw='500' mb='xs'>
-{completenessLabel} ({assignmentCount}/{totalProperties} assignments)
+{completenessLabel} ({assignmentCount}/7 properties)
   </Text>
 
-  <Group gap='xs' mb='xs'>
-<Text size='sm'>
-  Required: {requiredCount}/{totalRequiredProperties}
-</Text>
-<Text size='sm' c='dimmed'>
-  Optional: {optionalCount}/{totalOptionalProperties}
-</Text>
-  </Group>
-
-  {missingProperties.length > 0 && (
-<Text size='sm' c='dimmed'>
-  {formatMissingProperties(missingProperties)}
+  {completionStatus === 'invalid' && missingRequired.length > 0 && (
+<Text size='sm' c='red' mb='xs'>
+  Missing required: {formatMissingProperties(missingRequired)}
 </Text>
   )}
 
-  {isComplete !== undefined && (
-<Text size='sm' c={actualIsComplete ? 'green' : 'red'} mt='xs'>
-  Status: {actualIsComplete ? 'Complete' : 'Incomplete'}
+  {completionStatus === 'partial' && missingOptional.length > 0 && (
+<Text size='sm' c='dimmed'>
+  Missing optional: {formatMissingProperties(missingOptional)}
+</Text>
+  )}
+
+  {completionStatus === 'complete' && (
+<Text size='sm' c='green'>
+  All properties assigned
 </Text>
   )}
 </div>
