@@ -33,11 +33,22 @@ import {
   NOTIFICATION_NETWORK_ERROR_TIMEOUT,
 } from '@/utils/constants/timeouts';
 import { useBatchAssignments } from '@/utils/swr/assignments-batch';
+import {
+  AssignmentRequiredField,
+  getAssignmentFieldTooltip,
+} from './AssignmentRequiredField';
+import {
+  getAssignmentValidationErrors,
+  isAssignmentFormValid,
+  type AssignmentContext,
+} from '@/utils/validation/assignments';
+import type { UserContext } from '@/types/database';
 
 interface AssignmentDialogProps {
   contextId: string;
   contextName: string;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
 // OIDC property labels for display
@@ -99,11 +110,23 @@ interface OIDCAssignmentsResponse {
 export function AssignmentDialog({
   contextId,
   onClose,
+  onSuccess,
 }: AssignmentDialogProps) {
-  // Initialize form with Mantine useForm hook
+  // Initialize form with dynamic validation
   const form = useForm<FormValues>({
 mode: 'controlled',
 initialValues: {},
+validateInputOnBlur: true,
+validateInputOnChange: true,
+validate: (values) => {
+  if (!assignmentContext) return {};
+
+  const validationResult = getAssignmentValidationErrors(
+values,
+assignmentContext,
+  );
+  return validationResult.errors;
+},
   });
 
   // Fetch available names
@@ -125,6 +148,21 @@ swrFetcher<OIDCAssignmentsResponse>,
 
   // Batch assignment operations
   const { updateAssignmentsBatch, isSaving } = useBatchAssignments(contextId);
+
+  // Create assignment context for validation once data is loaded
+  const assignmentContext: AssignmentContext | null = assignmentsData
+? {
+context: {
+  id: contextId,
+  user_id: '', // Not needed for validation
+  context_name: assignmentsData.context_name,
+  is_permanent: assignmentsData.is_permanent,
+} as UserContext, // Type assertion to match expected interface
+isDefaultContext: assignmentsData.is_permanent === true,
+requiredProperties:
+  assignmentsData.is_permanent === true ? REQUIRED_OIDC_PROPERTIES : [],
+  }
+: null;
 
   // Initialize form values when assignments load
   useEffect(() => {
@@ -171,32 +209,25 @@ autoClose: 3000,
   return;
 }
 
-// Validate required properties for default context
-const formValues = form.values;
-const errors: { [key: string]: string } = {};
-const isDefaultContext = assignmentsData?.is_permanent === true;
+// Validate all assignments using centralized validation utilities
+if (assignmentContext) {
+  const validationResult = getAssignmentValidationErrors(
+form.values,
+assignmentContext,
+  );
 
-if (isDefaultContext) {
-  REQUIRED_OIDC_PROPERTIES.forEach((property) => {
-if (!formValues[property] || formValues[property] === '') {
-  errors[property] =
-`${OIDC_PROPERTY_LABELS[property]} is required for the default context`;
-}
-  });
-}
-
-// Set validation errors if any exist
-if (Object.keys(errors).length > 0) {
-  form.setErrors(errors);
-  // Show validation error notification
-  notifications.show({
-title: 'Validation Error',
-message: 'Please fix the errors below before saving',
-color: 'yellow',
-icon: <IconAlertTriangle size={18} />,
-autoClose: 5000,
-  });
-  return;
+  if (!validationResult.valid) {
+form.setErrors(validationResult.errors);
+// Show validation error notification
+notifications.show({
+  title: 'Validation Error',
+  message: 'Please fix the errors below before saving',
+  color: 'yellow',
+  icon: <IconAlertTriangle size={18} />,
+  autoClose: 5000,
+});
+return;
+  }
 }
 
 try {
@@ -254,6 +285,8 @@ autoClose: 5000,
 
   // Reset form after successful save
   form.resetDirty();
+  // Trigger parent revalidation to update completeness status
+  onSuccess?.();
   onClose(); // Auto-close dialog after successful save
 },
 // Enhanced error handling
@@ -433,19 +466,18 @@ style={{
 }}
   >
 <Table.Td>
-  <Stack gap='xs'>
-<Group gap='xs'>
-  <Text fw={500}>{OIDC_PROPERTY_LABELS[property]}</Text>
-  {isRequired && (
-<Badge size='xs' color='red' variant='light'>
-  Required
-</Badge>
-  )}
-</Group>
-<Text size='xs' c='dimmed'>
-  {OIDC_PROPERTY_DESCRIPTIONS[property]}
-</Text>
-  </Stack>
+  <AssignmentRequiredField
+required={isRequired}
+label={OIDC_PROPERTY_LABELS[property]}
+description={OIDC_PROPERTY_DESCRIPTIONS[property]}
+tooltip={getAssignmentFieldTooltip(property, isRequired)}
+  >
+{isRequired && (
+  <Badge size='xs' color='red' variant='light'>
+Required
+  </Badge>
+)}
+  </AssignmentRequiredField>
 </Table.Td>
 <Table.Td>
   <Select
@@ -474,7 +506,13 @@ error={fieldError}
 </Button>
 <Button
   onClick={handleSave}
-  disabled={!form.isDirty() || isSaving}
+  disabled={
+!form.isDirty() ||
+isSaving ||
+(assignmentContext &&
+  !isAssignmentFormValid(form.values, assignmentContext)) ||
+false
+  }
   loading={isSaving}
   leftSection={<IconCheck size={16} />}
 >

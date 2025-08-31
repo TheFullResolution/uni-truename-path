@@ -28,6 +28,7 @@ import {
   type OIDCClaims,
   useOAuthToken,
   useStoredOAuthToken,
+  ResponseViewer,
 } from '@uni-final/truename-oauth';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -521,30 +522,21 @@ fz={{ base: 'sm', sm: 'md', md: 'lg' }}
 Complete OIDC Claims (Technical View)
   </Title>
   <Text size='sm' c='gray.6'>
-Raw identity data from TrueNamePath OAuth integration
+Raw identity data from TrueNamePath OAuth integration showing
+context-aware identity resolution for casual social
+interactions.
   </Text>
 
-  <Box
-p='md'
-bg='var(--mantine-color-gray-0)'
-style={{
-  border: '1px solid var(--mantine-color-gray-3)',
-  borderRadius: 'var(--mantine-radius-md)',
-  fontFamily: 'var(--mantine-font-family-monospace)',
-  fontSize: '0.8rem',
-  overflow: 'auto',
+  <ResponseViewer
+data={userData}
+title='OIDC Claims Response'
+showMetrics
+metadata={{
+  Context: userData.context_name || 'Default',
+  App: 'ChatSpace',
+  Environment: 'Demo',
 }}
-  >
-<pre
-  style={{
-margin: 0,
-whiteSpace: 'pre-wrap',
-wordBreak: 'break-word',
-  }}
->
-  {JSON.stringify(userData, null, 2)}
-</pre>
-  </Box>
+  />
 </Stack>
   </Paper>
 </Stack>

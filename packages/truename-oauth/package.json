@@ -15,8 +15,8 @@
   "scripts": {
 "build": "tsc",
 "type-check": "tsc --noEmit",
-"lint": "eslint src --ext .ts",
-"lint:fix": "eslint src --ext .ts --fix",
+"lint": "eslint src --ext .ts,.tsx",
+"lint:fix": "eslint src --ext .ts,.tsx --fix",
 "clean": "rm -rf dist",
 "test": "vitest run",
 "test:watch": "vitest",
@@ -26,10 +26,23 @@
   "dependencies": {
 "swr": "^2.2.5"
   },
+  "peerDependencies": {
+"@mantine/core": ">=7.0.0",
+"@mantine/hooks": ">=7.0.0",
+"@tabler/icons-react": ">=2.0.0",
+"react": ">=18.0.0"
+  },
   "devDependencies": {
+"@eslint/js": "^9.33.0",
 "@types/node": "24.3.0",
+"@types/react": "^19.1.12",
+"@types/react-dom": "^19.1.9",
+"@typescript-eslint/eslint-plugin": "^8.16.0",
+"@typescript-eslint/parser": "^8.16.0",
 "@vitest/coverage-v8": "^2.0.0",
 "@vitest/ui": "^2.0.0",
+"eslint": "^9.33.0",
+"globals": "^15.12.0",
 "typescript": "^5.8.2",
 "vitest": "^2.0.0"
   },

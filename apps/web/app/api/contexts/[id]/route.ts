@@ -119,6 +119,33 @@ constraint:
 );
   }
 
+  // If changing visibility to public or private, check completeness
+  if (body.visibility && ['public', 'private'].includes(body.visibility)) {
+const { data: completenessResult } = await context.supabase.rpc(
+  'get_context_completeness_status',
+  { p_context_id: contextId },
+);
+
+const completenessStatus = completenessResult as unknown as {
+  is_complete: boolean;
+  missing_properties?: string[];
+};
+
+if (!completenessStatus?.is_complete) {
+  return createErrorResponse(
+ErrorCodes.VALIDATION_ERROR,
+`Cannot make context ${body.visibility}. Missing required OIDC properties: ${completenessStatus?.missing_properties?.join(', ') || 'unknown'}`,
+context.requestId,
+{
+  missing_properties: completenessStatus?.missing_properties || [],
+  required_properties: ['name', 'given_name', 'family_name'],
+  completeness_status: completenessResult,
+},
+context.timestamp,
+  );
+}
+  }
+
   // Build update object with only provided fields
   const updateData: Record<string, unknown> = {
 updated_at: new Date().toISOString(),

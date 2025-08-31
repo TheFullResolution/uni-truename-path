@@ -1,6 +1,6 @@
-// TrueNamePath: Name Deletion Validation API Route - Step 15.3
-// GET endpoint to check if a name can be deleted using new can_delete_name RPC
-// Date: August 2025 - Step 15.3 Complete Cleanup Implementation
+// TrueNamePath: Name Context Assignments API Route - Step 18
+// GET endpoint to fetch context assignments for a specific name
+// Date: August 2025 - Enhanced name management functionality
 
 import {
   type AuthenticatedHandler,
@@ -9,7 +9,7 @@ import {
   ErrorCodes,
   withRequiredAuth,
 } from '@/utils/api';
-import { type CanDeleteNameResponse } from '@/types/database';
+import { type NameAssignmentsResponse } from '@/types/database';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 
@@ -21,19 +21,19 @@ const ParamsSchema = z.object({
 });
 
 /**
- * Response interface for can-delete endpoint - enhanced with protection information
+ * Response interface for name assignments endpoint
  */
-interface CanDeleteResponseData extends CanDeleteNameResponse {
+interface NameAssignmentsResponseData extends NameAssignmentsResponse {
   metadata: {
 name_id: string;
 user_id: string;
-check_timestamp: string;
+retrieval_timestamp: string;
   };
 }
 
 /**
- * GET /api/names/[nameId]/can-delete - Check if a name variant can be deleted
- * Uses the new can_delete_name RPC function from Step 15.3 migration
+ * GET /api/names/[nameId]/assignments - Fetch context assignments for a specific name
+ * Returns all contexts where this name is assigned with context details
  */
 const handleGET: AuthenticatedHandler = async (
   request: NextRequest,
@@ -48,6 +48,7 @@ const handleGET: AuthenticatedHandler = async (
   // Import this dynamically to avoid issues
   const { createClient } = await import('@/utils/supabase/server');
   const supabase = await createClient();
+
   try {
 // 1. Validate route parameters
 const paramsValidationResult = ParamsSchema.safeParse({ nameId });
@@ -82,7 +83,7 @@ const authenticatedUserId = user.id;
 // 3. Verify the name exists and belongs to the user
 const { data: existingName, error: fetchError } = await supabase
   .from('names')
-  .select('id, name_text, is_preferred, user_id')
+  .select('id, name_text, user_id')
   .eq('id', paramsValidationResult.data.nameId)
   .eq('user_id', authenticatedUserId)
   .maybeSingle();
@@ -108,66 +109,72 @@ timestamp,
   );
 }
 
-// 4. Use the can_delete_name RPC function to check deletion eligibility
-const { data: deletionCheck, error: checkError } = await supabase.rpc(
-  'can_delete_name',
-  {
-p_user_id: authenticatedUserId,
-p_name_id: paramsValidationResult.data.nameId,
-  },
-);
+// 4. Fetch context assignments for this name
+const { data: assignments, error: assignmentsError } = await supabase
+  .from('context_oidc_assignments')
+  .select(
+`
+context_id,
+oidc_property,
+user_contexts!inner (
+  id,
+  context_name,
+  visibility,
+  is_permanent
+)
+  `,
+  )
+  .eq('name_id', paramsValidationResult.data.nameId)
+  .eq('user_id', authenticatedUserId);
 
-if (checkError) {
-  console.error('Error checking name deletion permissions:', checkError);
+if (assignmentsError) {
+  console.error('Error fetching context assignments:', assignmentsError);
   return createErrorResponse(
 ErrorCodes.DATABASE_ERROR,
-'Failed to validate deletion',
+'Failed to fetch context assignments',
 requestId,
-{ error: checkError.message },
+{ error: assignmentsError.message },
 timestamp,
   );
 }
 
-// 5. Prepare response data with enhanced protection information
-const checkData = deletionCheck as unknown as CanDeleteNameResponse;
-const responseData: CanDeleteResponseData = {
-  can_delete: checkData?.can_delete || false,
-  reason: checkData?.reason || 'Unknown',
-  reason_code: checkData?.reason_code || 'UNKNOWN',
-  protection_type: checkData?.protection_type || 'UNKNOWN',
-  name_count: checkData?.name_count || 0,
-  context_info: checkData?.context_info || {
-public_contexts: [],
-permanent_contexts: [],
-  },
+// 5. Transform the data to match the expected response structure
+const transformedAssignments = (assignments || []).map((assignment) => ({
+  context_id: assignment.context_id,
+  context_name: assignment.user_contexts.context_name,
+  visibility: assignment.user_contexts.visibility,
+  is_permanent: assignment.user_contexts.is_permanent ?? false,
+  oidc_property: assignment.oidc_property,
+}));
+
+// 6. Prepare response data
+const responseData: NameAssignmentsResponseData = {
+  assignments: transformedAssignments,
+  total: transformedAssignments.length,
   metadata: {
 name_id: paramsValidationResult.data.nameId,
 user_id: authenticatedUserId,
-check_timestamp: timestamp,
+retrieval_timestamp: timestamp,
   },
 };
 
 console.log(`API Request [${requestId}]:`, {
-  endpoint: '/api/names/[nameId]/can-delete',
+  endpoint: '/api/names/[nameId]/assignments',
   method: 'GET',
   authenticatedUserId: authenticatedUserId.substring(0, 8) + '...',
   nameId: paramsValidationResult.data.nameId.substring(0, 8) + '...',
-  canDelete: responseData.can_delete,
-  reason: responseData.reason,
-  reasonCode: responseData.reason_code,
-  protectionType: responseData.protection_type,
-  nameCount: responseData.name_count,
-  publicContexts: responseData.context_info.public_contexts.length,
-  permanentContexts: responseData.context_info.permanent_contexts.length,
+  nameText: existingName.name_text.substring(0, 20) + '...',
+  assignmentsCount: transformedAssignments.length,
+  contexts: transformedAssignments.map((a) => a.context_name),
 });
 
 return createSuccessResponse(responseData, requestId, timestamp);
   } catch (error) {
-console.error('Name deletion check error:', error);
+console.error('Name assignments fetch error:', error);
 
 return createErrorResponse(
   ErrorCodes.INTERNAL_ERROR,
-  'An unexpected error occurred while checking name deletion permissions',
+  'An unexpected error occurred while fetching name assignments',
   requestId,
   { error: error instanceof Error ? error.message : 'Unknown error' },
   timestamp,

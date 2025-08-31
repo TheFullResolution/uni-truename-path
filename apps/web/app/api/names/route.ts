@@ -9,6 +9,7 @@ import {
   ErrorCodes,
   withRequiredAuth,
 } from '@/utils/api';
+import { type CanDeleteNameResponse } from '@/types/database';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 
@@ -477,11 +478,7 @@ timestamp,
   );
 }
 
-const checkData = deletionCheck as {
-  can_delete: boolean;
-  reason?: string;
-  action_required?: string;
-};
+const checkData = deletionCheck as unknown as CanDeleteNameResponse;
 if (!checkData?.can_delete) {
   return createErrorResponse(
 ErrorCodes.VALIDATION_ERROR,
@@ -489,7 +486,10 @@ checkData?.reason || 'Cannot delete this name variant',
 requestId,
 {
   reason: checkData?.reason,
-  action_required: checkData?.action_required,
+  reason_code: checkData?.reason_code,
+  protection_type: checkData?.protection_type,
+  name_count: checkData?.name_count,
+  context_info: checkData?.context_info,
 },
 timestamp,
   );

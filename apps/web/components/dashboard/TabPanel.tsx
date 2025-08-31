@@ -17,12 +17,16 @@ export function TabPanel({
   children,
 }: TabPanelProps) {
   return (
-<Tabs.Panel value={value}>
+<Tabs.Panel value={value} data-testid={`tab-panel-${value}`}>
   {(title || actions || description) && (
 <Box mb='lg'>
   {(title || actions) && (
 <Group justify='space-between' mb={description ? 'md' : 'lg'}>
-  {title && <Title order={2}>{title}</Title>}
+  {title && (
+<Title order={2} data-testid={`tab-panel-title-${value}`}>
+  {title}
+</Title>
+  )}
   {actions && actions}
 </Group>
   )}

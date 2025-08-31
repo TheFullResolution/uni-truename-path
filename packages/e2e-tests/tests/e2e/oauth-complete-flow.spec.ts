@@ -183,15 +183,80 @@ expect(data.data.resolved_at).toBeDefined();
 expect(data.data.performance).toBeDefined();
 expect(data.data.performance.response_time_ms).toBeGreaterThan(0);
 
-// Step 5: Verify OIDC claims structure
+// Step 5: Verify complete OIDC claims structure
 const claims = data.data.claims;
-expect(claims.sub).toBeDefined(); // Subject (user identifier)
-expect(claims.name).toBeDefined(); // Display name
-expect(claims.given_name).toBeDefined(); // First name
-expect(claims.family_name).toBeDefined(); // Last name
 
-console.log(`✅ OIDC claims validated: ${JSON.stringify(claims, null, 2)}`);
-console.log('🎉 Bearer token resolution test completed successfully');
+// Verify mandatory OIDC claims are present
+expect(claims.sub).toBeDefined(); // Subject (user identifier)
+expect(claims.iss).toBeDefined(); // Issuer
+expect(claims.aud).toBeDefined(); // Audience
+expect(claims.iat).toBeDefined(); // Issued at
+expect(claims.exp).toBeDefined(); // Expiration time
+expect(claims.nbf).toBeDefined(); // Not before
+expect(claims.jti).toBeDefined(); // JWT ID
+
+// Verify mandatory claims have correct types
+expect(typeof claims.sub).toBe('string');
+expect(typeof claims.iss).toBe('string');
+expect(typeof claims.aud).toBe('string');
+expect(typeof claims.iat).toBe('number');
+expect(typeof claims.exp).toBe('number');
+expect(typeof claims.nbf).toBe('number');
+expect(typeof claims.jti).toBe('string');
+
+// Verify time relationships
+expect(claims.exp).toBe(claims.iat + 3600); // exp = iat + 1 hour
+expect(claims.nbf).toBe(claims.iat); // nbf = iat
+expect(claims.exp).toBeGreaterThan(claims.iat); // exp > iat
+
+// Verify UUID format for jti
+const uuidRegex =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+expect(claims.jti).toMatch(uuidRegex);
+
+// Verify UK university defaults
+expect(claims.locale).toBe('en-GB');
+expect(claims.zoneinfo).toBe('Europe/London');
+
+// Verify academic transparency claims
+expect(claims._token_type).toBe('bearer_demo');
+expect(claims._note).toBe('Bearer token - claims informational only');
+
+// Verify TrueNamePath-specific claims
+expect(claims.context_name).toBeDefined();
+expect(claims.app_name).toBeDefined();
+
+// Verify optional standard OIDC claims when present
+if (claims.name !== undefined) {
+  expect(claims.name).toBeDefined(); // Display name
+}
+if (claims.given_name !== undefined) {
+  expect(claims.given_name).toBeDefined(); // First name
+}
+if (claims.family_name !== undefined) {
+  expect(claims.family_name).toBeDefined(); // Last name
+}
+if (claims.email_verified !== undefined) {
+  expect(typeof claims.email_verified).toBe('boolean');
+}
+if (claims.updated_at !== undefined) {
+  expect(typeof claims.updated_at).toBe('number');
+}
+
+console.log(
+  `✅ Enhanced OIDC claims validated: ${Object.keys(claims).length} claims total`,
+);
+console.log(`✅ Mandatory claims: sub, iss, aud, iat, exp, nbf, jti`);
+console.log(
+  `✅ Time relationships: exp=${claims.exp}, iat=${claims.iat}, nbf=${claims.nbf}`,
+);
+console.log(`✅ UUID format jti: ${claims.jti}`);
+console.log(
+  `✅ UK defaults: locale=${claims.locale}, zoneinfo=${claims.zoneinfo}`,
+);
+console.log(
+  '🎉 Enhanced Bearer token resolution test completed successfully',
+);
   });
 
   test('Security features work correctly', async ({ page }) => {

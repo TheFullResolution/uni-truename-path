@@ -68,4 +68,46 @@ await expect(page.locator('text=Assignment Summary')).toBeVisible();
 // Close the modal
 await page.getByRole('button', { name: 'Cancel' }).click();
   });
+
+  test('should auto-populate new contexts with default OIDC assignments', async ({
+page,
+  }) => {
+// Navigate to contexts tab
+await page.getByTestId('tab-contexts').click();
+await page.waitForLoadState('networkidle');
+
+// Find the "Test Work Context" created in beforeEach
+const testContextCard = page
+  .locator('[data-testid^="context-card"]')
+  .filter({ hasText: 'Test Work Context' });
+
+await expect(testContextCard).toBeVisible();
+
+// Click edit assignments to verify auto-population
+await testContextCard
+  .locator('[data-testid="edit-assignments-button"]')
+  .click();
+
+// Wait for assignment modal
+await expect(page.getByText('Edit Assignments')).toBeVisible();
+
+// Verify basic OIDC properties have assignments (not "Not assigned")
+const oidcProperties = ['Name', 'Given Name', 'Family Name'];
+
+for (const property of oidcProperties) {
+  const propertyRow = page.locator('table tbody tr').filter({
+hasText: property,
+  });
+
+  // Check that property has an assignment (doesn't show "Not assigned")
+  await expect(propertyRow).not.toContainText('Not assigned');
+}
+
+console.log(
+  '✅ Context auto-population verified - OIDC properties populated',
+);
+
+// Close modal
+await page.getByRole('button', { name: 'Cancel' }).click();
+  });
 });

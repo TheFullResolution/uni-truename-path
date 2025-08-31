@@ -27,6 +27,15 @@ const CreateContextSchema = z.object({
 .optional()
 .default('restricted'),
 });
+// Database function response interface for completeness data
+// Database function response interface for completeness data
+interface CompletenessResponse {
+  is_complete?: boolean;
+  missing_properties?: string[];
+  completeness_details?: {
+completion_percentage?: number;
+  };
+}
 
 const handlePost: AuthenticatedHandler = async (request, context) => {
   const body = CreateContextSchema.parse(await request.json());
@@ -98,23 +107,33 @@ return createSuccessResponse([], context.requestId, context.timestamp);
 
   const contextIds = contexts.map((c) => c.id);
 
-  // Batch fetch statistics
-  const [{ data: assignments }, { data: consents }, { data: oidcAssignments }] =
-await Promise.all([
-  context.supabase
-.from('context_name_assignments')
-.select('context_id')
-.in('context_id', contextIds),
-  context.supabase
-.from('consents')
-.select('context_id')
-.in('context_id', contextIds)
-.eq('status', 'GRANTED'),
-  context.supabase
-.from('context_oidc_assignments')
-.select('context_id')
-.in('context_id', contextIds),
-]);
+  // Batch fetch statistics and completeness data
+  const [
+{ data: assignments },
+{ data: consents },
+{ data: oidcAssignments },
+...completenessResults
+  ] = await Promise.all([
+context.supabase
+  .from('context_name_assignments')
+  .select('context_id')
+  .in('context_id', contextIds),
+context.supabase
+  .from('consents')
+  .select('context_id')
+  .in('context_id', contextIds)
+  .eq('status', 'GRANTED'),
+context.supabase
+  .from('context_oidc_assignments')
+  .select('context_id')
+  .in('context_id', contextIds),
+// Add completeness queries for each context
+...contextIds.map((contextId) =>
+  context.supabase.rpc('get_context_completeness_status', {
+p_context_id: contextId,
+  }),
+),
+  ]);
 
   // Build statistics maps
   const assignmentCounts = new Map<string, number>();
@@ -135,13 +154,56 @@ oidcAssignmentCounts.set(
 ),
   );
 
-  // Return contexts with stats
-  const contextsWithStats: ContextWithStats[] = contexts.map((ctx) => ({
-...ctx,
-name_assignments_count: assignmentCounts.get(ctx.id) || 0,
-has_active_consents: consentSet.has(ctx.id),
-oidc_assignment_count: oidcAssignmentCounts.get(ctx.id) || 0,
-  }));
+  // Build completeness data map
+  const completenessMap = new Map<
+string,
+{
+  is_complete: boolean;
+  missing_properties: string[];
+  completion_percentage: number;
+}
+  >();
+
+  completenessResults.forEach((result, index) => {
+const contextId = contextIds[index];
+if (result.data && typeof result.data === 'object') {
+  const data = result.data as unknown as CompletenessResponse;
+  completenessMap.set(contextId, {
+is_complete: data.is_complete || false,
+missing_properties: Array.isArray(data.missing_properties)
+  ? data.missing_properties
+  : [],
+completion_percentage:
+  data.completeness_details?.completion_percentage || 0,
+  });
+} else {
+  // Fallback for any failed completeness checks
+  completenessMap.set(contextId, {
+is_complete: false,
+missing_properties: ['name', 'given_name', 'family_name'],
+completion_percentage: 0,
+  });
+}
+  });
+
+  // Return contexts with stats and completeness data
+  const contextsWithStats: ContextWithStats[] = contexts.map((ctx) => {
+const completeness = completenessMap.get(ctx.id) || {
+  is_complete: false,
+  missing_properties: ['name', 'given_name', 'family_name'],
+  completion_percentage: 0,
+};
+
+return {
+  ...ctx,
+  name_assignments_count: assignmentCounts.get(ctx.id) || 0,
+  has_active_consents: consentSet.has(ctx.id),
+  oidc_assignment_count: oidcAssignmentCounts.get(ctx.id) || 0,
+  is_complete: completeness.is_complete,
+  missing_properties: completeness.missing_properties,
+  completion_percentage: completeness.completion_percentage,
+};
+  });
 
   const responseTime = Date.now() - startTime;
 

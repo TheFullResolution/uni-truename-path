@@ -100,16 +100,33 @@ const VALID_BEARER_TOKEN = 'tnp_abcdef1234567890abcdef1234567890';
 const EXPIRED_BEARER_TOKEN = 'tnp_expired12345678901234567890';
 
 const VALID_OIDC_CLAIMS: OIDCClaims = {
+  // Mandatory OIDC claims
   sub: 'profile_123456789',
+  iss: 'https://truenameapi.demo',
+  aud: 'test-app',
+  iat: 1692801330,
+  exp: 1692804930, // iat + 3600
+  nbf: 1692801330, // same as iat
+  jti: '550e8400-e29b-41d4-a716-446655440000', // valid UUID format
+
+  // Standard optional OIDC claims
   name: 'John Smith',
   given_name: 'John',
   family_name: 'Smith',
   nickname: 'Johnny',
-  iss: 'https://truename.test',
-  aud: 'test-app',
-  iat: 1692801330,
+  email: 'john.smith@test.com',
+  email_verified: true,
+  updated_at: 1692801330,
+  locale: 'en-GB',
+  zoneinfo: 'Europe/London',
+
+  // TrueNamePath-specific claims
   context_name: 'Work Colleagues',
   app_name: 'Test App',
+
+  // Academic transparency claims
+  _token_type: 'bearer_demo',
+  _note: 'Bearer token - claims informational only',
 };
 
 // Mock authentication state
@@ -263,6 +280,123 @@ error: null,
   );
 });
 
+it('should validate mandatory OIDC claims are present', async () => {
+  mockSupabaseQuery.single.mockResolvedValue({
+data: VALID_OIDC_CLAIMS,
+error: null,
+  });
+
+  const request = createMockRequest(`Bearer ${VALID_BEARER_TOKEN}`);
+  const response = await POST(request);
+  const responseData = await parseJsonResponse(response);
+  const claims = responseData.data.claims;
+
+  // Verify mandatory OIDC claims are present
+  expect(claims.sub).toBeDefined();
+  expect(claims.iss).toBeDefined();
+  expect(claims.aud).toBeDefined();
+  expect(claims.iat).toBeDefined();
+  expect(claims.exp).toBeDefined();
+  expect(claims.nbf).toBeDefined();
+  expect(claims.jti).toBeDefined();
+
+  // Verify mandatory claims have correct types
+  expect(typeof claims.sub).toBe('string');
+  expect(typeof claims.iss).toBe('string');
+  expect(typeof claims.aud).toBe('string');
+  expect(typeof claims.iat).toBe('number');
+  expect(typeof claims.exp).toBe('number');
+  expect(typeof claims.nbf).toBe('number');
+  expect(typeof claims.jti).toBe('string');
+});
+
+it('should validate time relationships between claims', async () => {
+  mockSupabaseQuery.single.mockResolvedValue({
+data: VALID_OIDC_CLAIMS,
+error: null,
+  });
+
+  const request = createMockRequest(`Bearer ${VALID_BEARER_TOKEN}`);
+  const response = await POST(request);
+  const responseData = await parseJsonResponse(response);
+  const claims = responseData.data.claims;
+
+  // Verify exp is exactly iat + 3600 (1 hour)
+  expect(claims.exp).toBe(claims.iat + 3600);
+
+  // Verify nbf equals iat
+  expect(claims.nbf).toBe(claims.iat);
+
+  // Verify exp is greater than iat
+  expect(claims.exp).toBeGreaterThan(claims.iat);
+});
+
+it('should validate jti claim is valid UUID format', async () => {
+  mockSupabaseQuery.single.mockResolvedValue({
+data: VALID_OIDC_CLAIMS,
+error: null,
+  });
+
+  const request = createMockRequest(`Bearer ${VALID_BEARER_TOKEN}`);
+  const response = await POST(request);
+  const responseData = await parseJsonResponse(response);
+  const claims = responseData.data.claims;
+
+  // Verify jti is in valid UUID format
+  const uuidRegex =
+/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  expect(claims.jti).toMatch(uuidRegex);
+});
+
+it('should validate UK defaults for locale and timezone', async () => {
+  mockSupabaseQuery.single.mockResolvedValue({
+data: VALID_OIDC_CLAIMS,
+error: null,
+  });
+
+  const request = createMockRequest(`Bearer ${VALID_BEARER_TOKEN}`);
+  const response = await POST(request);
+  const responseData = await parseJsonResponse(response);
+  const claims = responseData.data.claims;
+
+  // Verify UK university defaults
+  expect(claims.locale).toBe('en-GB');
+  expect(claims.zoneinfo).toBe('Europe/London');
+});
+
+it('should validate academic transparency claims', async () => {
+  mockSupabaseQuery.single.mockResolvedValue({
+data: VALID_OIDC_CLAIMS,
+error: null,
+  });
+
+  const request = createMockRequest(`Bearer ${VALID_BEARER_TOKEN}`);
+  const response = await POST(request);
+  const responseData = await parseJsonResponse(response);
+  const claims = responseData.data.claims;
+
+  // Verify academic transparency claims
+  expect(claims._token_type).toBe('bearer_demo');
+  expect(claims._note).toBe('Bearer token - claims informational only');
+});
+
+it('should validate email verification status', async () => {
+  mockSupabaseQuery.single.mockResolvedValue({
+data: VALID_OIDC_CLAIMS,
+error: null,
+  });
+
+  const request = createMockRequest(`Bearer ${VALID_BEARER_TOKEN}`);
+  const response = await POST(request);
+  const responseData = await parseJsonResponse(response);
+  const claims = responseData.data.claims;
+
+  // Verify email verification status is boolean when present
+  if (claims.email_verified !== undefined) {
+expect(typeof claims.email_verified).toBe('boolean');
+  }
+});
+
 it('should include performance metrics in successful response', async () => {
   mockSupabaseQuery.single.mockResolvedValue({
 data: VALID_OIDC_CLAIMS,
@@ -278,14 +412,29 @@ error: null,
   expect(responseData.data.performance.response_time_ms).toBeGreaterThan(0);
 });
 
-it('should handle minimal OIDC claims structure', async () => {
+it('should handle minimal OIDC claims structure with mandatory fields', async () => {
+  const currentTime = Math.floor(Date.now() / 1000);
   const minimalClaims = {
+// All mandatory OIDC claims must be present
 sub: 'test-user-id',
-iss: 'https://truename.test',
+iss: 'https://truenameapi.demo',
 aud: 'test-app',
-iat: Math.floor(Date.now() / 1000),
+iat: currentTime,
+exp: currentTime + 3600, // iat + 1 hour
+nbf: currentTime, // same as iat
+jti: '123e4567-e89b-12d3-a456-426614174000', // valid UUID
+
+// TrueNamePath required claims
 context_name: 'Default Context',
 app_name: 'Test App',
+
+// UK defaults
+locale: 'en-GB',
+zoneinfo: 'Europe/London',
+
+// Academic transparency
+_token_type: 'bearer_demo',
+_note: 'Bearer token - claims informational only',
   };
 
   mockSupabaseQuery.single.mockResolvedValue({
@@ -299,6 +448,15 @@ error: null,
 
   expect(responseData.success).toBe(true);
   expect(responseData.data.claims).toEqual(minimalClaims);
+
+  // Verify mandatory claims are present even in minimal response
+  expect(responseData.data.claims.sub).toBeDefined();
+  expect(responseData.data.claims.iss).toBeDefined();
+  expect(responseData.data.claims.aud).toBeDefined();
+  expect(responseData.data.claims.iat).toBeDefined();
+  expect(responseData.data.claims.exp).toBeDefined();
+  expect(responseData.data.claims.nbf).toBeDefined();
+  expect(responseData.data.claims.jti).toBeDefined();
 });
   });
 

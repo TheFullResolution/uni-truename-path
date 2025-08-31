@@ -19,6 +19,7 @@ import {
   IconSettings,
   IconTrash,
 } from '@tabler/icons-react';
+import { ContextCompletenessIndicator } from './ContextCompletenessIndicator';
 
 interface ContextCardProps {
   context: ContextWithStats;
@@ -63,14 +64,16 @@ export function ContextCard({
   const visibilityColor = getVisibilityBadgeColor(context.visibility);
   const visibilityLabel = getVisibilityLabel(context.visibility);
 
+  const contextTestId = context.context_name.toLowerCase().replace(/\s+/g, '-');
+
   return (
-<Card p='md' withBorder>
+<Card p='md' withBorder data-testid={`context-card-${contextTestId}`}>
   <Stack gap='sm'>
 {/* Header with name and badges */}
 <Group justify='space-between' align='flex-start'>
   <Box flex={1}>
 <Group gap='xs' align='center' mb={4}>
-  <Text size='lg' fw='600'>
+  <Text size='lg' fw='600' data-testid='context-name'>
 {context.context_name}
   </Text>
 
@@ -93,10 +96,24 @@ Default
   )}
 
   {/* Assignment Count Badge */}
-  <Badge size='sm' variant='light' color='cyan'>
+  <Badge
+size='sm'
+variant='light'
+color='cyan'
+data-testid='assignment-count-badge'
+  >
 {context.oidc_assignment_count} assignment
 {context.oidc_assignment_count !== 1 ? 's' : ''}
   </Badge>
+
+  {/* Completeness Indicator */}
+  <ContextCompletenessIndicator
+isComplete={context.is_complete}
+assignmentCount={context.oidc_assignment_count}
+totalRequiredProperties={3} // name, given_name, family_name
+totalOptionalProperties={4} // nickname, display_name, preferred_username, middle_name
+missingProperties={context.missing_properties}
+  />
 
   {/* Visibility Badge */}
   <Badge size='sm' variant='light' color={visibilityColor}>
@@ -106,7 +123,7 @@ Default
 
 {/* Description */}
 {context.description && (
-  <Text size='sm' c='dimmed'>
+  <Text size='sm' c='dimmed' data-testid='context-description'>
 {context.description}
   </Text>
 )}

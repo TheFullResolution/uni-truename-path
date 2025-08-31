@@ -6,12 +6,13 @@ import globals from 'globals';
 export default [
   js.configs.recommended,
   {
-files: ['**/*.ts'],
+files: ['**/*.ts', '**/*.tsx'],
 languageOptions: {
   parser: tsParser,
   parserOptions: {
 ecmaVersion: 2022,
 sourceType: 'module',
+jsx: true,
   },
   globals: {
 ...globals.browser,

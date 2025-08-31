@@ -12,6 +12,9 @@ export {
 } from './auth-utils.js';
 
 export { fetchClientInfo, resolveOIDCClaims } from './api-client.js';
+
+// Components
+export { ResponseViewer } from './components/index.js';
 export { useOAuthToken } from './hooks/useOAuthToken.js';
 export { useStoredOAuthToken } from './hooks/useStoredOAuthToken.js';
 export {
@@ -38,6 +41,7 @@ export type {
   ApiResponse,
   OAuthError,
 } from './types.js';
+export type { ResponseViewerProps } from './components/index.js';
 export type {
   SWRState,
   OAuthCacheKey,

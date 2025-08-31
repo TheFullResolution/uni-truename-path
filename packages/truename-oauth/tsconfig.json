@@ -16,8 +16,16 @@
 "esModuleInterop": true,
 "resolveJsonModule": true,
 "isolatedModules": true,
-"noEmit": false
+"noEmit": false,
+"jsx": "react-jsx",
+"lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
   "include": ["src/**/*"],
-  "exclude": ["dist", "node_modules", "src/**/*.test.ts", "vitest.setup.ts"]
+  "exclude": [
+"dist",
+"node_modules",
+"src/**/*.test.ts",
+"src/**/*.test.tsx",
+"vitest.setup.ts"
+  ]
 }

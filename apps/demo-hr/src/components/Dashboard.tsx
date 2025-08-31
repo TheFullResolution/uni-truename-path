@@ -25,6 +25,7 @@ import { paperStyles, cardStyles } from './shared/styles';
 import { EmployeeProfileSection } from './sections/EmployeeProfileSection';
 import { AuthenticationDetailsSection } from './sections/AuthenticationDetailsSection';
 import { ContextAwarenessSection } from './sections/ContextAwarenessSection';
+import { OAuthResponseSection } from './sections/OAuthResponseSection';
 import {
   clearOAuthCache,
   useStoredOAuthToken,
@@ -210,6 +211,7 @@ context-aware identity management in enterprise environments.
 <AuthenticationDetailsSection userData={userData} />
 <ContextAwarenessSection userData={userData} />
   </Group>
+  <OAuthResponseSection userData={userData} />
 </Stack>
   </Stack>
 </PageLayout>

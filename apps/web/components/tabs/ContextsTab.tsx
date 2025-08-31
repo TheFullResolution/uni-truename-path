@@ -500,6 +500,7 @@ setDependencyImpact(null);
   onClose={handleCloseAssignments}
   contextId={selectedContextForAssignments?.id || ''}
   contextName={selectedContextForAssignments?.context_name || ''}
+  onSuccess={revalidateContexts}
 />
   </Stack>
 </TabPanel>

@@ -8,4 +8,9 @@ export interface ContextWithStats extends UserContext {
   name_assignments_count: number;
   has_active_consents: boolean;
   oidc_assignment_count: number;
+
+  // Completeness data for better performance and UX
+  is_complete: boolean;
+  missing_properties: string[];
+  completion_percentage: number;
 }

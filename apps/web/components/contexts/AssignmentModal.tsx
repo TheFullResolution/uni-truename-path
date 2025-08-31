@@ -8,6 +8,7 @@ interface AssignmentModalProps {
   onClose: () => void;
   contextId: string;
   contextName: string;
+  onSuccess?: () => void;
 }
 
 export function AssignmentModal({
@@ -15,6 +16,7 @@ export function AssignmentModal({
   onClose,
   contextId,
   contextName,
+  onSuccess,
 }: AssignmentModalProps) {
   return (
 <Modal
@@ -30,6 +32,7 @@ export function AssignmentModal({
 contextId={contextId}
 contextName={contextName}
 onClose={onClose}
+onSuccess={onSuccess}
   />
 </Modal>
   );

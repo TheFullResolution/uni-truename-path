@@ -1,9 +1,11 @@
 'use client';
 
-import { DeleteNameModal } from '@/components/modals/DeleteNameModal';
 import { TabPanel } from '@/components/dashboard/TabPanel';
+import { NamesList } from '@/components/tabs/NamesList';
+import { AddNameForm } from '@/components/tabs/AddNameForm';
 import type { AuthenticatedUser } from '@/utils/context';
 import type { Tables } from '@/generated/database';
+import type { CanDeleteNameResponse } from '@/types/database';
 
 type Name = Tables<'names'>;
 import {
@@ -11,49 +13,24 @@ import {
   createMutationFetcher,
   formatSWRError,
 } from '@/utils/swr-fetcher';
-import {
-  ActionIcon,
-  Alert,
-  Button,
-  Card,
-  Group,
-  Paper,
-  Stack,
-  Text,
-  TextInput,
-  Title,
-  Loader,
-  Center,
-} from '@mantine/core';
-import { useForm } from '@mantine/form';
+import { Button, Stack } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import {
-  IconPlus,
-  IconTrash,
-  IconAlertTriangle,
-  IconEdit,
-  IconCheck,
-  IconX,
-} from '@tabler/icons-react';
+import { IconPlus } from '@tabler/icons-react';
 import { useState } from 'react';
 import useSWR from 'swr';
 import useSWRMutation from 'swr/mutation';
-import { z } from 'zod';
 
 interface NamesTabProps {
   user: AuthenticatedUser | null;
 }
-
-// Step 15.4 Simplified form data type - only name_text required
-type CreateNameFormData = {
-  name_text: string;
-};
 
 export function NamesTab({ user }: NamesTabProps) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [deletingName, setDeletingName] = useState<Name | null>(null);
   const [canDeleteName, setCanDeleteName] = useState(true);
   const [deleteReason, setDeleteReason] = useState<string>('');
+  const [protectionData, setProtectionData] =
+useState<CanDeleteNameResponse | null>(null);
 
   // Edit functionality state
   const [editingName, setEditingName] = useState<Name | null>(null);
@@ -80,7 +57,6 @@ notifications.show({
 });
 revalidateNames();
 setShowAddForm(false);
-form.reset();
   },
   onError: (error) => {
 notifications.show({
@@ -145,20 +121,7 @@ notifications.show({
 },
   );
 
-  // Form for adding names
-  const form = useForm<CreateNameFormData>({
-initialValues: {
-  name_text: '',
-},
-validate: {
-  name_text: (value) => {
-const result = z.string().trim().min(1).max(100).safeParse(value);
-return result.success ? null : 'Name text is required';
-  },
-},
-  });
-
-  const handleSubmit = async (values: CreateNameFormData) => {
+  const handleAddNameSubmit = async (values: { name_text: string }) => {
 await createName(values);
   };
 
@@ -185,8 +148,11 @@ return;
   const canDeleteData = await canDeleteResponse.json();
 
   // Set the deletion state and reason
-  setCanDeleteName(canDeleteData.data?.can_delete || false);
-  setDeleteReason(canDeleteData.data?.reason || '');
+  const protectionInfo = canDeleteData.data;
+  setCanDeleteName(protectionInfo?.can_delete || false);
+  setDeleteReason(protectionInfo?.reason || '');
+  setProtectionData(protectionInfo);
+
   setDeletingName(name);
 } catch {
   notifications.show({
@@ -242,180 +208,39 @@ setEditText('');
   }
 >
   <Stack gap='lg'>
-{/* Add Name Form */}
-{showAddForm && (
-  <Paper p='md' withBorder>
-<Title order={3} mb='md'>
-  Add Name Variant
-</Title>
-<form onSubmit={form.onSubmit(handleSubmit)}>
-  <Stack gap='md'>
-<TextInput
-  label='Name Text'
-  placeholder='Enter the name'
-  required
-  data-testid='name-text-input'
-  {...form.getInputProps('name_text')}
+{/* Add Name Form - Isolated component to prevent re-renders */}
+<AddNameForm
+  isVisible={showAddForm}
+  isCreating={isCreating}
+  onSubmit={handleAddNameSubmit}
+  onCancel={() => setShowAddForm(false)}
 />
 
-<Group justify='flex-end'>
-  <Button
-type='button'
-variant='light'
-onClick={() => setShowAddForm(false)}
-disabled={isCreating}
-  >
-Cancel
-  </Button>
-  <Button
-type='submit'
-loading={isCreating}
-leftSection={<IconPlus />}
-data-testid='add-name-button'
-  >
-Add Name
-  </Button>
-</Group>
-  </Stack>
-</form>
-  </Paper>
-)}
-
-{/* Names List */}
-{isLoading ? (
-  <Center p='xl'>
-<Stack align='center'>
-  <Loader size='md' />
-  <Text size='sm' c='dimmed'>
-Loading names...
-  </Text>
-</Stack>
-  </Center>
-) : namesError ? (
-  <Alert
-color='red'
-title='Error Loading Names'
-icon={<IconAlertTriangle size={16} />}
-  >
-<Text size='sm'>{formatSWRError(namesError)}</Text>
-  </Alert>
-) : names.length === 0 ? (
-  <Paper p='xl' withBorder>
-<Center>
-  <Stack align='center'>
-<Text size='lg' fw={500} c='dimmed'>
-  No name variants yet
-</Text>
-<Text size='sm' c='dimmed'>
-  Add your first name variant to get started
-</Text>
-<Button
-  onClick={() => setShowAddForm(true)}
-  leftSection={<IconPlus />}
-  mt='sm'
->
-  Add Name
-</Button>
-  </Stack>
-</Center>
-  </Paper>
-) : (
-  <Stack gap='sm'>
-{names.map((name: Tables<'names'>) => (
-  <Card key={name.id} p='md' withBorder>
-<Group justify='space-between'>
-  <Group grow>
-{editingName?.id === name.id ? (
-  // Edit mode
-  <Group gap='xs' grow>
-<TextInput
-  value={editText}
-  onChange={(e) => setEditText(e.target.value)}
-  flex={1}
-  data-testid='edit-name-input'
-  onKeyDown={(e) => {
-if (e.key === 'Enter') {
-  handleSaveEdit();
-} else if (e.key === 'Escape') {
-  handleCancelEdit();
-}
-  }}
-  autoFocus
-/>
-<ActionIcon
-  color='green'
-  variant='light'
-  onClick={handleSaveEdit}
-  loading={isUpdating}
-  disabled={isUpdating || !editText.trim()}
-  data-testid='save-edit-button'
->
-  <IconCheck size={16} />
-</ActionIcon>
-<ActionIcon
-  color='gray'
-  variant='light'
-  onClick={handleCancelEdit}
-  disabled={isUpdating}
-  data-testid='cancel-edit-button'
->
-  <IconX size={16} />
-</ActionIcon>
-  </Group>
-) : (
-  // Display mode
-  <div>
-<Text fw={500} size='lg'>
-  {name.name_text}
-</Text>
-  </div>
-)}
-  </Group>
-
-  {editingName?.id !== name.id && (
-<Group gap='xs'>
-  <ActionIcon
-color='blue'
-variant='light'
-onClick={() => handleStartEdit(name)}
-disabled={!!editingName || isDeleting}
-data-testid='edit-name-button'
-  >
-<IconEdit size={16} />
-  </ActionIcon>
-  <ActionIcon
-color='red'
-variant='light'
-onClick={() => handleDelete(name)}
-loading={isDeleting}
-disabled={isDeleting || !!editingName}
-data-testid='delete-name-button'
-  >
-<IconTrash size={16} />
-  </ActionIcon>
-</Group>
-  )}
-</Group>
-  </Card>
-))}
-  </Stack>
-)}
-
-{/* Delete Name Modal */}
-<DeleteNameModal
-  opened={!!deletingName}
-  onClose={() => {
+{/* Names List - Isolated component to prevent form re-renders */}
+<NamesList
+  names={names}
+  isLoading={isLoading}
+  error={namesError}
+  editingName={editingName}
+  editText={editText}
+  isUpdating={isUpdating}
+  isDeleting={isDeleting}
+  onStartEdit={handleStartEdit}
+  onSaveEdit={handleSaveEdit}
+  onCancelEdit={handleCancelEdit}
+  onSetEditText={setEditText}
+  onDelete={handleDelete}
+  onConfirmDelete={handleConfirmDelete}
+  deletingName={deletingName}
+  canDeleteName={canDeleteName}
+  deleteReason={deleteReason}
+  protectionData={protectionData}
+  onCloseDeleteModal={() => {
 setDeletingName(null);
 setCanDeleteName(true);
 setDeleteReason('');
+setProtectionData(null);
   }}
-  nameId={deletingName?.id || ''}
-  nameText={deletingName?.name_text || ''}
-  isDeleting={isDeleting}
-  onConfirmDelete={handleConfirmDelete}
-  canDelete={canDeleteName}
-  deleteReason={deleteReason}
-  isDefaultContextName={deleteReason.toLowerCase().includes('default')}
 />
   </Stack>
 </TabPanel>

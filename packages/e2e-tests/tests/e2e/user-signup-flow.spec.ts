@@ -44,37 +44,36 @@ await expect(page).toHaveURL('/dashboard');
 
 // Verify database triggers created names from signup form
 await page.getByTestId('tab-names').click();
-await expect(
-  page.getByRole('heading', { name: 'Name Variants' }),
-).toBeVisible();
+await expect(page.getByTestId('tab-panel-title-names')).toBeVisible();
 
 // Verify names from signup form are auto-created
 await page.waitForTimeout(1000);
-await expect(page.getByText('TestFirst', { exact: true })).toBeVisible();
-await expect(page.getByText('TestLast', { exact: true })).toBeVisible();
+await expect(page.getByTestId('name-card-testfirst')).toBeVisible();
+await expect(page.getByTestId('name-card-testlast')).toBeVisible();
 await expect(
-  page.getByText('TestFirst TestLast', { exact: true }),
+  page.getByTestId('name-card-testfirst-testlast'),
 ).toBeVisible();
-await expect(page.getByText('TestDisplay', { exact: true })).toBeVisible();
+await expect(page.getByTestId('name-card-testdisplay')).toBeVisible();
 
 // Verify database triggers created default context
 await page.getByTestId('tab-contexts').click();
-await expect(
-  page.getByRole('heading', { name: 'Context Management' }),
-).toBeVisible();
+await expect(page.getByTestId('tab-panel-title-contexts')).toBeVisible();
 
 // Verify default context is auto-created
 await page.waitForTimeout(1000);
+await expect(page.getByTestId('context-card-default')).toBeVisible();
 await expect(
-  page.getByRole('paragraph').filter({ hasText: /^Default$/ }),
-).toBeVisible();
-await expect(page.getByText('Default identity context')).toBeVisible();
+  page.locator(
+'[data-testid="context-card-default"] [data-testid="context-name"]',
+  ),
+).toContainText('Default');
 
-// Verify OIDC property assignments were created
-const assignmentBadge = page
-  .locator('[data-testid*="assignment"], :has-text("assignment")')
-  .first();
-await expect(assignmentBadge).toBeVisible();
+// Verify OIDC property assignments were created (assignment badge should be visible)
+await expect(
+  page.locator(
+'[data-testid="context-card-default"] [data-testid="assignment-count-badge"]',
+  ),
+).toBeVisible();
   });
 
   test('should validate required form fields', async ({ page }) => {

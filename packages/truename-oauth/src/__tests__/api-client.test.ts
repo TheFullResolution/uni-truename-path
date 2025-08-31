@@ -208,17 +208,34 @@ const token = 'bearer-token-123';
 
 test('should resolve OIDC claims successfully', async () => {
   const mockClaims: OIDCClaims = {
+// Mandatory OIDC claims
 sub: 'user-456',
+iss: 'https://truenameapi.demo',
+aud: 'demo-hr',
+iat: 1692275400,
+exp: 1692279000, // iat + 3600
+nbf: 1692275400, // same as iat
+jti: '550e8400-e29b-41d4-a716-446655440000', // valid UUID
+
+// Optional standard OIDC claims
 name: 'John Doe',
 given_name: 'John',
 family_name: 'Doe',
 nickname: 'Johnny',
 preferred_username: 'johndoe',
-iss: 'https://truename.example.com',
-aud: 'demo-hr',
-iat: 1692275400,
+email: 'john.doe@test.com',
+email_verified: true,
+updated_at: 1692275400,
+locale: 'en-GB',
+zoneinfo: 'Europe/London',
+
+// TrueNamePath-specific claims
 context_name: 'Work Colleagues',
 app_name: 'demo-hr',
+
+// Academic transparency claims
+_token_type: 'bearer_demo',
+_note: 'Bearer token - claims informational only',
   };
 
   const mockResponse = {
@@ -446,17 +463,34 @@ expect(result.data.app_name).toBe('hr-dashboard');
 
 test('should handle complete OAuth resolution flow', async () => {
   const fullClaims: OIDCClaims = {
+// Mandatory OIDC claims
 sub: 'emp_12345',
+iss: 'https://truenameapi.demo',
+aud: 'hr-dashboard',
+iat: 1692275400,
+exp: 1692279000, // iat + 3600
+nbf: 1692275400, // same as iat
+jti: '123e4567-e89b-12d3-a456-426614174000', // valid UUID
+
+// Optional standard OIDC claims
 name: 'Jane Smith',
 given_name: 'Jane',
 family_name: 'Smith',
 nickname: 'Janie',
 preferred_username: 'jsmith',
-iss: 'https://api.truename.com',
-aud: 'hr-dashboard',
-iat: 1692275400,
+email: 'jane.smith@company.com',
+email_verified: true,
+updated_at: 1692275400,
+locale: 'en-GB',
+zoneinfo: 'Europe/London',
+
+// TrueNamePath-specific claims
 context_name: 'HR Team Members',
 app_name: 'hr-dashboard',
+
+// Academic transparency claims
+_token_type: 'bearer_demo',
+_note: 'Bearer token - claims informational only',
   };
 
   const mockResponse = {
@@ -488,6 +522,102 @@ context: {
 expect(result.data.sub).toBe('emp_12345');
 expect(result.data.context_name).toBe('HR Team Members');
 expect(result.data.iat).toBe(1692275400);
+
+// Verify mandatory OIDC claims are present
+expect(result.data.iss).toBeDefined();
+expect(result.data.aud).toBeDefined();
+expect(result.data.exp).toBeDefined();
+expect(result.data.nbf).toBeDefined();
+expect(result.data.jti).toBeDefined();
+
+// Verify time relationships
+expect(result.data.exp).toBe(result.data.iat + 3600);
+expect(result.data.nbf).toBe(result.data.iat);
+
+// Verify UK defaults
+expect(result.data.locale).toBe('en-GB');
+expect(result.data.zoneinfo).toBe('Europe/London');
+
+// Verify academic transparency claims
+expect(result.data._token_type).toBe('bearer_demo');
+expect(result.data._note).toBeDefined();
+  }
+});
+
+test('should validate OIDC claims structure in resolved data', async () => {
+  const enhancedClaims: OIDCClaims = {
+// All mandatory claims
+sub: 'user_789',
+iss: 'https://truenameapi.demo',
+aud: 'test-app',
+iat: 1692275400,
+exp: 1692279000,
+nbf: 1692275400,
+jti: '456e7890-e12c-34d5-a678-901234567890',
+
+// Standard optional claims
+email: 'user@test.com',
+email_verified: false,
+locale: 'en-GB',
+zoneinfo: 'Europe/London',
+
+// Required TrueNamePath claims
+context_name: 'Test Context',
+app_name: 'test-app',
+
+// Academic claims
+_token_type: 'bearer_demo',
+_note: 'Bearer token - claims informational only',
+  };
+
+  const mockResponse = {
+ok: true,
+json: vi.fn().mockResolvedValue({
+  success: true,
+  data: { claims: enhancedClaims },
+}),
+  };
+
+  mockFetch.mockResolvedValue(mockResponse);
+
+  const result = await resolveOIDCClaims(
+'https://api.test.com',
+'test-token',
+  );
+
+  expect(result.success).toBe(true);
+  if (result.success) {
+const claims = result.data;
+
+// Verify all mandatory OIDC claims
+expect(claims.sub).toBe('user_789');
+expect(claims.iss).toBe('https://truenameapi.demo');
+expect(claims.aud).toBe('test-app');
+expect(claims.iat).toBe(1692275400);
+expect(claims.exp).toBe(1692279000);
+expect(claims.nbf).toBe(1692275400);
+expect(claims.jti).toBe('456e7890-e12c-34d5-a678-901234567890');
+
+// Verify time relationships
+expect(claims.exp).toBe(claims.iat + 3600);
+expect(claims.nbf).toBe(claims.iat);
+
+// Verify UUID format for jti
+const uuidRegex =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+expect(claims.jti).toMatch(uuidRegex);
+
+// Verify email verification is boolean
+expect(typeof claims.email_verified).toBe('boolean');
+expect(claims.email_verified).toBe(false);
+
+// Verify UK defaults
+expect(claims.locale).toBe('en-GB');
+expect(claims.zoneinfo).toBe('Europe/London');
+
+// Verify academic transparency claims
+expect(claims._token_type).toBe('bearer_demo');
+expect(claims._note).toBe('Bearer token - claims informational only');
   }
 });
   });

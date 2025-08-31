@@ -636,6 +636,10 @@ Functions: {
 Args: { p_client_id: string; p_profile_id: string }
 Returns: string
   }
+  auto_populate_context: {
+Args: { p_new_context_id: string; p_user_id: string }
+Returns: Json
+  }
   can_delete_name: {
 Args: { p_name_id: string; p_user_id: string }
 Returns: Json
@@ -651,6 +655,10 @@ Returns: Json
   generate_oauth_token: {
 Args: Record<PropertyKey, never>
 Returns: string
+  }
+  get_context_completeness_status: {
+Args: { p_context_id: string }
+Returns: Json
   }
   get_oauth_dashboard_stats: {
 Args: { p_profile_id: string }
@@ -670,6 +678,14 @@ Returns: {
   grant_consent: {
 Args: { p_granter_user_id: string; p_requester_user_id: string }
 Returns: boolean
+  }
+  is_context_complete: {
+Args: { p_context_id: string }
+Returns: boolean
+  }
+  jsonb_object_keys_count: {
+Args: { obj: Json }
+Returns: number
   }
   log_app_usage: {
 Args: {
@@ -700,6 +716,10 @@ Returns: Json
   revoke_consent: {
 Args: { p_granter_user_id: string; p_requester_user_id: string }
 Returns: boolean
+  }
+  validate_name_deletion_protection_setup: {
+Args: Record<PropertyKey, never>
+Returns: Json
   }
 }
 Enums: {
