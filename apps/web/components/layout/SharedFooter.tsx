@@ -84,13 +84,14 @@ Settings
 </>
   )}
   <Anchor
+component={Link}
+href={'/docs' as Route}
 size='sm'
 c='gray.3'
 style={{
   textDecoration: 'none',
-  cursor: 'not-allowed',
-  opacity: 0.6,
 }}
+className='footer-link'
   >
 Documentation
   </Anchor>

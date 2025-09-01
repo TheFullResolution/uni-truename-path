@@ -32,14 +32,12 @@ style={{ alignItems: 'center' }}
 
   <Group gap='lg' align='center'>
 <Anchor
+  component={Link}
+  href={'/docs' as Route}
   c='gray.6'
   size='sm'
   fw={500}
   td='none'
-  style={{
-cursor: 'not-allowed',
-opacity: 0.6,
-  }}
 >
   <Group gap='xs' align='center'>
 <IconBook size={16} />
