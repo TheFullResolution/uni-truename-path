@@ -25,7 +25,7 @@ export function ConnectedAppCard({
 <Card p='md' withBorder>
   <Stack gap='sm'>
 <Group gap='xs' align='center' mb={4}>
-  <Text fw={600} size='lg'>
+  <Text fw={600} size='lg' data-testid='connected-app-title'>
 {app.display_name}
   </Text>
   <Badge size='sm' variant='light' color='blue'>

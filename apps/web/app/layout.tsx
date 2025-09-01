@@ -10,8 +10,6 @@ import {
 import { Notifications } from '@mantine/notifications';
 import { ModalsProvider } from '@mantine/modals';
 import { theme } from '../utils/theme';
-import { AuthProvider } from '../utils/context';
-import { SharedFooter } from '@/components/layout/SharedFooter';
 
 export const metadata = {
   title: 'TrueNamePath - Context-Aware Identity Management',
@@ -27,8 +25,6 @@ export default function RootLayout({
   return (
 <html lang='en' {...mantineHtmlProps}>
   <head>
-<title>{metadata.title}</title>
-<meta name='description' content={metadata.description} />
 <ColorSchemeScript />
 <link rel='shortcut icon' href='/favicon.ico' />
 <link
@@ -66,17 +62,7 @@ style={{
 <MantineProvider theme={theme}>
   <ModalsProvider>
 <Notifications />
-<AuthProvider>
-  <main
-style={{
-  flex: 1,
-  backgroundColor: 'var(--mantine-color-gray-0)',
-}}
-  >
 {children}
-  </main>
-  <SharedFooter />
-</AuthProvider>
   </ModalsProvider>
 </MantineProvider>
   </body>

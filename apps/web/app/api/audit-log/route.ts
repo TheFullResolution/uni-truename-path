@@ -7,9 +7,9 @@ import {
   ErrorCodes,
 } from '@/utils/api';
 import { z } from 'zod';
-import type { Tables } from '@/generated/database';
+// Note: Tables import removed as we handle joined query data directly
 
-type AppUsageLogEntry = Tables<'app_usage_log'>;
+// Note: AppUsageLogEntry type removed as we now handle joined data from query
 
 // Transform app_usage_log entry to match UI expectations
 interface TransformedAuditLogEntry {
@@ -22,6 +22,10 @@ interface TransformedAuditLogEntry {
   success: boolean;
   error_type: string | null;
   response_time_ms: number | null;
+  // Human-readable fields from joins
+  app_display_name: string | null;
+  publisher_domain: string | null;
+  context_name: string | null;
   // Fields that don't exist in app_usage_log but UI might expect
   resolved_name_id: null;
   target_user_id: string; // mapped from profile_id
@@ -148,10 +152,55 @@ context.timestamp,
 const total = count || 0;
 const hasMore = offset + limit < total;
 
+// Get unique client IDs and context IDs for lookup
+const clientIds = Array.from(
+  new Set(rawEntries?.map((e) => e.client_id).filter(Boolean) || []),
+);
+const contextIds = Array.from(
+  new Set(
+rawEntries
+  ?.map((e) => e.context_id)
+  .filter((id): id is string => Boolean(id)) || [],
+  ),
+);
+
+// Fetch client registry data
+const clientData: Record<
+  string,
+  { display_name: string; publisher_domain: string }
+> = {};
+if (clientIds.length > 0) {
+  const { data: clients } = await context.supabase
+.from('oauth_client_registry')
+.select('client_id, display_name, publisher_domain')
+.in('client_id', clientIds);
+
+  clients?.forEach((client) => {
+clientData[client.client_id] = {
+  display_name: client.display_name,
+  publisher_domain: client.publisher_domain,
+};
+  });
+}
+
+// Fetch context data
+const contextData: Record<string, { name: string }> = {};
+if (contextIds.length > 0) {
+  const { data: contexts } = await context.supabase
+.from('user_contexts')
+.select('id, context_name')
+.in('id', contextIds)
+.eq('user_id', context.user!.id); // Ensure user owns the contexts
+
+  contexts?.forEach((ctx) => {
+contextData[ctx.id] = { name: ctx.context_name };
+  });
+}
+
 // Transform app_usage_log entries to match UI expectations
 const transformedEntries: TransformedAuditLogEntry[] = (
   rawEntries || []
-).map((entry: AppUsageLogEntry) => ({
+).map((entry) => ({
   id: entry.id,
   accessed_at: entry.created_at, // Map created_at to accessed_at for UI compatibility
   action: entry.action,
@@ -161,6 +210,12 @@ const transformedEntries: TransformedAuditLogEntry[] = (
   success: entry.success,
   error_type: entry.error_type,
   response_time_ms: entry.response_time_ms,
+  // Human-readable fields from separate queries
+  app_display_name: clientData[entry.client_id]?.display_name || null,
+  publisher_domain: clientData[entry.client_id]?.publisher_domain || null,
+  context_name: entry.context_id
+? contextData[entry.context_id]?.name || null
+: null,
   // Fields that don't exist in app_usage_log but UI might expect
   resolved_name_id: null,
   target_user_id: entry.profile_id, // Map profile_id to target_user_id for UI compatibility

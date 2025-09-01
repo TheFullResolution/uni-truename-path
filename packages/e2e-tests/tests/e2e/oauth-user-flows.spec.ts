@@ -269,15 +269,39 @@ async function createGamingNames(
 
   // Create first name (gaming nickname)
   await toggleAddButton.click();
+
+  // Wait for form to open and elements to be ready
+  await expect(page.getByTestId('name-text-input')).toBeVisible({
+timeout: 5000,
+  });
+  await expect(page.getByTestId('add-name-button')).toBeVisible({
+timeout: 5000,
+  });
+
   await page.getByTestId('name-text-input').fill(nickname);
   await page.getByTestId('add-name-button').click();
+
+  // Wait for success notification to confirm form submission completed
+  await expect(page.locator('text=Name Added')).toBeVisible({ timeout: 10000 });
   console.log(`✅ Created gaming nickname: ${nickname}`);
 
   // Wait and create second name
   await page.waitForTimeout(1500);
   await toggleAddButton.click();
+
+  // Wait for form to open and elements to be ready
+  await expect(page.getByTestId('name-text-input')).toBeVisible({
+timeout: 5000,
+  });
+  await expect(page.getByTestId('add-name-button')).toBeVisible({
+timeout: 5000,
+  });
+
   await page.getByTestId('name-text-input').fill(displayName);
   await page.getByTestId('add-name-button').click();
+
+  // Wait for success notification to confirm form submission completed
+  await expect(page.locator('text=Name Added')).toBeVisible({ timeout: 10000 });
   console.log(`✅ Created gaming display name: ${displayName}`);
 
   await page.waitForTimeout(1500);

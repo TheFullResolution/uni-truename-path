@@ -1,12 +1,4 @@
-import {
-  Card,
-  Group,
-  Box,
-  Title,
-  Text,
-  SimpleGrid,
-  Skeleton,
-} from '@mantine/core';
+import { Card, Group, Box, Title, Text, Badge, Skeleton } from '@mantine/core';
 import { IconPlug } from '@tabler/icons-react';
 
 import { DashboardUser } from '@/types/ui';
@@ -23,12 +15,15 @@ export function WelcomeCard({ user, stats, loading }: WelcomeCardProps) {
 ? new Date(stats.user_profile.member_since).toLocaleDateString('en-US', {
 year: 'numeric',
 month: 'long',
+day: 'numeric',
   })
 : 'Unknown';
 
+  const connectedApps = stats?.oauth_metrics?.connected_apps || 0;
+
   return (
-<Card withBorder radius='md' p='md'>
-  <Group gap='md' mb='xl'>
+<Card withBorder radius='md' p='lg'>
+  <Group gap='md' align='center'>
 <Box
   className='icon-gradient-container'
   w={60}
@@ -42,66 +37,29 @@ justifyContent: 'center',
 >
   <IconPlug size={24} color='var(--mantine-color-brand-6)' />
 </Box>
-<Box>
+<Box style={{ flex: 1 }}>
   <Title order={2} c='gray.8' mb='xs'>
-OAuth Integration Dashboard
+Welcome to TrueNamePath
   </Title>
-  <Text size='sm' c='gray.6'>
-{user?.email || 'Unknown user'}
-  </Text>
-</Box>
-  </Group>
-
-  <SimpleGrid cols={3} spacing='md'>
-<Box>
-  {loading ? (
-<Skeleton height={28} width={40} />
-  ) : (
-<Text size='xl' fw={600} c='brand.7'>
-  {stats?.oauth_metrics?.connected_apps || 0}
-</Text>
-  )}
-  <Text size='xs' c='gray.6'>
-Connected Apps
-  </Text>
-</Box>
-<Box>
-  {loading ? (
-<Skeleton height={28} width={40} />
-  ) : (
-<Text size='xl' fw={600} c='blue.7'>
-  {stats?.oauth_metrics?.recent_authorizations || 0}
-</Text>
-  )}
-  <Text size='xs' c='gray.6'>
-Recent Authorizations
-  </Text>
-</Box>
-<Box>
-  {loading ? (
-<Skeleton height={28} width={40} />
-  ) : (
-<Text size='xl' fw={600} c='green.7'>
-  {stats?.oauth_metrics?.total_usage || 0}
-</Text>
-  )}
-  <Text size='xs' c='gray.6'>
-Total API Usage
-  </Text>
-</Box>
-  </SimpleGrid>
-
-  <Group gap='xs' mt='xl'>
-<Text size='xs' c='gray.6'>
-  Member since
+  <Group gap='sm'>
+<Text size='sm' c='gray.6'>
+  {user?.email || 'Unknown user'}
 </Text>
 {loading ? (
-  <Skeleton height={14} width={80} />
+  <Skeleton height={20} width={100} />
 ) : (
-  <Text size='xs' c='gray.6'>
-{memberSince}
-  </Text>
+  connectedApps > 0 && (
+<Badge variant='light' color='blue'>
+  {connectedApps} {connectedApps === 1 ? 'app' : 'apps'}{' '}
+  connected
+</Badge>
+  )
 )}
+  </Group>
+  <Text size='xs' c='dimmed' mt='xs'>
+Member since {loading ? '...' : memberSince}
+  </Text>
+</Box>
   </Group>
 </Card>
   );

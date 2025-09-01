@@ -177,6 +177,11 @@ createSuccessResponse: vi.fn((data, requestId, timestamp) => ({
 
 // No helper functions to mock - implementation is inline in route
 
+// Mock analytics module
+vi.mock('@/utils/analytics', () => ({
+  trackOAuthAuthorization: vi.fn().mockResolvedValue({ success: true }),
+}));
+
 // Mock console.error to track error logging
 const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -346,8 +351,10 @@ data: VALID_TOKEN,
 error: null,
   });
 
-  // Mock successful session creation
-  mockSupabaseQuery.insert.mockResolvedValueOnce({
+  // Mock successful session creation - insert returns query, then select, then single
+  mockSupabaseQuery.select.mockReturnValueOnce(mockSupabaseQuery);
+  mockSupabaseQuery.single.mockResolvedValueOnce({
+data: { id: 'session_123' },
 error: null,
   });
 
@@ -407,7 +414,12 @@ return_url: returnUrlWithParams,
   mockSupabaseQuery.upsert.mockResolvedValueOnce({ error: null }); // context assignment
   mockSupabaseClient.rpc.mockReturnValue(mockSupabaseQuery); // token generation setup
 
-  mockSupabaseQuery.insert.mockResolvedValueOnce({ error: null });
+  // Mock successful session creation - insert returns query, then select, then single
+  mockSupabaseQuery.select.mockReturnValueOnce(mockSupabaseQuery);
+  mockSupabaseQuery.single.mockResolvedValueOnce({
+data: { id: 'session_123' },
+error: null,
+  });
 
   const request = createMockRequest(requestBody);
   const response = await POST(request);
@@ -443,7 +455,12 @@ return_url: VALID_RETURN_URL,
   mockSupabaseQuery.upsert.mockResolvedValueOnce({ error: null }); // context assignment
   mockSupabaseClient.rpc.mockReturnValue(mockSupabaseQuery); // token generation setup
 
-  mockSupabaseQuery.insert.mockResolvedValueOnce({ error: null });
+  // Mock successful session creation - insert returns query, then select, then single
+  mockSupabaseQuery.select.mockReturnValueOnce(mockSupabaseQuery);
+  mockSupabaseQuery.single.mockResolvedValueOnce({
+data: { id: 'session_123' },
+error: null,
+  });
 
   const request = createMockRequest(requestBody);
 
@@ -977,8 +994,10 @@ return_url: VALID_RETURN_URL,
   mockSupabaseQuery.upsert.mockResolvedValueOnce({ error: null }); // context assignment
   mockSupabaseClient.rpc.mockReturnValue(mockSupabaseQuery); // token generation setup
 
-  // Mock session creation failure
-  mockSupabaseQuery.insert.mockResolvedValueOnce({
+  // Mock session creation failure - insert returns query, then select, then single with error
+  mockSupabaseQuery.select.mockReturnValueOnce(mockSupabaseQuery);
+  mockSupabaseQuery.single.mockResolvedValueOnce({
+data: null,
 error: { message: 'Insert failed', code: 'INSERT_ERROR' },
   });
 
@@ -1058,7 +1077,12 @@ return_url: VALID_RETURN_URL,
   mockSupabaseQuery.upsert.mockResolvedValueOnce({ error: null }); // context assignment
   mockSupabaseClient.rpc.mockReturnValue(mockSupabaseQuery); // token generation setup
 
-  mockSupabaseQuery.insert.mockResolvedValueOnce({ error: null });
+  // Mock successful session creation - insert returns query, then select, then single
+  mockSupabaseQuery.select.mockReturnValueOnce(mockSupabaseQuery);
+  mockSupabaseQuery.single.mockResolvedValueOnce({
+data: { id: 'session_123' },
+error: null,
+  });
 
   const request = createMockRequest(requestBody);
   const response = await POST(request);
@@ -1127,7 +1151,12 @@ return_url: VALID_RETURN_URL,
   mockSupabaseQuery.upsert.mockResolvedValueOnce({ error: null }); // context assignment
   mockSupabaseClient.rpc.mockReturnValue(mockSupabaseQuery); // token generation setup
 
-  mockSupabaseQuery.insert.mockResolvedValueOnce({ error: null });
+  // Mock successful session creation - insert returns query, then select, then single
+  mockSupabaseQuery.select.mockReturnValueOnce(mockSupabaseQuery);
+  mockSupabaseQuery.single.mockResolvedValueOnce({
+data: { id: 'session_123' },
+error: null,
+  });
 
   const request = createMockRequest(requestBody);
   const response = await POST(request);
@@ -1186,7 +1215,12 @@ return_url: VALID_RETURN_URL,
   mockSupabaseQuery.upsert.mockResolvedValueOnce({ error: null }); // context assignment
   mockSupabaseClient.rpc.mockReturnValue(mockSupabaseQuery); // token generation setup
 
-  mockSupabaseQuery.insert.mockResolvedValueOnce({ error: null });
+  // Mock successful session creation - insert returns query, then select, then single
+  mockSupabaseQuery.select.mockReturnValueOnce(mockSupabaseQuery);
+  mockSupabaseQuery.single.mockResolvedValueOnce({
+data: { id: 'session_123' },
+error: null,
+  });
 
   const beforeRequest = Date.now();
   const request = createMockRequest(requestBody);
@@ -1229,7 +1263,12 @@ return_url: VALID_RETURN_URL,
   mockSupabaseQuery.upsert.mockResolvedValueOnce({ error: null }); // context assignment
   mockSupabaseClient.rpc.mockReturnValue(mockSupabaseQuery); // token generation setup
 
-  mockSupabaseQuery.insert.mockResolvedValueOnce({ error: null });
+  // Mock successful session creation - insert returns query, then select, then single
+  mockSupabaseQuery.select.mockReturnValueOnce(mockSupabaseQuery);
+  mockSupabaseQuery.single.mockResolvedValueOnce({
+data: { id: 'session_123' },
+error: null,
+  });
 
   const request = createMockRequest(requestBody);
   await POST(request);
@@ -1288,28 +1327,67 @@ context_id: VALID_CONTEXT_ID,
 return_url: VALID_RETURN_URL,
   };
 
-  // Setup mock chain once
+  // Setup mock chain that always returns mockSupabaseQuery
   mockSupabaseClient.from.mockReturnValue(mockSupabaseQuery);
   mockSupabaseClient.rpc.mockReturnValue(mockSupabaseQuery);
   mockSupabaseQuery.select.mockReturnValue(mockSupabaseQuery);
   mockSupabaseQuery.eq.mockReturnValue(mockSupabaseQuery);
-  mockSupabaseQuery.single.mockReturnValue(mockSupabaseQuery);
   mockSupabaseQuery.insert.mockReturnValue(mockSupabaseQuery);
-  mockSupabaseQuery.upsert.mockReturnValue(mockSupabaseQuery);
-  mockSupabaseQuery.upsert.mockReturnValue(mockSupabaseQuery);
 
-  // Mock successful operations for all requests
-  for (let i = 0; i < 10; i++) {
-mockSupabaseQuery.single
-  .mockResolvedValueOnce({ data: createMockApp(), error: null })
-  .mockResolvedValueOnce({ data: createMockContext(), error: null })
-  .mockResolvedValueOnce({ data: `${VALID_TOKEN}_${i}`, error: null }); // token generation
+  // Mock upsert to return the query itself (for chaining) and resolve with success
+  mockSupabaseQuery.upsert.mockImplementation(() => {
+return Promise.resolve({ error: null });
+  });
 
-mockSupabaseQuery.upsert.mockResolvedValueOnce({ error: null }); // context assignment
-mockSupabaseClient.rpc.mockReturnValue(mockSupabaseQuery); // token generation setup
+  // For concurrent requests, we'll use a simpler approach
+  // Each call to single() will return appropriate data based on the call pattern
+  let appCallCount = 0;
+  let contextCallCount = 0;
+  let tokenCallCount = 0;
+  let sessionCallCount = 0;
 
-mockSupabaseQuery.insert.mockResolvedValueOnce({ error: null });
+  mockSupabaseQuery.single.mockImplementation(() => {
+// Determine what type of call this is based on previous method calls
+const fromCalls = mockSupabaseClient.from.mock.calls;
+const rpcCalls = mockSupabaseClient.rpc.mock.calls;
+const lastFromCall = fromCalls[fromCalls.length - 1];
+const lastRpcCall = rpcCalls[rpcCalls.length - 1];
+
+// Check if this is an RPC call (token generation)
+if (
+  lastRpcCall &&
+  lastRpcCall[0] === 'generate_oauth_token' &&
+  rpcCalls.length > fromCalls.length
+) {
+  // This is a token generation call
+  return Promise.resolve({
+data: `${VALID_TOKEN}_${tokenCallCount++}`,
+error: null,
+  });
+}
+
+// Check what table we're querying
+if (lastFromCall) {
+  const tableName = lastFromCall[0];
+
+  if (tableName === 'oauth_client_registry') {
+// App lookup
+return Promise.resolve({ data: createMockApp(), error: null });
+  } else if (tableName === 'user_contexts') {
+// Context lookup
+return Promise.resolve({ data: createMockContext(), error: null });
+  } else if (tableName === 'oauth_sessions') {
+// Session creation
+return Promise.resolve({
+  data: { id: `session_${sessionCallCount++}` },
+  error: null,
+});
   }
+}
+
+// Default fallback
+return Promise.resolve({ data: createMockApp(), error: null });
+  });
 
   // Create 10 concurrent requests
   const requests = Array(10)
@@ -1323,10 +1401,24 @@ mockSupabaseQuery.insert.mockResolvedValueOnce({ error: null });
 
   // All should succeed
   expect(responses).toHaveLength(10);
+  const results = [];
   for (const response of responses) {
 const data = await parseJsonResponse(response);
-expect(data.success).toBe(true);
+results.push(data);
   }
+
+  // Check that all succeeded
+  const failures = results.filter((r) => !r.success);
+  if (failures.length > 0) {
+console.error('Failed responses:', failures);
+console.error('Total single calls made');
+  }
+  expect(failures).toHaveLength(0);
+  results.forEach((data) => {
+expect(data.success).toBe(true);
+expect(data.data).toBeDefined();
+expect(data.data.session_token).toBeDefined();
+  });
 });
   });
 });

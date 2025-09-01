@@ -10,6 +10,7 @@ import { ErrorCodes, StandardResponse } from '@/utils/api/types';
 import { OAuthAuthorizeRequestSchema, OAuthAuthorizeRequest } from './schemas';
 import { OAuthAuthorizeResponseData, AuthorizeErrorCodes } from './types';
 import { createCORSOptionsResponse } from '@/utils/api/cors';
+import { trackOAuthAuthorization } from '@/utils/analytics';
 
 interface ClientData {
   client_id: string;
@@ -104,7 +105,7 @@ async function createSessionRecord(
   expiresAt: string,
   returnUrl: string,
   state?: string,
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; sessionId?: string; error?: string }> {
   const sessionData = {
 profile_id: userId,
 client_id: clientId,
@@ -114,14 +115,18 @@ return_url: returnUrl,
 state,
   };
 
-  const { error } = await supabase.from('oauth_sessions').insert(sessionData);
+  const { data, error } = await supabase
+.from('oauth_sessions')
+.insert(sessionData)
+.select('id')
+.single();
 
-  if (error) {
+  if (error || !data) {
 console.error('Failed to create OAuth session:', error);
 return { success: false, error: 'Failed to create OAuth session' };
   }
 
-  return { success: true };
+  return { success: true, sessionId: data.id };
 }
 
 async function createAuthorizationSession(
@@ -132,7 +137,12 @@ async function createAuthorizationSession(
   returnUrl: string,
   state?: string,
 ): Promise<
-  | { success: true; sessionToken: string; expiresAt: string }
+  | {
+  success: true;
+  sessionToken: string;
+  sessionId: string;
+  expiresAt: string;
+}
   | { success: false; error: string }
 > {
   const { error: assignError } = await supabase
@@ -165,10 +175,15 @@ expiresAt,
 returnUrl,
 state,
   );
-  if (!recordResult.success)
+  if (!recordResult.success || !recordResult.sessionId)
 return { success: false, error: recordResult.error! };
 
-  return { success: true, sessionToken: tokenResult.token, expiresAt };
+  return {
+success: true,
+sessionToken: tokenResult.token,
+sessionId: recordResult.sessionId,
+expiresAt,
+  };
 }
 
 function buildAuthorizationResponse(
@@ -283,6 +298,17 @@ undefined,
 timestamp,
   );
 }
+
+// Track OAuth authorization for analytics
+const startTime = Date.now();
+await trackOAuthAuthorization(
+  supabase,
+  user.id,
+  client_id,
+  context_id,
+  sessionResult.sessionId,
+  Date.now() - startTime,
+);
 
 const responseData = buildAuthorizationResponse(
   sessionResult.sessionToken,

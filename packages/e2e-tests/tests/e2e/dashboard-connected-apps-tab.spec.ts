@@ -162,9 +162,10 @@ const hasConnectedAppsContent =
   (await page.locator('text=/Connected Apps/i').count()) > 0;
 expect(hasConnectedAppsContent).toBeTruthy();
 
-// Look for Demo HR app specifically
+// Look for Demo HR app specifically using data-testid
 const hasHRApp = await page
-  .locator('text=/Demo Hr/i')
+  .getByTestId('connected-app-title')
+  .filter({ hasText: 'Demo Hr' })
   .isVisible({ timeout: 10000 });
 expect(hasHRApp).toBeTruthy();
 

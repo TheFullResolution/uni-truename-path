@@ -3,6 +3,9 @@ import { Suspense } from 'react';
 import { DashboardContent } from '@/components/dashboard/DashboardContent';
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
 
+// Force dynamic rendering for authenticated routes
+export const dynamic = 'force-dynamic';
+
 type ValidTab =
   | 'dashboard'
   | 'names'
@@ -24,10 +27,7 @@ interface PageProps {
   params: Promise<{ tab?: string[] }>;
 }
 
-export async function generateStaticParams() {
-  // Pre-render only the root dashboard path for optimal SEO
-  return VALID_TABS.map((tab) => ({ tab: tab === 'dashboard' ? [] : [tab] }));
-}
+// Removed generateStaticParams as we're using force-dynamic
 
 export async function generateMetadata({ params }: PageProps) {
   const { tab } = await params;

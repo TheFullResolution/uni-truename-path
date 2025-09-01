@@ -20,6 +20,7 @@ const PUBLIC_ROUTES = [
   '/auth/login',
   '/auth/signup',
   '/auth/forgot-password',
+  '/docs',
   '/',
 ];
 

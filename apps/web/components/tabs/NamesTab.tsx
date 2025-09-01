@@ -2,7 +2,6 @@
 
 import { TabPanel } from '@/components/dashboard/TabPanel';
 import { NamesList } from '@/components/tabs/NamesList';
-import { AddNameForm } from '@/components/tabs/AddNameForm';
 import type { AuthenticatedUser } from '@/utils/context';
 import type { Tables } from '@/generated/database';
 import type { CanDeleteNameResponse } from '@/types/database';
@@ -14,7 +13,9 @@ import {
   createMutationFetcher,
   formatSWRError,
 } from '@/utils/swr-fetcher';
-import { Button, Stack } from '@mantine/core';
+import { Button, Stack, Paper, Title, TextInput, Group } from '@mantine/core';
+import { useForm } from '@mantine/form';
+import { z } from 'zod';
 import { notifications } from '@mantine/notifications';
 import { IconPlus } from '@tabler/icons-react';
 import { useState } from 'react';
@@ -37,6 +38,19 @@ useState<CanDeleteNameResponse | null>(null);
   const [editingName, setEditingName] = useState<Name | null>(null);
   const [editText, setEditText] = useState<string>('');
 
+  // Form for adding names (following ContextsTab pattern)
+  const form = useForm<{ name_text: string }>({
+initialValues: {
+  name_text: '',
+},
+validate: {
+  name_text: (value) => {
+const result = z.string().trim().min(1).max(100).safeParse(value);
+return result.success ? null : 'Name text is required';
+  },
+},
+  });
+
   // Fetch names with simplified structure
   const {
 data: namesResponse,
@@ -58,6 +72,7 @@ notifications.show({
 });
 revalidateNames();
 setShowAddForm(false);
+form.reset();
   },
   onError: (error) => {
 notifications.show({
@@ -124,6 +139,11 @@ notifications.show({
 
   const handleAddNameSubmit = async (values: { name_text: string }) => {
 await createName(values);
+  };
+
+  const handleCancel = () => {
+setShowAddForm(false);
+form.reset();
   };
 
   const handleDelete = async (name: Name) => {
@@ -209,13 +229,44 @@ setEditText('');
   }
 >
   <Stack gap='lg'>
-{/* Add Name Form - Isolated component to prevent re-renders */}
-<AddNameForm
-  isVisible={showAddForm}
-  isCreating={isCreating}
-  onSubmit={handleAddNameSubmit}
-  onCancel={() => setShowAddForm(false)}
+{/* Add Name Form - Following ContextsTab pattern for stability */}
+{showAddForm && (
+  <Paper p='md' withBorder>
+<Title order={3} mb='md'>
+  Add Name Variant
+</Title>
+<form onSubmit={form.onSubmit(handleAddNameSubmit)}>
+  <Stack gap='md'>
+<TextInput
+  label='Name Text'
+  placeholder='Enter the name'
+  required
+  data-testid='name-text-input'
+  {...form.getInputProps('name_text')}
 />
+
+<Group justify='flex-end'>
+  <Button
+type='button'
+variant='light'
+onClick={handleCancel}
+disabled={isCreating}
+  >
+Cancel
+  </Button>
+  <Button
+type='submit'
+loading={isCreating}
+leftSection={<IconPlus />}
+data-testid='add-name-button'
+  >
+Add Name
+  </Button>
+</Group>
+  </Stack>
+</form>
+  </Paper>
+)}
 
 {/* Names List - Isolated component to prevent form re-renders */}
 <NamesList

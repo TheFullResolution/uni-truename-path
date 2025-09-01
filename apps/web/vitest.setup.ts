@@ -66,6 +66,13 @@ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY =
 process.env.SUPABASE_SERVICE_ROLE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY || 'test-service-key';
 
+// Demo application environment variables for testing
+process.env.NEXT_PUBLIC_DEMO_HR_URL =
+  process.env.NEXT_PUBLIC_DEMO_HR_URL || 'https://demo-hr-truename.vercel.app';
+process.env.NEXT_PUBLIC_DEMO_CHAT_URL =
+  process.env.NEXT_PUBLIC_DEMO_CHAT_URL ||
+  'https://demo-chat-truename.vercel.app';
+
 // Mock performance.now() for consistent testing
 const mockPerformanceNow = vi.fn();
 let performanceCounter = 0;

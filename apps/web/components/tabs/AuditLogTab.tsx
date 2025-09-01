@@ -6,9 +6,11 @@ import { TabPanel } from '@/components/dashboard/TabPanel';
 import {
   Alert,
   Badge,
+  Box,
   Button,
   Card,
   Center,
+  Flex,
   Loader,
   Stack,
   Table,
@@ -16,6 +18,7 @@ import {
 } from '@mantine/core';
 import { IconHistory, IconReload, IconAlertCircle } from '@tabler/icons-react';
 import useSWRInfinite from 'swr/infinite';
+import { useState, useEffect } from 'react';
 
 interface AuditLogTabProps {
   user: AuthenticatedUser | null;
@@ -32,6 +35,10 @@ type AuditLogEntry = {
   success: boolean;
   error_type: string | null;
   response_time_ms: number | null;
+  // Human-readable fields from joins
+  app_display_name: string | null;
+  publisher_domain: string | null;
+  context_name: string | null;
   // Fields that don't exist in app_usage_log but UI might expect
   resolved_name_id: null;
   target_user_id: string; // mapped from profile_id
@@ -47,7 +54,7 @@ hasMore: boolean;
   };
 }
 
-const ITEMS_PER_PAGE = 20;
+const ITEMS_PER_PAGE = 50; // Increased for better data density
 
 // Action badge color mapping
 const ACTION_COLORS: Record<string, string> = {
@@ -89,7 +96,36 @@ useSWRInfinite<AuditLogResponse>(getKey, swrFetcher, {
   revalidateFirstPage: false,
   revalidateOnFocus: true,
   revalidateOnReconnect: true,
+  refreshInterval: 30000, // Simple 30-second auto-refresh
 });
+
+  // Track last updated timestamp
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+
+  // Update timestamp when data changes
+  useEffect(() => {
+if (data && !isValidating) {
+  setLastUpdated(new Date());
+}
+  }, [data, isValidating]);
+
+  // Format relative time for "last updated" indicator
+  const formatRelativeTime = (date: Date): string => {
+const now = new Date();
+const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+if (diffInSeconds < 60) {
+  return diffInSeconds < 10 ? 'just now' : `${diffInSeconds}s ago`;
+}
+
+const diffInMinutes = Math.floor(diffInSeconds / 60);
+if (diffInMinutes < 60) {
+  return `${diffInMinutes}m ago`;
+}
+
+const diffInHours = Math.floor(diffInMinutes / 60);
+return `${diffInHours}h ago`;
+  };
 
   // Flatten the data array for rendering
   const auditEntries = data ? data.flatMap((page) => page.entries) : [];
@@ -126,27 +162,28 @@ return new Intl.DateTimeFormat('en-US', {
 
   // Format action type for display
   const formatAction = (action: string) => {
-return action
-  .split('_')
-  .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
-  .join(' ');
+const actionMap: Record<string, string> = {
+  resolve: 'Identity Resolved',
+  authorize: 'App Authorized',
+  revoke: 'Access Revoked',
+  assign_context: 'Context Changed',
+};
+return (
+  actionMap[action] ||
+  action
+.split('_')
+.map((word) => word.charAt(0) + word.slice(1).toLowerCase())
+.join(' ')
+);
   };
 
   // Get details text from app usage log entry
   const getDetailsText = (entry: AuditLogEntry): string => {
 const parts: string[] = [];
 
-// Add success status
-parts.push(`Status: ${entry.success ? 'Success' : 'Failed'}`);
-
 // Add response time if available
 if (entry.response_time_ms !== null) {
   parts.push(`${entry.response_time_ms}ms`);
-}
-
-// Add session info if available
-if (entry.session_id) {
-  parts.push(`Session: ${entry.session_id.slice(0, 8)}...`);
 }
 
 // Add error type if failed
@@ -154,7 +191,15 @@ if (!entry.success && entry.error_type) {
   parts.push(`Error: ${entry.error_type}`);
 }
 
-return parts.length > 0 ? parts.join(', ') : 'N/A';
+return parts.length > 0 ? parts.join(', ') : '';
+  };
+
+  // Get response time color based on performance
+  const getResponseTimeColor = (ms: number | null): string => {
+if (ms === null) return 'gray';
+if (ms < 50) return 'green';
+if (ms < 200) return 'yellow';
+return 'red';
   };
 
   return (
@@ -163,16 +208,21 @@ return parts.length > 0 ? parts.join(', ') : 'N/A';
   title='App Activity'
   description={`Track OAuth application usage, identity resolutions, and context assignments.${totalCount > 0 ? ` (${totalCount} total entries)` : ''}`}
   actions={
-<Button
-  leftSection={<IconReload />}
-  onClick={handleRefresh}
-  variant='light'
-  size='sm'
-  loading={isValidating}
-  data-testid='refresh-audit-log'
->
-  Refresh
-</Button>
+<Flex align='center' gap='sm'>
+  <Text size='xs' c='dimmed'>
+Last updated: {formatRelativeTime(lastUpdated)}
+  </Text>
+  <Button
+leftSection={<IconReload />}
+onClick={handleRefresh}
+variant='light'
+size='sm'
+loading={isValidating}
+data-testid='refresh-audit-log'
+  >
+Refresh
+  </Button>
+</Flex>
   }
 >
   <Stack gap='lg'>
@@ -223,15 +273,16 @@ icon={<IconAlertCircle />}
   </Card>
 ) : (
   /* Data Table */
-  <Card withBorder>
-<Table.ScrollContainer minWidth={600}>
+  <Box w='100%'>
+<Table.ScrollContainer minWidth={800}>
   <Table striped highlightOnHover>
 <Table.Thead>
   <Table.Tr>
 <Table.Th>Date/Time</Table.Th>
 <Table.Th>Action</Table.Th>
-<Table.Th>Client/App</Table.Th>
-<Table.Th>Details</Table.Th>
+<Table.Th>Application</Table.Th>
+<Table.Th>Context</Table.Th>
+<Table.Th>Status</Table.Th>
   </Table.Tr>
 </Table.Thead>
 <Table.Tbody>
@@ -244,7 +295,7 @@ icon={<IconAlertCircle />}
   </Table.Td>
   <Table.Td>
 <Badge
-  size='sm'
+  size='xs'
   color={ACTION_COLORS[entry.action] || 'gray'}
   variant='light'
 >
@@ -252,14 +303,56 @@ icon={<IconAlertCircle />}
 </Badge>
   </Table.Td>
   <Table.Td>
-<Text size='sm'>
-  <Text component='span' ff='monospace' size='xs'>
-{entry.client_id.slice(0, 8)}...
+<Stack gap={2}>
+  <Text size='sm' fw={500} title={entry.client_id}>
+{entry.app_display_name || 'Unknown App'}
   </Text>
+  {entry.publisher_domain && (
+<Text size='xs' c='dimmed'>
+  {entry.publisher_domain}
 </Text>
+  )}
+</Stack>
   </Table.Td>
   <Table.Td>
-<Text size='sm'>{getDetailsText(entry)}</Text>
+{entry.context_name ? (
+  <Badge size='xs' variant='light' color='violet'>
+{entry.context_name}
+  </Badge>
+) : (
+  <Text size='xs' c='dimmed'>
+Default
+  </Text>
+)}
+  </Table.Td>
+  <Table.Td>
+<Flex align='center' gap='xs'>
+  {entry.success ? (
+<Text size='xs' c='green' fw={500}>
+  ✓ Success
+</Text>
+  ) : (
+<Text size='xs' c='red' fw={500}>
+  ✗ Failed
+</Text>
+  )}
+  {entry.response_time_ms !== null && (
+<Badge
+  size='xs'
+  color={getResponseTimeColor(
+entry.response_time_ms,
+  )}
+  variant='light'
+>
+  {entry.response_time_ms}ms
+</Badge>
+  )}
+</Flex>
+{getDetailsText(entry) && (
+  <Text size='xs' c='dimmed' mt={2}>
+{getDetailsText(entry)}
+  </Text>
+)}
   </Table.Td>
 </Table.Tr>
   ))}
@@ -276,11 +369,12 @@ style={{ borderTop: '1px solid var(--mantine-color-gray-3)' }}
   >
 <Button
   variant='light'
+  size='sm'
   onClick={handleLoadMore}
   loading={isValidating}
   data-testid='load-more-audit-entries'
 >
-  Load More Entries
+  Load More
 </Button>
   </Center>
 )}
@@ -292,13 +386,12 @@ mt='md'
 pt='md'
 style={{ borderTop: '1px solid var(--mantine-color-gray-3)' }}
   >
-<Text size='sm' c='dimmed'>
-  All audit entries loaded ({auditEntries.length} of{' '}
-  {totalCount})
+<Text size='xs' c='dimmed'>
+  All entries loaded ({auditEntries.length} of {totalCount})
 </Text>
   </Center>
 )}
-  </Card>
+  </Box>
 )}
   </Stack>
 </TabPanel>

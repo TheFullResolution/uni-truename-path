@@ -1,11 +1,11 @@
 'use client';
 
 import type { DashboardStatsResponse } from '@/app/api/dashboard/stats/types';
-import { APIUsageCard } from '@/components/cards/APIUsageCard';
-import { ConnectedAppsCard } from '@/components/cards/NameVariantsCard';
-import { OAuthActivityCard } from '@/components/cards/PrivacyScoreCard';
-import { RecentActivityCard } from '@/components/cards/RecentActivityCard';
 import { WelcomeCard } from '@/components/cards/WelcomeCard';
+import { OAuthOverviewCard } from '@/components/cards/OAuthOverviewCard';
+import { ConnectedAppsCard } from '@/components/cards/NameVariantsCard';
+import { APIUsageCard } from '@/components/cards/APIUsageCard';
+import { ActivityTimelineCard } from '@/components/cards/ActivityTimelineCard';
 import { TabPanel } from '@/components/dashboard/TabPanel';
 import type { AuthenticatedUser } from '@/utils/context';
 import { Grid } from '@mantine/core';
@@ -24,7 +24,7 @@ export function DashboardTab({
   return (
 <TabPanel value='dashboard' title='Overview'>
   <Grid>
-{/* Welcome Card */}
+{/* Row 1: Welcome Card */}
 <Grid.Col span={12}>
   <WelcomeCard
 user={user}
@@ -33,20 +33,13 @@ loading={statsLoading}
   />
 </Grid.Col>
 
-{/* OAuth Activity Card */}
-<Grid.Col span={{ base: 12, md: 4 }}>
-  <OAuthActivityCard
+{/* Row 2: OAuth Overview | Connected Apps */}
+<Grid.Col span={{ base: 12, md: 6 }}>
+  <OAuthOverviewCard
 stats={dashboardStats || null}
 loading={statsLoading}
   />
 </Grid.Col>
-
-{/* API Usage Statistics */}
-<Grid.Col span={{ base: 12, md: 6 }}>
-  <APIUsageCard stats={dashboardStats || null} loading={statsLoading} />
-</Grid.Col>
-
-{/* Connected Apps Overview */}
 <Grid.Col span={{ base: 12, md: 6 }}>
   <ConnectedAppsCard
 stats={dashboardStats || null}
@@ -54,9 +47,12 @@ loading={statsLoading}
   />
 </Grid.Col>
 
-{/* Recent Activity */}
-<Grid.Col span={12}>
-  <RecentActivityCard
+{/* Row 3: Performance Metrics | Activity Timeline */}
+<Grid.Col span={{ base: 12, md: 4 }}>
+  <APIUsageCard stats={dashboardStats || null} loading={statsLoading} />
+</Grid.Col>
+<Grid.Col span={{ base: 12, md: 8 }}>
+  <ActivityTimelineCard
 stats={dashboardStats || null}
 loading={statsLoading}
   />

@@ -54,6 +54,7 @@ import { ErrorCodes } from '@/utils/api/types';
 import { ResolveErrorCodes, OIDCClaims } from './types';
 import { measurePerformance } from './helpers';
 import { createCORSOptionsResponse, withCORSHeaders } from '@/utils/api/cors';
+import { trackOAuthResolve } from '@/utils/analytics';
 
 async function handleResolve(request: NextRequest) {
   const perf = measurePerformance();
@@ -123,6 +124,23 @@ createErrorResponse(
 }
 
 const responseTime = perf.getElapsed();
+
+// Track OAuth resolve for analytics
+const claims = claimsResult as unknown as OIDCClaims;
+if (claims.sub && claims.aud) {
+  // Note: We use sub as profile_id, aud as client_id from OIDC claims
+  // context_id and session_id would need to be extracted from the token resolution
+  // For now, track with available data
+  await trackOAuthResolve(
+supabase,
+claims.sub, // profile_id
+claims.aud, // client_id (app identifier)
+'', // context_id would need to be extracted from session
+'', // session_id would need to be extracted from session
+responseTime,
+  ).catch((err) => console.error('Failed to track OAuth resolve:', err));
+}
+
 return NextResponse.json(
   createSuccessResponse(
 {
