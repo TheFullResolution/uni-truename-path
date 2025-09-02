@@ -4,49 +4,51 @@ import { Logo } from '@/components/branding/Logo';
 import { LogoWithText } from '@/components/branding/LogoWithText';
 import { LoginForm } from '@/components/forms/LoginForm';
 import { useAuth } from '@/utils/context';
-import { Box, Center, Container, Paper, Text, Title } from '@mantine/core';
+import {
+  Box,
+  Center,
+  Container,
+  Paper,
+  Text,
+  Title,
+  Alert,
+} from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import type { Route } from 'next';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect } from 'react';
-import { IconCheck } from '@tabler/icons-react';
-import { Alert } from '@mantine/core';
+import { IconCheck, IconInfoCircle } from '@tabler/icons-react';
 
 function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, loading } = useAuth();
 
-  // Check if user just completed signup
   const isFromSignup = searchParams.get('signup') === 'success';
 
-  // Handle redirect logic
   useEffect(() => {
 if (!loading && isAuthenticated) {
-  // User is already authenticated, redirect them
   const returnUrl = searchParams.get('returnUrl') || '/dashboard';
   router.replace(returnUrl as Route);
 }
   }, [isAuthenticated, loading, router, searchParams]);
 
-  // Handle successful login
   const handleLoginSuccess = useCallback(() => {
 const returnUrl = searchParams.get('returnUrl') || '/dashboard';
 
 router.replace(returnUrl as Route);
   }, [router, searchParams]);
 
-  // Handle forgot password
   const handleForgotPassword = useCallback(() => {
 notifications.show({
-  title: 'Forgot Password',
+  title: 'Password Reset',
   message: 'Password reset functionality is coming soon.',
   color: 'blue',
+  icon: <IconInfoCircle size={16} />,
   autoClose: 4000,
 });
   }, []);
 
-  // Handle create account navigation
   const handleCreateAccount = useCallback(() => {
 const returnUrl = searchParams.get('returnUrl');
 const signupUrl = returnUrl
@@ -56,7 +58,6 @@ const signupUrl = returnUrl
 router.push(signupUrl as Route);
   }, [router, searchParams]);
 
-  // Show loading state while checking authentication
   if (loading) {
 return (
   <Box bg='gray.0' style={{ minHeight: '100vh' }}>
@@ -76,7 +77,6 @@ Checking authentication...
 );
   }
 
-  // Don't render login form if user is authenticated (redirect is in progress)
   if (isAuthenticated) {
 return null;
   }
@@ -95,7 +95,6 @@ background:
   radius='lg'
   style={{ overflow: 'hidden', backgroundColor: 'white' }}
 >
-  {/* Brand Header */}
   <Box
 py='xl'
 px='xl'
@@ -117,7 +116,6 @@ style={{
 </Text>
   </Box>
 
-  {/* Centered single-column layout */}
   <Box
 p={{ base: 'xl', md: '3rem' }}
 style={{ maxWidth: '450px', margin: '0 auto' }}
@@ -152,7 +150,6 @@ border: '1px solid rgba(46, 204, 113, 0.3)',
 : 'Sign in to manage your context-aware identity'}
 </Text>
 
-{/* Integrated LoginForm component */}
 <LoginForm
   onSuccess={handleLoginSuccess}
   onForgotPassword={handleForgotPassword}

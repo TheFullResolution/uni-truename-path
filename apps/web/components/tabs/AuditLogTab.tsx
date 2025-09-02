@@ -102,7 +102,6 @@ useSWRInfinite<AuditLogResponse>(getKey, swrFetcher, {
   // Track last updated timestamp
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  // Update timestamp when data changes
   useEffect(() => {
 if (data && !isValidating) {
   setLastUpdated(new Date());
@@ -130,7 +129,6 @@ return `${diffInHours}h ago`;
   // Flatten the data array for rendering
   const auditEntries = data ? data.flatMap((page) => page.entries) : [];
 
-  // Check if we can load more
   const canLoadMore =
 data && data.length > 0
   ? (data[data.length - 1]?.pagination?.hasMore ?? false)
@@ -177,7 +175,6 @@ return (
 );
   };
 
-  // Get details text from app usage log entry
   const getDetailsText = (entry: AuditLogEntry): string => {
 const parts: string[] = [];
 
@@ -194,7 +191,6 @@ if (!entry.success && entry.error_type) {
 return parts.length > 0 ? parts.join(', ') : '';
   };
 
-  // Get response time color based on performance
   const getResponseTimeColor = (ms: number | null): string => {
 if (ms === null) return 'gray';
 if (ms < 50) return 'green';

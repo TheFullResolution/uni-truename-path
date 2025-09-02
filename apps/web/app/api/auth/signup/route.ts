@@ -4,17 +4,14 @@ import { z } from 'zod';
 import {
   createSuccessResponse,
   createErrorResponse,
-  handle_method_not_allowed,
   ErrorCodes,
 } from '@/utils/api';
 import { createClient } from '@/utils/supabase/server';
 import { generateRequestId } from '@/utils/api/with-auth';
 import { passwordSchema } from '@/utils/validation/password';
 
-// Validation schema for signup request (combining both steps)
 const signupRequestSchema = z
   .object({
-// Step 1 data
 email: z.string().email({ message: 'Invalid email address' }),
 password: passwordSchema,
 confirmPassword: z.string(),
@@ -27,7 +24,6 @@ consentToProcessing: z.boolean().refine((val) => val === true, {
 }),
 allowMarketing: z.boolean().optional(),
 
-// Step 2 data (OIDC properties)
 given_name: z
   .string()
   .trim()
@@ -66,9 +62,7 @@ message: 'Passwords do not match',
 path: ['confirmPassword'],
   });
 
-export type SignupRequest = z.infer<typeof signupRequestSchema>;
-
-export interface SignupResponse {
+interface SignupResponse {
   user: {
 id: string;
 email: string;
@@ -81,7 +75,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const timestamp = new Date().toISOString();
 
   try {
-// Parse and validate request body
 const body = await request.json();
 const validation = signupRequestSchema.safeParse(body);
 
@@ -105,20 +98,16 @@ errors: validation.error.issues.map((issue) => ({
 
 const signupData = validation.data;
 
-// Create Supabase client
 const supabase = await createClient();
 
-// Create the account with metadata for database trigger processing
 const { data: authData, error: authError } = await supabase.auth.signUp({
   email: signupData.email,
   password: signupData.password,
   options: {
 data: {
-  // Store consent data in user metadata
   agreeToTerms: signupData.agreeToTerms,
   consentToProcessing: signupData.consentToProcessing,
   allowMarketing: signupData.allowMarketing || false,
-  // Store OIDC name properties for database trigger processing
   given_name: signupData.given_name,
   family_name: signupData.family_name,
   display_name: signupData.display_name,
@@ -129,7 +118,6 @@ data: {
 });
 
 if (authError) {
-  // Handle specific Supabase auth errors
   let errorCode: string = ErrorCodes.AUTHENTICATION_FAILED;
   let message = 'Account creation failed';
   let details = authError.message;
@@ -165,8 +153,6 @@ createErrorResponse(
   );
 }
 
-// Success! The database trigger handles profile and name creation automatically
-// Return user data for client-side session establishment
 const responseData: SignupResponse = {
   user: {
 id: authData.user.id,
@@ -180,7 +166,6 @@ return NextResponse.json(
   { status: 201 },
 );
   } catch (error) {
-// Handle unexpected errors
 const errorMessage =
   error instanceof Error ? error.message : 'An unexpected error occurred';
 
@@ -196,9 +181,3 @@ timestamp,
 );
   }
 }
-
-// Handle unsupported HTTP methods
-export const GET = () => handle_method_not_allowed(['POST']);
-export const PUT = () => handle_method_not_allowed(['POST']);
-export const DELETE = () => handle_method_not_allowed(['POST']);
-export const PATCH = () => handle_method_not_allowed(['POST']);

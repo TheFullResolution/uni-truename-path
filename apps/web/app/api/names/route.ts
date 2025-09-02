@@ -1,6 +1,4 @@
-// TrueNamePath: Names API Route - Step 15.4 OAuth Compatible Structure
-// CRUD operations for simplified name variants (text only)
-// Date: August 2025 - Step 15.4 Remove name_type, OIDC properties managed at assignment level
+// Names API Route
 
 import {
   type AuthenticatedHandler,
@@ -13,10 +11,7 @@ import { type CanDeleteNameResponse } from '@/types/database';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 
-// Import generated database types directly
 import type { TablesInsert, TablesUpdate } from '@/generated/database';
-
-// Import enhanced types from the co-located types file
 import type {
   NamesResponseData,
   NameWithAssignments,
@@ -25,7 +20,6 @@ import type {
 
 /**
  * Request body validation schema for name creation
- * Simplified structure - only name_text required, OIDC properties managed at context assignment level
  */
 const CreateNameSchema = z.object({
   name_text: z
@@ -35,9 +29,6 @@ const CreateNameSchema = z.object({
 .max(100, 'Name text cannot exceed 100 characters'),
 });
 
-/**
- * Request body validation schema for name updates
- */
 const UpdateNameSchema = z.object({
   name_id: z.string().uuid('Name ID must be a valid UUID'),
   name_text: z
@@ -48,16 +39,10 @@ const UpdateNameSchema = z.object({
 .optional(),
 });
 
-/**
- * Request body validation schema for name deletion
- */
 const DeleteNameSchema = z.object({
   name_id: z.string().uuid('Name ID must be a valid UUID'),
 });
 
-/**
- * Query parameter validation schema for filtering and pagination
- */
 const QueryParamsSchema = z.object({
   limit: z
 .string()
@@ -69,19 +54,15 @@ const QueryParamsSchema = z.object({
 }),
 });
 
-// NamesResponseData interface now imported from types file
-
 type QueryParams = z.infer<typeof QueryParamsSchema>;
 
 /**
  * GET /api/names - Retrieve all name variants for authenticated user
- * Returns all name variants for the authenticated user with optional filtering
  */
 const handleGET: AuthenticatedHandler<NamesResponseData> = async (
   request: NextRequest,
   { user, supabase, requestId, timestamp },
 ) => {
-  // 1. Query parameter validation
   const url = new URL(request.url);
   const queryParams = {
 limit: url.searchParams.get('limit'),
@@ -105,7 +86,6 @@ code: err.code,
 
   const validatedQueryParams = queryValidationResult.data;
 
-  // 2. Check user exists
   if (!user) {
 return createErrorResponse(
   ErrorCodes.AUTHENTICATION_REQUIRED,
@@ -118,19 +98,15 @@ return createErrorResponse(
 
   const authenticatedUserId = user.id;
 
-  // 3. Database query with authenticated client - Enhanced with assignment data
-  // First get the names with proper filtering and ordering
   let namesQuery = supabase
 .from('names')
 .select('*')
 .eq('user_id', authenticatedUserId);
 
-  // Apply optional filters
   if (validatedQueryParams.limit) {
 namesQuery = namesQuery.limit(validatedQueryParams.limit);
   }
 
-  // Order by preferred status and creation date
   namesQuery = namesQuery
 .order('is_preferred', { ascending: false })
 .order('created_at', { ascending: false });
@@ -156,14 +132,12 @@ return createErrorResponse(
 );
   }
 
-  // 4. Get assignments for all names in a single query
   const nameVariants = namesData || [];
   let nameVariantsWithAssignments: NameWithAssignments[] = nameVariants;
 
   if (nameVariants.length > 0) {
 const nameIds = nameVariants.map((name) => name.id);
 
-// Fetch all assignments for these names in one query
 const { data: assignments, error: assignmentsError } = await supabase
   .from('context_oidc_assignments')
   .select(
@@ -187,10 +161,8 @@ error: assignmentsError.message,
 code: assignmentsError.code,
 details: assignmentsError.details,
   });
-  // Continue without assignments rather than failing the entire request
 }
 
-// Group assignments by name_id for efficient lookup
 const assignmentsByNameId = new Map<string, NameAssignment[]>();
 (assignments || []).forEach((assignment) => {
   const nameId = assignment.name_id;
@@ -206,14 +178,12 @@ oidc_property: assignment.oidc_property,
   });
 });
 
-// Enhance names with assignment data
 nameVariantsWithAssignments = nameVariants.map((name) => ({
   ...name,
   assignments: assignmentsByNameId.get(name.id) || [],
 }));
   }
 
-  // 5. Success response with comprehensive metadata
   const responseData: NamesResponseData = {
 names: nameVariantsWithAssignments,
 total: nameVariantsWithAssignments.length,
@@ -248,18 +218,15 @@ filtersApplied: Object.keys(validatedQueryParams).filter(
 
 /**
  * POST /api/names - Create a new name variant
- * Creates a new name variant for the authenticated user's profile
  */
 const handlePOST: AuthenticatedHandler = async (
   request: NextRequest,
   { user, supabase, requestId, timestamp },
 ) => {
   try {
-// Parse and validate request body
 const body = await request.json();
 const validatedData = CreateNameSchema.parse(body);
 
-// Check user exists
 if (!user) {
   return createErrorResponse(
 ErrorCodes.AUTHENTICATION_REQUIRED,
@@ -270,7 +237,6 @@ timestamp,
   );
 }
 
-// Get user's profile
 const { data: profile, error: profileError } = await supabase
   .from('profiles')
   .select('id')
@@ -287,7 +253,6 @@ timestamp,
   );
 }
 
-// Create the new name variant with simplified structure
 const nameData: TablesInsert<'names'> = {
   user_id: profile.id,
   name_text: validatedData.name_text,
@@ -337,7 +302,6 @@ timestamp,
   );
 }
 
-// Handle JSON parsing errors
 if (error instanceof SyntaxError && error.message.includes('JSON')) {
   return createErrorResponse(
 ErrorCodes.VALIDATION_ERROR,
@@ -360,18 +324,15 @@ return createErrorResponse(
 
 /**
  * PUT /api/names - Update a name variant
- * Updates a specific name variant for the authenticated user
  */
 const handlePUT: AuthenticatedHandler = async (
   request: NextRequest,
   { user, supabase, requestId, timestamp },
 ) => {
   try {
-// Parse and validate request body
 const body = await request.json();
 const validatedData = UpdateNameSchema.parse(body);
 
-// Check if the name exists and belongs to the user
 const { data: existingName, error: fetchError } = await supabase
   .from('names')
   .select('id, name_text, is_preferred, user_id, created_at, updated_at')
@@ -400,7 +361,6 @@ timestamp,
   );
 }
 
-// Build update object using generated types
 const updateData: TablesUpdate<'names'> = {
   updated_at: new Date().toISOString(),
 };
@@ -409,7 +369,6 @@ if (validatedData.name_text) {
   updateData.name_text = validatedData.name_text;
 }
 
-// Update the name
 const { data: updatedName, error: updateError } = await supabase
   .from('names')
   .update(updateData)
@@ -450,7 +409,6 @@ timestamp,
   );
 }
 
-// Handle JSON parsing errors
 if (error instanceof SyntaxError && error.message.includes('JSON')) {
   return createErrorResponse(
 ErrorCodes.VALIDATION_ERROR,
@@ -473,19 +431,15 @@ return createErrorResponse(
 
 /**
  * DELETE /api/names - Delete a name variant
- * Deletes a specific name variant for the authenticated user
- * Uses the new can_delete_name RPC function to check if deletion is allowed
  */
 const handleDELETE: AuthenticatedHandler = async (
   request: NextRequest,
   { user, supabase, requestId, timestamp },
 ) => {
   try {
-// Parse and validate request body
 const body = await request.json();
 const validatedData = DeleteNameSchema.parse(body);
 
-// Check if the name exists and belongs to the user
 const { data: existingName, error: fetchError } = await supabase
   .from('names')
   .select('id, name_text, is_preferred, created_at, updated_at')
@@ -514,7 +468,6 @@ timestamp,
   );
 }
 
-// Use the new can_delete_name RPC function to check if deletion is allowed
 const { data: deletionCheck, error: checkError } = await supabase.rpc(
   'can_delete_name',
   {
@@ -551,7 +504,6 @@ timestamp,
   );
 }
 
-// Proceed with deletion
 const { error: deleteError } = await supabase
   .from('names')
   .delete()
@@ -590,7 +542,6 @@ timestamp,
   );
 }
 
-// Handle JSON parsing errors
 if (error instanceof SyntaxError && error.message.includes('JSON')) {
   return createErrorResponse(
 ErrorCodes.VALIDATION_ERROR,
@@ -611,7 +562,6 @@ return createErrorResponse(
   }
 };
 
-// Export the handlers with authentication wrapper
 export const GET = withRequiredAuth(handleGET, { enableLogging: true });
 export const POST = withRequiredAuth(handlePOST);
 export const PUT = withRequiredAuth(handlePUT);

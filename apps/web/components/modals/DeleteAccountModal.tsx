@@ -71,7 +71,6 @@ body: JSON.stringify({
   const result = await response.json();
 
   if (!response.ok || result.status === 'error') {
-// Handle API error responses
 const errorMessage =
   result.details || result.message || 'Failed to delete account';
 setError(errorMessage);

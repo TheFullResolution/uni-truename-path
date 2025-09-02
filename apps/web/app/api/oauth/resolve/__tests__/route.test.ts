@@ -1,11 +1,4 @@
-/**
- * Comprehensive Unit Tests for OAuth Resolve Endpoint
- *
- * Tests for POST /api/oauth/resolve - Bearer token to OIDC claims resolution
- * Complete test suite validating all success/error paths with core functionality
- * Academic project - Step 16 OAuth integration testing
- * Note: Database triggers now handle all OAuth usage logging automatically
- */
+// OAuth Resolve Endpoint Tests
 
 /// <reference types="node" />
 
@@ -16,7 +9,6 @@ import { POST } from '../route';
 import type { OIDCClaims } from '../types';
 import { ResolveErrorCodes } from '../types';
 
-// Mock NextResponse.json to return a proper Response-like object
 vi.mock('next/server', async () => {
   const actual = await vi.importActual('next/server');
   return {
@@ -24,7 +16,6 @@ vi.mock('next/server', async () => {
 NextResponse: {
   ...((actual as any).NextResponse || {}),
   json: vi.fn((data: any, init?: any) => {
-// Create a Response-like object with proper methods
 return {
   json: async () => data,
   text: async () => JSON.stringify(data),
@@ -37,15 +28,13 @@ return {
   };
 });
 
-// Mock the helper functions from helpers.ts (only measurePerformance remains)
 vi.mock('../helpers', () => ({
   measurePerformance: vi.fn(() => ({
 startTime: Date.now(),
-getElapsed: vi.fn(() => 2), // Mock 2ms response time
+getElapsed: vi.fn(() => 2),
   })),
 }));
 
-// Mock Supabase client
 const mockSupabaseClient = {
   rpc: vi.fn(),
 };

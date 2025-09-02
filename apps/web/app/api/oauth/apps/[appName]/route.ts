@@ -9,7 +9,6 @@ import {
   createErrorResponse,
   createSuccessResponse,
   AuthenticatedContext,
-  handle_method_not_allowed,
 } from '@/utils/api';
 import { AppNameSchema } from '@/app/api/oauth/schemas';
 import {
@@ -208,12 +207,6 @@ last_used_at: newClient.last_used_at,
 
 // Export GET handler with optional auth for OAUTH_PUBLIC security level
 export const GET = withOptionalAuth(handleGet);
-
-// Handle unsupported HTTP methods
-export const POST = () => handle_method_not_allowed(['GET']);
-export const PUT = () => handle_method_not_allowed(['GET']);
-export const DELETE = () => handle_method_not_allowed(['GET']);
-export const PATCH = () => handle_method_not_allowed(['GET']);
 
 /**
  * OPTIONS handler for CORS preflight requests

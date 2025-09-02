@@ -13,7 +13,6 @@ import {
   createOAuthSession,
   buildRedirectUrl,
   assignDefaultContextToApp,
-  validateTokenFormat,
   validateReturnUrl,
 } from '../helpers';
 import type { AuthorizeContextInfo, AuthorizeClientInfo } from '../types';
@@ -629,70 +628,6 @@ mockSupabaseClient as any,
 });
   });
 
-  describe('validateTokenFormat', () => {
-it('should return true for valid token format', () => {
-  const validTokens = [
-'tnp_' + 'a'.repeat(32),
-'tnp_' + 'f'.repeat(32),
-'tnp_0123456789abcdef0123456789abcdef',
-'tnp_fedcba9876543210fedcba9876543210',
-  ];
-
-  validTokens.forEach((token) => {
-expect(validateTokenFormat(token)).toBe(true);
-  });
-});
-
-it('should return false for invalid token formats', () => {
-  const invalidTokens = [
-'invalid-token',
-'tnp_short',
-'tnp_' + 'g'.repeat(32), // 'g' not valid hex
-'tnp_' + 'a'.repeat(31), // too short
-'tnp_' + 'a'.repeat(33), // too long
-'TNP_' + 'a'.repeat(32), // wrong prefix case
-'otp_' + 'a'.repeat(32), // wrong prefix
-'tnp-' + 'a'.repeat(32), // wrong separator
-'', // empty string
-'tnp_', // prefix only
-  ];
-
-  invalidTokens.forEach((token) => {
-expect(validateTokenFormat(token)).toBe(false);
-  });
-});
-
-it('should handle edge cases', () => {
-  expect(validateTokenFormat('tnp_0000000000000000000000000000000')).toBe(
-false,
-  ); // 31 chars
-  expect(validateTokenFormat('tnp_00000000000000000000000000000000')).toBe(
-true,
-  ); // 32 chars
-  expect(validateTokenFormat('tnp_000000000000000000000000000000000')).toBe(
-false,
-  ); // 33 chars
-});
-
-it('should validate exact hex character requirements', () => {
-  // All valid hex characters
-  expect(validateTokenFormat('tnp_0123456789abcdef0123456789abcdef')).toBe(
-true,
-  );
-
-  // Invalid characters
-  expect(validateTokenFormat('tnp_0123456789abcdef0123456789abcdeg')).toBe(
-false,
-  ); // 'g'
-  expect(validateTokenFormat('tnp_0123456789abcdef0123456789abcdeG')).toBe(
-false,
-  ); // uppercase
-  expect(validateTokenFormat('tnp_0123456789abcdef0123456789abcde!')).toBe(
-false,
-  ); // special char
-});
-  });
-
   describe('validateReturnUrl', () => {
 it('should return true for valid HTTPS URLs', () => {
   const validUrls = [
@@ -777,7 +712,6 @@ it('should complete all helper functions within performance requirements', () =>
   // Test synchronous helpers
   const startTime = Date.now();
 
-  validateTokenFormat(VALID_TOKEN);
   validateReturnUrl('https://example.com/callback');
   buildRedirectUrl('https://example.com/callback', VALID_TOKEN);
 
@@ -796,7 +730,6 @@ it('should handle multiple concurrent validation calls efficiently', () => {
 
   const startTime = Date.now();
 
-  tokens.forEach((token) => validateTokenFormat(token));
   urls.forEach((url) => validateReturnUrl(url));
 
   const endTime = Date.now();
@@ -807,14 +740,11 @@ it('should handle multiple concurrent validation calls efficiently', () => {
 
   describe('Edge Cases and Error Handling', () => {
 it('should handle null and undefined inputs gracefully', () => {
-  expect(validateTokenFormat(null as any)).toBe(false);
-  expect(validateTokenFormat(undefined as any)).toBe(false);
   expect(validateReturnUrl(null as any)).toBe(false);
   expect(validateReturnUrl(undefined as any)).toBe(false);
 });
 
 it('should handle empty strings appropriately', () => {
-  expect(validateTokenFormat('')).toBe(false);
   expect(validateReturnUrl('')).toBe(false);
   expect(buildRedirectUrl('', 'token')).toBe('?token=token');
   expect(buildRedirectUrl('https://example.com', '')).toBe(
@@ -824,12 +754,10 @@ it('should handle empty strings appropriately', () => {
 
 it('should handle very long inputs without crashing', () => {
   const longString = 'a'.repeat(10000);
-  expect(validateTokenFormat(longString)).toBe(false);
   expect(validateReturnUrl(longString)).toBe(false);
 });
 
 it('should handle special characters in tokens and URLs', () => {
-  expect(validateTokenFormat('tnp_' + 'a'.repeat(31) + '!')).toBe(false);
   expect(
 buildRedirectUrl(
   'https://example.com/callback',

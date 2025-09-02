@@ -7,8 +7,9 @@ import {
   Anchor,
   Stack,
 } from '@mantine/core';
-import { IconSchool, IconCode } from '@tabler/icons-react';
+import { IconCode, IconHeart } from '@tabler/icons-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import type { Route } from 'next';
 import { LogoWithText } from '@/components/branding/LogoWithText';
 import { getServerAuth } from '@/utils/auth/server-auth';
@@ -102,12 +103,20 @@ Documentation
 
   <Stack gap='md'>
 <Group justify='center' gap='xs'>
-  <IconSchool size={16} color='#4A7FE7' />
+  <Image
+src='/University_of_London.svg.png'
+alt='University of London Logo'
+width={23}
+height={30}
+style={{ verticalAlign: 'middle' }}
+  />
   <Text size='sm' c='gray.3' fw={500}>
 Built with{' '}
-<Text component='span' c='#e74c3c' fw={600}>
-  passion
-</Text>{' '}
+<IconHeart
+  size={14}
+  color='#e74c3c'
+  style={{ display: 'inline', verticalAlign: 'middle' }}
+/>{' '}
 at University of London
   </Text>
 </Group>
@@ -125,8 +134,7 @@ identity management
 </Group>
 
 <Text size='xs' c='gray.5' ta='center' pt='md'>
-  © {currentYear} TrueNamePath. Academic project for educational
-  purposes.
+  © {currentYear} TrueNamePath.
 </Text>
   </Stack>
 </Stack>

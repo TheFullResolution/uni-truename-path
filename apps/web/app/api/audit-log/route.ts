@@ -2,7 +2,6 @@ import {
   withRequiredAuth,
   createSuccessResponse,
   createErrorResponse,
-  handle_method_not_allowed,
   type AuthenticatedHandler,
   ErrorCodes,
 } from '@/utils/api';
@@ -257,7 +256,3 @@ return createErrorResponse(
 };
 
 export const GET = withRequiredAuth(handleGet);
-export const POST = () => handle_method_not_allowed(['GET']);
-export const PUT = POST;
-export const DELETE = POST;
-export const PATCH = POST;

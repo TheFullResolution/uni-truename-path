@@ -1,21 +1,10 @@
-// TrueNamePath: Shared Assignment Validation Schemas
-// Centralized Zod schemas for assignment API endpoints
-// Date: August 21, 2025 - Updated to use database-generated enum types
-// Academic project - shared validation patterns
+// Shared Assignment Validation Schemas
 
 import { z } from 'zod';
 import type { Enums } from '@/generated/database';
 
-// =============================================================================
-// Database Type Aliases
-// =============================================================================
-
-/**
- * OIDC property type from database enum (single source of truth)
- */
 export type OIDCProperty = Enums<'oidc_property'>;
 
-// Helper to extract enum values for Zod validation (simplified schema)
 export const OIDC_PROPERTY_VALUES = [
   'given_name',
   'family_name',
@@ -26,36 +15,16 @@ export const OIDC_PROPERTY_VALUES = [
   'middle_name',
 ] as const satisfies readonly OIDCProperty[];
 
-// =============================================================================
-// Common Field Schemas
-// =============================================================================
-
-/**
- * UUID validation schema with consistent error message
- */
 export const UuidSchema = z.string().uuid();
 
-/**
- * Context ID validation schema
- */
 export const ContextIdSchema = UuidSchema.refine((val) => val.length > 0, {
   message: 'Context ID is required',
 });
 
-/**
- * Name ID validation schema
- */
 export const NameIdSchema = UuidSchema.refine((val) => val.length > 0, {
   message: 'Name ID is required',
 });
 
-// =============================================================================
-// Query Parameter Schemas
-// =============================================================================
-
-/**
- * Common query parameters for list endpoints with pagination and filtering
- */
 export const ListQueryParamsSchema = z.object({
   limit: z
 .string()
@@ -69,51 +38,28 @@ export const ListQueryParamsSchema = z.object({
   context_id: ContextIdSchema.nullable().optional(),
 });
 
-// =============================================================================
-// Request Body Schemas
-// =============================================================================
-
-// =============================================================================
-// OIDC-Specific Schemas (Simplified)
-// =============================================================================
-
-/**
- * Schema for OIDC assignment operations (simplified for new table)
- * Removed scope and visibility complexity - direct property assignments only
- */
 export const OIDCAssignmentRequestSchema = z.object({
   context_id: ContextIdSchema,
   name_id: NameIdSchema,
   oidc_property: z.enum(OIDC_PROPERTY_VALUES),
 });
 
-/**
- * Schema for OIDC query parameters
- */
 export const OIDCQueryParamsSchema = z.object({
   context_id: ContextIdSchema.optional(),
 });
 
-/**
- * Schema for batch OIDC assignment operations (Step 15.7.6)
- * Handles multiple OIDC property assignments for a single context
- */
 export const BatchOIDCAssignmentRequestSchema = z.object({
   context_id: ContextIdSchema,
   assignments: z
 .array(
   z.object({
 oidc_property: z.enum(OIDC_PROPERTY_VALUES),
-name_id: NameIdSchema.nullable(), // null means delete/unassign
+name_id: NameIdSchema.nullable(),
   }),
 )
 .min(1, 'At least one assignment is required')
 .max(20, 'Maximum 20 assignments per batch request'),
 });
-
-// =============================================================================
-// Type Exports for Schema Inference
-// =============================================================================
 
 export type ListQueryParams = z.infer<typeof ListQueryParamsSchema>;
 
@@ -121,14 +67,6 @@ export type BatchOIDCAssignmentRequest = z.infer<
   typeof BatchOIDCAssignmentRequestSchema
 >;
 
-// =============================================================================
-// Shared Validation Helpers
-// =============================================================================
-
-/**
- * Creates a standardized validation error response
- * Reduces boilerplate across assignment API routes
- */
 export function createValidationErrorResponse(
   result: z.ZodSafeParseResult<unknown>,
   request_id: string,

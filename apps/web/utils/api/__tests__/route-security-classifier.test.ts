@@ -118,7 +118,7 @@ isHeaderAllowedForRoute('x-authenticated-user-profile', route),
   });
 
   describe('Public Route Classification', () => {
-const publicRoutes = ['/api/auth/login', '/api/auth/signup'];
+const publicRoutes = ['/api/auth/signup'];
 
 it('should classify auth routes as PUBLIC', () => {
   publicRoutes.forEach((route) => {
@@ -192,7 +192,7 @@ const allKnownRoutes = [
   '/api/dashboard/stats',
 
   // Public routes
-  '/api/auth/login',
+  '/api/auth/signup',
 ];
 
 it('should validate all known routes are classified', () => {
@@ -296,7 +296,7 @@ expect(isHeaderAllowedForRoute('x-authenticated-user-id', route)).toBe(
 });
 
 it('should have zero header exposure for public routes', () => {
-  const publicRoutes = ['/api/auth/login'];
+  const publicRoutes = ['/api/auth/signup'];
 
   publicRoutes.forEach((route) => {
 const allowedHeaders = getAllowedHeadersForRoute(route);

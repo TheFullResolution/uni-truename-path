@@ -15,10 +15,6 @@ export type Profile = Tables<'profiles'>;
 export type Name = Tables<'names'>;
 export type UserContext = Tables<'user_contexts'>;
 
-// OAuth table shortcuts
-export type OAuthClientRegistry = Tables<'oauth_client_registry'>;
-export type OAuthSession = Tables<'oauth_sessions'>;
-
 export type OIDCProperty = Enums<'oidc_property'>;
 
 // Enhanced can_delete_name RPC function response interface

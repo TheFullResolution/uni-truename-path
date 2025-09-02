@@ -84,7 +84,8 @@ innovation—user-controlled, context-specific name
 presentation—rather than reimplementing standard OAuth
 infrastructure. All design decisions reflect conscious trade-offs
 for academic demonstration, not limitations in technical
-understanding.
+understanding. The system includes 85 database migrations and
+comprehensive OIDC-compliant claims resolution.
   </Text>
 </Alert>
 
@@ -165,14 +166,14 @@ expiry
   <TableTd>
 <Badge
   variant='outline'
-  color='blue'
-  aria-label='Session reusability'
+  color='red'
+  aria-label='Not implemented'
 >
-  Session reusability
+  Not implemented
 </Badge>{' '}
-(2-hour window)
+(Token reusability within 2-hour validity)
   </TableTd>
-  <TableTd>Long-term refresh tokens</TableTd>
+  <TableTd>Long-term refresh token implementation</TableTd>
 </TableTr>
 <TableTr>
   <TableTd>
@@ -283,8 +284,8 @@ server-side validation (expires_at timestamp checks)
 </ListItem>
 <ListItem>
   <Text>
-<strong>Performance:</strong> Sub-3ms validation with indexed
-database lookups and session reusability
+<strong>Performance:</strong> Optimized for fast response times
+with indexed database lookups and session reusability
   </Text>
 </ListItem>
 <ListItem>
@@ -730,57 +731,44 @@ Performance Metrics & Industry Context
   <Stack gap='md'>
 <div>
   <Text fw={500} mb='sm' c='blue'>
-Measured Performance
+Performance Design Goals
   </Text>
   <List spacing='sm' icon={<IconClock size={16} />}>
 <ListItem>
   <Text size='sm'>
-<strong>Name Resolution:</strong> 2.4ms average response
-time for context-aware identity lookups
+<strong>Name Resolution:</strong> Optimized database queries
+with indexed lookups for efficient context-aware identity
+resolution
   </Text>
 </ListItem>
 <ListItem>
   <Text size='sm'>
-<strong>Token Operations:</strong> Sub-3ms OAuth token
-validation and session management
+<strong>Token Operations:</strong> Streamlined OAuth token
+validation with database-backed session management
   </Text>
 </ListItem>
 <ListItem>
   <Text size='sm'>
-<strong>Dashboard Loading:</strong> Sub-second interactive
-loading for complete identity management interface
+<strong>Dashboard Loading:</strong> Efficient data fetching
+with SWR caching for responsive identity management
+interface
   </Text>
 </ListItem>
   </List>
-</div>
 
-<div>
-  <Text fw={500} mb='sm' c='green'>
-2025 Industry Trends
-  </Text>
-  <List spacing='sm' icon={<IconArrowRight size={16} />}>
-<ListItem>
-  <Text size='sm'>
-<strong>Return to Opaque Tokens:</strong> Major providers
-moving back to opaque tokens for better revocation control
-and security
-  </Text>
-</ListItem>
-<ListItem>
-  <Text size='sm'>
-<strong>Hybrid Approaches:</strong> Production systems
-increasingly support both JWT and opaque patterns for
-different use cases
-  </Text>
-</ListItem>
-<ListItem>
-  <Text size='sm'>
-<strong>Context-Aware Identity:</strong> Growing industry
-interest in purpose-specific identity presentation for GDPR
-compliance
-  </Text>
-</ListItem>
-  </List>
+  <Alert
+variant='light'
+color='yellow'
+mt='md'
+icon={<IconInfoCircle />}
+  >
+<Text size='sm'>
+  <strong>Academic Note:</strong> Specific performance metrics
+  would require production load testing infrastructure not
+  implemented in this proof-of-concept. The system is designed
+  for efficiency with database indexing and caching strategies.
+</Text>
+  </Alert>
 </div>
   </Stack>
 </Paper>
@@ -793,10 +781,11 @@ Academic & Technical Achievement
   <Text>
 This implementation successfully demonstrates both technical mastery
 of OAuth 2.0 patterns and genuine innovation in context-aware
-identity management. The 2.4ms name resolution performance with full
-OIDC compliance showcases production-ready engineering, while the
-context assignment system addresses real-world privacy needs that
-traditional OAuth scopes cannot handle.
+identity management. The system achieves full OIDC compliance with
+efficient database design and showcases production-viable
+engineering patterns, while the context assignment system addresses
+real-world privacy needs that traditional OAuth scopes cannot
+handle.
   </Text>
 </Alert>
   </Stack>

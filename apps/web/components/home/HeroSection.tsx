@@ -9,6 +9,7 @@ import {
 } from '@mantine/core';
 import { IconArrowRight, IconDashboard } from '@tabler/icons-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import type { Route } from 'next';
 import { LogoWithText } from '@/components/branding/LogoWithText';
 import { getServerAuth } from '@/utils/auth/server-auth';
@@ -38,27 +39,28 @@ export async function HeroSection() {
   lh={1.1}
   className='hero-text-gradient'
 >
-  Your Identity, Your Rules
+  Context-Aware Identity Management
 </Title>
 
 <Text size='xl' c='gray.6' fw={400} lh={1.4}>
-  The first context-aware identity management API that ensures the{' '}
+  A university research project demonstrating how identity
+  management systems could provide{' '}
   <Text component='span' c='brand.6' fw={600}>
-right name
+context-specific name presentation
   </Text>{' '}
-  appears to the{' '}
+  based on{' '}
   <Text component='span' c='brand.6' fw={600}>
-right audience
-  </Text>{' '}
-  every time.
+user-configured rules
+  </Text>
+  .
 </Text>
   </Stack>
 
   {/* Subtitle */}
   <Text size='lg' c='gray.5' maw={600} ta='center'>
-Stop forcing your identity into rigid systems. TrueNamePath gives
-you complete control over how your name appears across different
-platforms and contexts.
+Academic prototype exploring the technical feasibility of
+audience-specific identity management using existing infrastructure
+in a novel configuration.
   </Text>
 
   {/* CTA Buttons */}
@@ -82,7 +84,7 @@ View Dashboard
   color='brand'
   rightSection={<IconArrowRight size={20} />}
 >
-  Get Started Free
+  View Demo
 </Button>
 <Button
   component={Link}
@@ -98,9 +100,19 @@ View Dashboard
   </Box>
 
   {/* Trust Indicator */}
-  <Text size='sm' c='dimmed' ta='center' pt='xl'>
-GDPR Compliant • OAuth 2.0 Compatible • Privacy by Design
-  </Text>
+  <Group justify='center' gap='xs' pt='xl'>
+<Image
+  src='/University_of_London.svg.png'
+  alt='University of London Logo'
+  width={19}
+  height={25}
+  style={{ verticalAlign: 'middle' }}
+/>
+<Text size='sm' c='dimmed' ta='center'>
+  Academic Project • CM3035 Advanced Web Design • University of
+  London
+</Text>
+  </Group>
 </Stack>
   </Container>
 </Box>

@@ -9,7 +9,6 @@ import {
   createSuccessResponse,
   createErrorResponse,
   AuthenticatedContext,
-  handle_method_not_allowed,
 } from '@/utils/api/with-auth';
 import { ErrorCodes, StandardResponse } from '@/utils/api/types';
 import { createCORSOptionsResponse } from '@/utils/api/cors';
@@ -244,12 +243,6 @@ timestamp,
 export const PUT = withRequiredAuth(handlePutAssignment, {
   enableLogging: true,
 });
-
-// Handle unsupported HTTP methods
-export const GET = () => handle_method_not_allowed(['PUT']);
-export const POST = () => handle_method_not_allowed(['PUT']);
-export const DELETE = () => handle_method_not_allowed(['PUT']);
-export const PATCH = () => handle_method_not_allowed(['PUT']);
 
 /**
  * OPTIONS handler for CORS preflight requests

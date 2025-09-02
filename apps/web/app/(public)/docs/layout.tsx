@@ -3,6 +3,7 @@ import { IconBrandGithub } from '@tabler/icons-react';
 import { DocsNavigation } from '@/components/docs/DocsNavigation';
 import { StaticDocumentationNav } from '@/components/docs/StaticDocumentationNav';
 import { Logo } from '@/components/branding/Logo';
+import { SharedFooter } from '@/components/layout/SharedFooter';
 import type { ReactNode } from 'react';
 
 interface DocsLayoutProps {
@@ -51,18 +52,9 @@ style={{ textDecoration: 'none' }}
 
   {/* Content Area */}
   <Box>{children}</Box>
-
-  {/* Footer */}
-  <Paper p='md' mt='xl' radius='lg' bg='gray.0'>
-<Group justify='center' align='center'>
-  <Text size='sm' c='dimmed' ta='center'>
-TrueNamePath - University Final Project demonstrating advanced
-web design principles
-  </Text>
-</Group>
-  </Paper>
 </Container>
   </Box>
+  <SharedFooter />
 </>
   );
 }

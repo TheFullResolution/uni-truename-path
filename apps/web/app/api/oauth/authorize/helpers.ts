@@ -260,18 +260,6 @@ return false;
 // =============================================================================
 
 /**
- * Validates OAuth token format follows tnp_[32 hex] pattern
- *
- * @param token - Token string to validate
- * @returns boolean - True if token format is valid
- */
-export function validateTokenFormat(token: string): boolean {
-  // Token format: tnp_ + 32 hex characters
-  const tokenPattern = /^tnp_[a-f0-9]{32}$/;
-  return tokenPattern.test(token);
-}
-
-/**
  * Validates return URL format and basic security requirements
  *
  * @param returnUrl - Return URL to validate

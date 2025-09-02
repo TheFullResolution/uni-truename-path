@@ -12,10 +12,8 @@ import {
   isHeaderAllowedForRoute,
 } from '../api/route-security-classifier';
 
-// Define protected route patterns
 const PROTECTED_ROUTES = ['/dashboard', '/profile', '/settings'];
 
-// Define public routes that should never redirect
 const PUBLIC_ROUTES = [
   '/auth/login',
   '/auth/signup',
@@ -24,19 +22,12 @@ const PUBLIC_ROUTES = [
   '/',
 ];
 
-// Define public API routes that don't require authentication
 const PUBLIC_API_ROUTES: string[] = [];
 
-/**
- * Check if a given pathname matches any protected route patterns
- */
 function isProtectedRoute(pathname: string): boolean {
   return PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
 }
 
-/**
- * Check if a given pathname is a public route
- */
 function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTES.some(
 (route) =>
@@ -44,25 +35,14 @@ function isPublicRoute(pathname: string): boolean {
   );
 }
 
-/**
- * Check if a given pathname is an API route
- */
 function isApiRoute(pathname: string): boolean {
   return pathname.startsWith('/api/');
 }
 
-/**
- * Check if a given pathname is a public API route that doesn't require authentication
- */
 function isPublicApiRoute(pathname: string): boolean {
   return PUBLIC_API_ROUTES.some((route) => pathname.startsWith(route));
 }
 
-/**
- * Set authentication headers based on user authentication state and route security classification
- * SECURITY-AWARE: Only sets headers that are appropriate for the route's security level
- * Prevents GDPR violations by not exposing personal data to OAuth public routes
- */
 function setAuthHeaders(
   response: NextResponse,
   pathname: string,
@@ -71,11 +51,9 @@ function setAuthHeaders(
   oauthSession: OAuthSessionWithProfile | null,
   profile: Tables<'profiles'> | null,
 ): void {
-  // Classify route to determine appropriate header exposure
   const securityLevel = classifyRoute(pathname);
   const allowedHeaders = getAllowedHeadersForRoute(pathname);
 
-  // Log security classification for debugging in development
   if (process.env.NODE_ENV === 'development') {
 console.log(
   `[Security] Route: ${pathname}, Level: ${securityLevel}, Headers: ${allowedHeaders.length}`,
@@ -83,7 +61,6 @@ console.log(
   }
 
   if (!user) {
-// No authentication - set minimal default headers only if allowed
 if (isHeaderAllowedForRoute('x-authentication-verified', pathname)) {
   response.headers.set('x-authentication-verified', 'false');
 }
@@ -99,7 +76,6 @@ if (isHeaderAllowedForRoute('x-oauth-authenticated', pathname)) {
 return;
   }
 
-  // Set authentication headers based on security classification
   if (isHeaderAllowedForRoute('x-authentication-verified', pathname)) {
 response.headers.set('x-authentication-verified', 'true');
   }
@@ -108,13 +84,11 @@ response.headers.set('x-authentication-verified', 'true');
 response.headers.set('x-authenticated-user-id', user.id);
   }
 
-  // CRITICAL: Only set email header for internal app routes (GDPR compliance)
   if (isHeaderAllowedForRoute('x-authenticated-user-email', pathname)) {
 response.headers.set('x-authenticated-user-email', user.email || '');
   }
 
   if (isOAuth && oauthSession) {
-// Set OAuth-specific headers only if allowed
 if (isHeaderAllowedForRoute('x-oauth-authenticated', pathname)) {
   response.headers.set('x-oauth-authenticated', 'true');
 }
@@ -125,13 +99,10 @@ if (isHeaderAllowedForRoute('x-oauth-client-id', pathname)) {
   response.headers.set('x-oauth-client-id', oauthSession.client_id);
 }
   } else {
-// Set cookie auth headers only if allowed
 if (isHeaderAllowedForRoute('x-oauth-authenticated', pathname)) {
   response.headers.set('x-oauth-authenticated', 'false');
 }
   }
-
-  // CRITICAL: Only include profile data for internal app routes (GDPR compliance)
   if (
 profile &&
 isHeaderAllowedForRoute('x-authenticated-user-profile', pathname)
@@ -173,24 +144,18 @@ supabaseResponse.cookies.set(name, value, options),
 
   const pathname = request.nextUrl.pathname;
 
-  // Perform authentication check (single source of truth)
-  // Support both OAuth Bearer tokens and cookie-based sessions
   let user = null;
   let isOAuthAuth = false;
   let oauthSession = null;
 
-  // Handle API routes with header-based communication
   if (isApiRoute(pathname)) {
-// Check for OAuth Bearer token first
 const authHeader = request.headers.get('authorization');
 const bearerToken = extractBearerToken(authHeader);
 
 if (bearerToken) {
-  // Validate OAuth token
   const validation = await validateOAuthToken(bearerToken);
 
   if (validation.success && validation.session) {
-// OAuth authentication successful
 isOAuthAuth = true;
 oauthSession = validation.session;
 user = {
@@ -199,8 +164,6 @@ user = {
 };
   }
 }
-
-// Fall back to cookie authentication if no valid OAuth token
 if (!isOAuthAuth) {
   const {
 data: { user: cookieUser },
@@ -208,20 +171,16 @@ data: { user: cookieUser },
   user = cookieUser;
 }
 
-// For public API routes, set headers indicating no authentication required
 if (isPublicApiRoute(pathname)) {
   setAuthHeaders(supabaseResponse, pathname, null, false, null, null);
   return supabaseResponse;
 }
 
-// For protected API routes, set authentication headers
 let profile = null;
 
 if (user && isOAuthAuth && oauthSession) {
-  // Use profile from OAuth session
   profile = oauthSession.profiles;
 } else if (user) {
-  // Fetch user profile for cookie auth
   const { data: profileData, error: profileError } = await supabase
 .from('profiles')
 .select('*')
@@ -237,7 +196,6 @@ console.warn(
   profile = profileData;
 }
 
-// Set all authentication headers using helper function with route-aware security
 setAuthHeaders(
   supabaseResponse,
   pathname,
@@ -250,20 +208,14 @@ setAuthHeaders(
 return supabaseResponse;
   }
 
-  // For page routes, use cookie authentication only
   const {
 data: { user: cookieUser },
   } = await supabase.auth.getUser();
   user = cookieUser;
 
-  // Handle page routes with redirect logic (existing behavior)
-
-  // Allow public routes without authentication
   if (isPublicRoute(pathname)) {
 return supabaseResponse;
   }
-
-  // For protected routes, check authentication and redirect if needed
   if (isProtectedRoute(pathname) && !user) {
 const url = request.nextUrl.clone();
 url.pathname = '/auth/login';

@@ -24,7 +24,6 @@ const UpdateContextSchema = z.object({
 .nullable()
 .transform((str) => str?.trim() || null)
 .optional(),
-  // visibility field removed - simplified context model
 });
 
 const handlePut: AuthenticatedHandler = async (request, context) => {
@@ -99,11 +98,7 @@ attempted_name: body.context_name,
 );
   }
 
-  // Visibility validation removed - contexts are now validated by completeness only
-  // The Public context (is_permanent=true) is the only "public" context
-  // All other contexts are regular contexts validated by OIDC property assignments
-
-  // Build update object with only provided fields (visibility removed)
+  // Build update object with only provided fields
   const updateData: Record<string, unknown> = {
 updated_at: new Date().toISOString(),
   };
@@ -114,7 +109,6 @@ updateData.context_name = body.context_name;
   if (body.description !== undefined) {
 updateData.description = body.description;
   }
-  // visibility field removed from updates
 
   // Update context
   const { data: updated } = await context.supabase
@@ -188,8 +182,7 @@ if ((appAssignments || 0) > 0) {
   context: existing,
   requires_force: true,
   impacts: {
-name_assignments: 0, // Legacy field, no longer used
-active_consents: appAssignments || 0, // Now represents app assignments
+app_assignments: appAssignments || 0,
   },
   message: 'Use ?force=true to delete with dependencies',
 },

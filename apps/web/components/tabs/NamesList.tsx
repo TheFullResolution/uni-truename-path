@@ -3,10 +3,7 @@
 import { ProtectedNameWarning } from '@/components/modals/ProtectedNameWarning';
 import { NameReplacementGuideModal } from '@/components/modals/NameReplacementGuideModal';
 import { DeleteNameModal } from '@/components/modals/DeleteNameModal';
-import {
-  isNameProtected,
-  getAssignmentCount,
-} from '@/hooks/useNameAssignments';
+import { isNameProtected, getAssignmentCount } from '@/utils/utils/names';
 import type { Tables } from '@/generated/database';
 import type { CanDeleteNameResponse } from '@/types/database';
 import type { NameAssignment } from '@/app/api/names/types';

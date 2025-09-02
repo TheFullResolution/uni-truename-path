@@ -149,7 +149,6 @@ swrFetcher<OIDCAssignmentsResponse>,
   // Batch assignment operations
   const { updateAssignmentsBatch, isSaving } = useBatchAssignments(contextId);
 
-  // Create assignment context for validation once data is loaded
   const assignmentContext: AssignmentContext | null = assignmentsData
 ? {
 context: {
@@ -177,7 +176,6 @@ initialValues[assignment.oidc_property] = assignment.name_id;
 // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assignmentsData?.assignments]);
 
-  // Handle dropdown changes
   const handlePropertyChange = (
 property: Enums<'oidc_property'>,
 nameId: string | null,
@@ -189,13 +187,11 @@ if (form.errors[property]) {
 }
   };
 
-  // Check if this is a default context and property is required
   const isRequiredProperty = (property: Enums<'oidc_property'>) => {
 const isDefaultContext = assignmentsData?.is_permanent === true;
 return isDefaultContext && REQUIRED_OIDC_PROPERTIES.includes(property);
   };
 
-  // Handle save with batch API and enhanced notifications
   const handleSave = async () => {
 if (!form.isDirty()) {
   // Show notification for no changes case
@@ -344,7 +340,6 @@ autoClose: NOTIFICATION_NETWORK_ERROR_TIMEOUT,
 }
   };
 
-  // Handle cancel
   const handleCancel = () => {
 form.reset();
 onClose();
@@ -417,7 +412,6 @@ return (
 
   const names = namesData?.names || [];
 
-  // Create dropdown options with "None" option - ensure it's always an array
   const nameOptions =
 names.length > 0
   ? [

@@ -1,7 +1,4 @@
-// TrueNamePath: Higher-Order Function for API Route Authentication
-// Higher-order function that wraps API route handlers with standardized authentication
-// Date: August 12, 2025
-// Academic project infrastructure for consistent API patterns
+// API Route Authentication HOF
 
 import { NextRequest, NextResponse } from 'next/server';
 import { Database } from '@/generated/database';
@@ -17,22 +14,13 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { classifyRoute, RouteSecurityLevel } from './route-security-classifier';
 import { withCORSHeaders } from './cors';
 
-/**
- * Authentication modes for API routes
- */
 export type AuthMode = 'required' | 'optional';
-
-/**
- * Context object passed to authenticated API route handlers
- * Extended to support OAuth Bearer token authentication
- */
 export interface AuthenticatedContext {
   user: AuthenticatedUser | null;
   requestId: string;
   timestamp: string;
   isAuthenticated: boolean;
   supabase: SupabaseClient<Database>;
-  // OAuth-specific fields
   isOAuth: boolean;
   oauthSession?: {
 id: string;
@@ -42,102 +30,25 @@ appName: string;
   };
 }
 
-/**
- * Type for API route handlers that receive authentication context
- */
 export type AuthenticatedHandler<T = unknown> = (
   request: NextRequest,
   context: AuthenticatedContext,
 ) => Promise<StandardResponse<T>>;
 
-/**
- * Configuration options for the withAuth higher-order function
- */
 export interface WithAuthOptions {
-  /**
-   * Authentication mode
-   * - 'required': Route requires authentication, returns 401 if not authenticated
-   * - 'optional': Route allows both authenticated and unauthenticated requests
-   */
   authMode: AuthMode;
-
-  /**
-   * Optional custom error handler for authentication failures
-   */
   onAuthError?: (
 error: { code: string; message: string },
 requestId: string,
   ) => StandardErrorResponse;
-
-  /**
-   * Enable request logging for debugging and monitoring
-   */
   enableLogging?: boolean;
 }
-
-/**
- * Generate unique request ID for tracking and debugging
- * Uses timestamp and random string for uniqueness
- */
 export function generateRequestId(): string {
   return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
 /**
- * Higher-order function that wraps API route handlers with standardized authentication
- *
- * MIDDLEWARE-FIRST AUTHENTICATION SYSTEM:
- * This HOF now reads authentication status from middleware headers instead of
- * performing duplicate authentication calls. The middleware handles authentication
- * verification and passes the results via secure headers.
- *
- * Features:
- * - Reads authentication from middleware headers (single source of truth)
- * - Consistent authentication patterns across all API routes
- * - Standardized JSend response format
- * - Request ID generation and logging
- * - Support for both required and optional authentication modes
- * - Comprehensive error handling with proper HTTP status codes
- * - TypeScript-first design with proper type inference
- * - Performance improvement through eliminated duplicate auth calls
- *
- * @param handler - The API route handler to wrap with authentication
- * @param options - Configuration options for authentication behavior
- * @returns Wrapped handler that returns standardized responses
- *
- * @example
- * ```typescript
- * // Required authentication
- * export const POST = withAuth(
- *   async (request, context) => {
- * // context.user is guaranteed to be non-null
- * return {
- *   success: true,
- *   data: { message: `Hello ${context.user.email}` },
- *   requestId: context.requestId,
- *   timestamp: context.timestamp,
- * };
- *   },
- *   { authMode: 'required' }
- * );
- *
- * // Optional authentication
- * export const GET = withAuth(
- *   async (request, context) => {
- * const message = context.isAuthenticated
- *   ? `Hello ${context.user?.email}`
- *   : 'Hello anonymous user';
- *
- * return {
- *   success: true,
- *   data: { message },
- *   requestId: context.requestId,
- *   timestamp: context.timestamp,
- * };
- *   },
- *   { authMode: 'optional' }
- * );
- * ```
+ * Higher-order function that wraps API route handlers with authentication
  */
 export function withAuth<T = unknown>(
   handler: AuthenticatedHandler<T>,
@@ -147,21 +58,16 @@ export function withAuth<T = unknown>(
 const requestId = generateRequestId();
 const timestamp = new Date().toISOString();
 
-// Minimal logging for academic demonstration
-
 try {
-  // 1. Read core authentication status from middleware headers
   const authVerified =
 request.headers.get('x-authentication-verified') === 'true';
   const userId = request.headers.get('x-authenticated-user-id') || '';
 
-  // 1.1. Read OAuth-specific headers from middleware
   const isOAuthAuth =
 request.headers.get('x-oauth-authenticated') === 'true';
   const oauthSessionId = request.headers.get('x-oauth-session-id') || '';
   const oauthClientId = request.headers.get('x-oauth-client-id') || '';
 
-  // 1.2. Read personal data headers (only available for internal routes)
   const userEmail = request.headers.get('x-authenticated-user-email') || '';
   const userProfileHeader = request.headers.get(
 'x-authenticated-user-profile',
@@ -170,20 +76,16 @@ request.headers.get('x-oauth-authenticated') === 'true';
   let user: AuthenticatedUser | null = null;
   let oauthSession = undefined;
 
-  // 2. Build authentication context based on available headers
   if (authVerified && userId) {
 if (isOAuthAuth && oauthSessionId && oauthClientId) {
-  // OAuth authentication: Handle both minimal and full contexts
-  let appName = oauthClientId; // Default fallback
+  let appName = oauthClientId;
 
   if (userEmail) {
-// Internal OAuth route: Full context with profile data from headers
 user = buildInternalAuthContext(
   userId,
   userEmail,
   userProfileHeader,
 );
-// Extract app name from profile header if available
 if (
   user?.profile &&
   typeof user.profile === 'object' &&
@@ -194,7 +96,6 @@ if (
 oauthClientId;
 }
   } else {
-// External OAuth route: Minimal context from database
 const oauthContext = await buildOAuthAuthContext(
   userId,
   oauthSessionId,
@@ -211,19 +112,16 @@ sessionId: oauthSessionId,
 appName,
   };
 } else if (userEmail) {
-  // Regular internal route: Build full context with profile data
   user = buildInternalAuthContext(userId, userEmail, userProfileHeader);
 } else {
-  // Fallback: Basic user context with minimal data
   user = {
 id: userId,
-email: '', // No email available for minimal routes
+email: '',
 profile: undefined,
   };
 }
   }
 
-  // 2. Handle authentication based on mode
   if (options.authMode === 'required') {
 if (!authVerified || !user) {
   const errorResponse = createErrorResponse(
@@ -234,7 +132,6 @@ undefined,
 timestamp,
   );
 
-  // Allow custom error handler to override default behavior
   const finalError = options.onAuthError
 ? options.onAuthError(
 {
@@ -245,12 +142,9 @@ requestId,
   )
 : errorResponse;
 
-  // Log authentication failure for debugging
   console.error(
 `Authentication failed [${requestId}]: ${finalError.error.code}`,
   );
-
-  // Add CORS headers for OAuth routes even in error responses
   const securityLevel = classifyRoute(new URL(request.url).pathname);
   const errorHeaders = {
 'Content-Type': 'application/json',
@@ -269,11 +163,9 @@ headers,
 }
   }
 
-  // 3. Create authentication context with authenticated Supabase client
   const authHeader = request.headers.get('authorization');
   const token = authHeader ? authHeader.replace('Bearer ', '') : undefined;
 
-  // Create authenticated client (uses token if available, otherwise cookies)
   const authenticatedClient = await createClientWithToken(token);
 
   const context: AuthenticatedContext = {
@@ -282,26 +174,17 @@ requestId,
 timestamp,
 isAuthenticated: authVerified && !!user,
 supabase: authenticatedClient,
-// OAuth context fields
 isOAuth: isOAuthAuth,
 oauthSession,
   };
 
-  // 4. Call the wrapped handler
   const result = await handler(request, context);
 
-  // Handler executed successfully
-
-  // 6. Determine appropriate HTTP status code
   let statusCode = 200;
   if (!result.success) {
-// Type assertion: result is StandardErrorResponse when success is false
 const errorResult = result as StandardErrorResponse;
-// Use centralized status code mapping
 statusCode = getStatusCode(errorResult.error.code as ErrorCode);
   }
-
-  // 7. Return standardized response with CORS headers for OAuth routes
   const securityLevel = classifyRoute(new URL(request.url).pathname);
   const baseHeaders = {
 'Content-Type': 'application/json',
@@ -319,7 +202,6 @@ status: statusCode,
 headers,
   });
 } catch (error) {
-  // Handle unexpected errors in the authentication wrapper
   console.error(
 `API Error [${requestId}]:`,
 error instanceof Error ? error.message : 'Unknown error',
@@ -336,8 +218,6 @@ process.env.NODE_ENV === 'development'
   : undefined,
 timestamp,
   );
-
-  // Add CORS headers for OAuth routes even in catch block
   const securityLevel = classifyRoute(new URL(request.url).pathname);
   const errorHeaders = {
 'Content-Type': 'application/json',
@@ -357,12 +237,6 @@ headers,
   };
 }
 
-/**
- * Convenience wrapper for required authentication
- * Equivalent to withAuth(handler, { authMode: 'required' })
- *
- * MIDDLEWARE-FIRST: Now reads authentication from middleware headers
- */
 export function withRequiredAuth<T = unknown>(
   handler: AuthenticatedHandler<T>,
   options?: Omit<WithAuthOptions, 'authMode'>,
@@ -370,12 +244,6 @@ export function withRequiredAuth<T = unknown>(
   return withAuth(handler, { ...options, authMode: 'required' });
 }
 
-/**
- * Convenience wrapper for optional authentication
- * Equivalent to withAuth(handler, { authMode: 'optional' })
- *
- * MIDDLEWARE-FIRST: Now reads authentication from middleware headers
- */
 export function withOptionalAuth<T = unknown>(
   handler: AuthenticatedHandler<T>,
   options?: Omit<WithAuthOptions, 'authMode'>,
@@ -383,9 +251,6 @@ export function withOptionalAuth<T = unknown>(
   return withAuth(handler, { ...options, authMode: 'optional' });
 }
 
-/**
- * Helper function to create success responses with consistent format
- */
 export function createSuccessResponse<T>(
   data: T,
   requestId: string,
@@ -399,9 +264,6 @@ timestamp: timestamp || new Date().toISOString(),
   };
 }
 
-/**
- * Helper function to create error responses with consistent format
- */
 export function createErrorResponse(
   code: string,
   message: string,
@@ -422,12 +284,6 @@ error: {
 },
   };
 }
-
-/**
- * Shared handler for unsupported HTTP methods
- * Eliminates boilerplate code in API routes by providing a single function
- * for all method not allowed responses
- */
 export function handle_method_not_allowed(allowed_methods: string[]): Response {
   const request_id = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const timestamp = new Date().toISOString();
@@ -450,32 +306,21 @@ headers: {
   });
 }
 
-/**
- * Validate UUID format - extracted to eliminate duplicated validation logic
- * across API routes
- */
 export function validate_uuid(id: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
 id,
   );
 }
-
-/**
- * Build OAuth-specific authentication context with minimal data exposure
- * Fetches only essential OAuth session and app data from database
- */
 async function buildOAuthAuthContext(
   userId: string,
   sessionId: string,
   clientId: string,
 ): Promise<{ user: AuthenticatedUser; appName: string }> {
   try {
-// Create server client for database access
 const supabase = await import('../supabase/server').then((m) =>
   m.createClient(),
 );
 
-// Fetch minimal OAuth session data with client registry info
 const { data: sessionData } = await supabase
   .from('oauth_sessions')
   .select(
@@ -495,8 +340,8 @@ oauth_client_registry!inner(
 
 const user: AuthenticatedUser = {
   id: userId,
-  email: '', // No email exposure for OAuth context
-  profile: undefined, // No profile data for OAuth-only routes
+  email: '',
+  profile: undefined,
 };
 
 const registry = sessionData?.oauth_client_registry;
@@ -507,7 +352,6 @@ const appName =
 
 return { user, appName };
   } catch (error) {
-// Fallback to minimal context on error
 console.warn('Failed to build OAuth context:', error);
 return {
   user: {
@@ -519,11 +363,6 @@ profile: undefined,
 };
   }
 }
-
-/**
- * Build internal route authentication context with full profile data
- * Uses headers provided by middleware for performance optimization
- */
 function buildInternalAuthContext(
   userId: string,
   userEmail: string,

@@ -58,7 +58,6 @@ error: namesError,
 mutate: revalidateNames,
   } = useSWR(user?.id ? '/api/names' : null, swrFetcher);
 
-  // Create name mutation
   const { trigger: createName, isMutating: isCreating } = useSWRMutation(
 '/api/names',
 createMutationFetcher('POST'),
@@ -85,7 +84,6 @@ notifications.show({
 },
   );
 
-  // Update name mutation
   const { trigger: updateName, isMutating: isUpdating } = useSWRMutation(
 '/api/names',
 createMutationFetcher('PUT'),
@@ -112,7 +110,6 @@ notifications.show({
 },
   );
 
-  // Delete name mutation
   const { trigger: deleteName, isMutating: isDeleting } = useSWRMutation(
 '/api/names',
 createMutationFetcher('DELETE'),
@@ -148,7 +145,6 @@ form.reset();
 
   const handleDelete = async (name: Name) => {
 try {
-  // Check if name can be deleted first
   const canDeleteResponse = await fetch(
 `/api/names/${name.id}/can-delete`,
 {
@@ -168,7 +164,6 @@ return;
 
   const canDeleteData = await canDeleteResponse.json();
 
-  // Set the deletion state and reason
   const protectionInfo = canDeleteData.data;
   setCanDeleteName(protectionInfo?.can_delete || false);
   setDeleteReason(protectionInfo?.reason || '');

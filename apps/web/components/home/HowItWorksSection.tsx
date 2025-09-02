@@ -50,11 +50,11 @@ export function HowItWorksSection() {
   {/* Section Header */}
   <Box ta='center' mb='xl'>
 <Title order={2} size='2.5rem' fw={600} c='gray.8' mb='md'>
-  How It Works
+  System Workflow
 </Title>
 <Text size='lg' c='gray.6' maw={700} mx='auto'>
-  Set up once, use everywhere. Our four-step process puts you in
-  complete control of your digital identity across all platforms.
+  The prototype demonstrates a four-step process for configuring and
+  managing context-aware identity presentation.
 </Text>
   </Box>
 

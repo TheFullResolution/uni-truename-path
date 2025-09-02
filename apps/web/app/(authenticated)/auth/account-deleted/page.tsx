@@ -30,17 +30,14 @@ import { Suspense, useCallback } from 'react';
 function AccountDeletedPageContent() {
   const router = useRouter();
 
-  // Navigate to homepage
   const handleGoHome = useCallback(() => {
 router.push('/' as Route);
   }, [router]);
 
-  // Navigate to signup for new account
   const handleCreateNewAccount = useCallback(() => {
 router.push('/auth/signup' as Route);
   }, [router]);
 
-  // Get current timestamp for confirmation
   const deletionTimestamp = new Date().toLocaleString('en-US', {
 weekday: 'long',
 year: 'numeric',
@@ -65,7 +62,6 @@ background:
   radius='lg'
   style={{ overflow: 'hidden', backgroundColor: 'white' }}
 >
-  {/* Brand Header */}
   <Box
 py='xl'
 px='xl'
@@ -87,9 +83,7 @@ style={{
 </Text>
   </Box>
 
-  {/* Two-column layout */}
   <Grid gutter={0} style={{ minHeight: '500px' }}>
-{/* Left Panel - Information Content */}
 <Grid.Col
   span={{ base: 12, md: 6 }}
   style={{
@@ -106,7 +100,6 @@ borderRight: '1px solid #dee2e6',
   removed from our systems.
 </Text>
 
-{/* Deletion confirmation box */}
 <Box
   style={{
 backgroundColor: 'rgba(46, 204, 113, 0.1)',
@@ -145,7 +138,6 @@ marginTop: '2px',
   </List>
 </Box>
 
-{/* GDPR Compliance section */}
 <Group gap='xs' mb='md'>
   <IconShield size={20} color='#4A7FE7' />
   <Title order={3} c='gray.7' size='h4'>
@@ -158,7 +150,6 @@ GDPR Compliant Deletion
   systems. This action cannot be undone.
 </Text>
 
-{/* Timestamp section */}
 <Group gap='xs' mb='md'>
   <IconClock size={20} color='#6c757d' />
   <Title order={3} c='gray.7' size='h4'>
@@ -169,7 +160,6 @@ Deletion Completed
   {deletionTimestamp}
 </Text>
 
-{/* Thank you message */}
 <Box
   style={{
 backgroundColor: 'rgba(74, 127, 231, 0.1)',
@@ -187,14 +177,12 @@ our platform.
   </Box>
 </Grid.Col>
 
-{/* Right Panel - Action Options */}
 <Grid.Col span={{ base: 12, md: 6 }}>
   <Box p='xl'>
 <Title order={2} c='gray.8' mb='xl'>
   What&apos;s Next?
 </Title>
 
-{/* Success confirmation alert */}
 <Alert
   icon={<IconCheck size={16} />}
   title='Account Deletion Confirmed'
@@ -213,7 +201,6 @@ our platform.
   again.
 </Text>
 
-{/* Action buttons */}
 <Box>
   <Button
 size='lg'
@@ -238,7 +225,6 @@ Create New Account
   </Button>
 </Box>
 
-{/* Additional information */}
 <Box mt='xl' pt='xl' style={{ borderTop: '1px solid #dee2e6' }}>
   <Title order={3} c='gray.7' mb='md' size='h5'>
 Need Support?

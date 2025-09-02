@@ -24,13 +24,11 @@ const CreateContextSchema = z.object({
 .nullable()
 .optional()
 .transform((str) => str?.trim() || null),
-  // visibility field removed - simplified context model
 });
 
 const handlePost: AuthenticatedHandler = async (request, context) => {
   const body = CreateContextSchema.parse(await request.json());
 
-  // Check for duplicate
   const { data: existing } = await context.supabase
 .from('user_contexts')
 .select('id')
@@ -48,15 +46,12 @@ return createErrorResponse(
 );
   }
 
-  // Create context - simplified schema without visibility
   const { data: newContext, error: insertError } = await context.supabase
 .from('user_contexts')
 .insert({
   user_id: context.user!.id,
   context_name: body.context_name,
   description: body.description,
-  // is_permanent defaults to FALSE (only "Public" context should be permanent)
-  // visibility removed - all contexts are validated by completeness only
 })
 .select()
 .single();
@@ -85,17 +80,14 @@ const handleGet: AuthenticatedHandler<ContextWithStats[]> = async (
   const startTime = Date.now();
 
   try {
-// Parse query parameters
 const url = new URL(request.url);
 const filter = url.searchParams.get('filter');
 
-// Use centralized utility for fetching contexts with stats
 const contextsWithStats = await fetchContextsWithStats(
   context.supabase,
   context.user!.id,
 );
 
-// Apply filtering if requested
 let filteredContexts = contextsWithStats;
 if (filter === 'complete') {
   filteredContexts = filterAvailableContexts(contextsWithStats);
@@ -103,7 +95,6 @@ if (filter === 'complete') {
 
 const responseTime = Date.now() - startTime;
 
-// Log performance metrics for monitoring
 if (responseTime > 500) {
   console.warn(
 `Slow context API response: ${responseTime}ms for user ${context.user!.id}`,

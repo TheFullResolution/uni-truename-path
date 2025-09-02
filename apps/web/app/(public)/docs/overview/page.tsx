@@ -18,7 +18,6 @@ import {
   IconUsers,
   IconInfoCircle,
   IconSchool,
-  IconStar,
   IconClock,
 } from '@tabler/icons-react';
 import { DemoAppsShowcase } from '@/components/docs/DemoAppsShowcase';
@@ -47,13 +46,13 @@ export default function OverviewPage() {
   <Group align='center' mb='md'>
 <Title order={1}>What is TrueNamePath?</Title>
 <Badge size='lg' color='blue' variant='light'>
-  Academic Research Project
+  University Final Project
 </Badge>
   </Group>
   <Text size='xl' c='dimmed' lh='1.6' mb='lg'>
-The first context-aware identity management system that gives users
-complete control over how their names are presented to different
-audiences.
+A university final project (CM3035 Advanced Web Design) that
+demonstrates context-aware identity management, allowing users to
+control how their names are presented to different applications.
   </Text>
 </div>
 
@@ -85,34 +84,27 @@ mb='md'
 </Text>
   </Alert>
   <Text size='md' lh='1.6' mb='md'>
-The impact extends beyond inconvenience into measurable
-discrimination. Bertrand and Mullainathan&apos;s landmark study
-found that resumes with &ldquo;White-sounding&rdquo; names received
-50% more callbacks than identical resumes with
-&ldquo;African-American-sounding&rdquo; names—demonstrating how name
-presentation directly impacts economic opportunity.
+Research shows this creates real discrimination. Bertrand and
+Mullainathan&apos;s study found that resumes with
+&ldquo;White-sounding&rdquo; names received 50% more callbacks than
+identical resumes with &ldquo;African-American-sounding&rdquo;
+names.
   </Text>
   <Text size='md' lh='1.6'>
 McKenzie (2010) catalogued over 40 false assumptions that software
-systems make about names, from expecting a single canonical
-representation to mishandling non-ASCII characters. Despite these
-well-documented challenges, traditional identity systems continue to
-enforce a one-size-fits-all approach that fails to accommodate the
-nuanced, context-dependent nature of personal identity.
+systems make about names, yet traditional identity systems continue
+to enforce a one-size-fits-all approach that fails to accommodate
+how names are used in different contexts.
   </Text>
 </div>
 
 {/* Solution Explanation */}
 <div data-testid='overview-solution'>
   <Title order={2} mb='lg' c='green.7'>
-Our Innovation: Context-Aware Identity Resolution
+Technical Implementation: Context-Aware Identity Resolution
   </Title>
   <Text size='md' lh='1.6' mb='lg'>
-TrueNamePath is the{' '}
-<Text component='span' fw={700}>
-  FIRST system of its kind
-</Text>{' '}
-to offer{' '}
+This project implements{' '}
 <Text
   component='span'
   bg='yellow.1'
@@ -122,64 +114,39 @@ to offer{' '}
 >
   context-aware name resolution
 </Text>{' '}
-as a primary feature. Surprisingly, despite the identity management
-market reaching substantial size, no commercial product offers
-user-configurable context-aware name selection.
+as a proof-of-concept, demonstrating how existing OAuth
+infrastructure can be extended to provide user-configurable name
+selection based on requesting application context.
   </Text>
 
   <Text size='md' lh='1.6' mb='md'>
 <Text component='span' fw={600}>
-  The Market Gap:
+  Technical Approach:
 </Text>{' '}
-Major identity providers possess all necessary technical
-components—including policy engines and configurable attribute
-disclosure capabilities—yet apply these exclusively to security
-decisions rather than identity presentation. This represents both a
-significant market gap and the key innovation opportunity for this
-project.
+The system leverages existing OAuth infrastructure, implementing
+context-aware identity resolution as a layer on top of standard
+OAuth flows. Applications receive contextually appropriate identity
+information through standard OAuth protocols.
   </Text>
 
   <Text size='md' lh='1.6' mb='md'>
 <Text component='span' fw={600}>
-  Technical Innovation:
+  Core Algorithm:
 </Text>{' '}
-TrueNamePath leverages existing OAuth infrastructure in a novel way,
-implementing context-aware identity resolution as a transparent
-layer on top of standard OAuth flows. Applications receive
-contextually appropriate identity information without requiring any
-code changes.
-  </Text>
-
-  <Text size='md' lh='1.6' mb='md'>
-<Text component='span' fw={600}>
-  The Core Algorithm:
-</Text>{' '}
-The system&apos;s{' '}
+The{' '}
 <Text component='code' size='sm' bg='gray.1' px={4} py={2}>
-  resolve_name()
+  resolve_oauth_oidc_claims()
 </Text>{' '}
-function implements a sophisticated three-layer algorithm: consent
-verification (ensuring user has granted permission), visibility
-filtering (checking context assignments), and audience-specific
-prioritisation (selecting the most appropriate name variant for the
-requesting application type).
+function implements a three-layer decision process: consent
+verification, visibility filtering, and context-specific name
+selection based on the requesting application.
   </Text>
-
-  <Group align='center' mb='lg'>
-<ThemeIcon size={24} color='blue' variant='light'>
-  <IconStar size={16} />
-</ThemeIcon>
-<Text size='sm' fw={600} c='blue.7'>
-  First-of-its-kind user-configurable context-aware name selection
-  system
-</Text>
-  </Group>
 </div>
 
 {/* Key Features */}
 <div data-testid='overview-features'>
   <Title order={2} mb='lg'>
-Key Features
+Implementation Features
   </Title>
   <List
 spacing='md'
@@ -193,13 +160,12 @@ icon={
 <ListItem>
   <Text component='div'>
 <Text component='span' fw={600}>
-  Complete User Control:
+  User-Defined Contexts:
 </Text>{' '}
-Users define their own contexts (&ldquo;Work Colleagues,&rdquo;
-&ldquo;Gaming Friends,&rdquo; &ldquo;HR Systems,&rdquo;
-&ldquo;LinkedIn Professional,&rdquo; &ldquo;Team
-Communication,&rdquo; &ldquo;Open Source Development&rdquo;) and
-assign appropriate name variants to each context.
+Users create custom contexts (e.g., &ldquo;Work
+Colleagues,&rdquo; &ldquo;Gaming Friends,&rdquo; &ldquo;HR
+Systems&rdquo;) and assign specific name variants to each
+context through a dashboard interface.
   </Text>
 </ListItem>
 <ListItem
@@ -211,13 +177,11 @@ assign appropriate name variants to each context.
 >
   <Text component='div'>
 <Text component='span' fw={600}>
-  Privacy Protection:
+  Privacy Controls:
 </Text>{' '}
-GDPR-compliant data minimization with privacy-by-design
-architecture prevents over-sharing of personal information by
-automatically selecting contextually appropriate names (e.g.,
-&ldquo;Alex C.&rdquo; for professional contexts instead of
-&ldquo;Alexandra Chen-Rodriguez&rdquo;).
+Implements data minimization by automatically selecting
+contextually appropriate names, with comprehensive audit logging
+and consent management for GDPR compliance.
   </Text>
 </ListItem>
 <ListItem
@@ -229,13 +193,11 @@ automatically selecting contextually appropriate names (e.g.,
 >
   <Text component='div'>
 <Text component='span' fw={600}>
-  Professional Presentation:
+  Context-Aware Selection:
 </Text>{' '}
-Implements a three-layer algorithm: consent verification,
-visibility filtering, and audience-specific prioritisation to
-ensure appropriate formality levels for different application
-types (formal names for HR systems, casual names for social
-platforms).
+Three-layer algorithm (consent verification, visibility
+filtering, context-specific selection) ensures appropriate names
+for different application types.
   </Text>
 </ListItem>
 <ListItem
@@ -247,11 +209,10 @@ platforms).
 >
   <Text component='div'>
 <Text component='span' fw={600}>
-  OAuth Integration:
+  REST API & OAuth:
 </Text>{' '}
-Seamless integration with existing OAuth workflows -
-applications receive contextually appropriate identity
-information without code changes.
+Complete REST API implementation with OAuth Bearer token
+authentication and standard OIDC claims resolution.
   </Text>
 </ListItem>
 <ListItem
@@ -263,11 +224,10 @@ information without code changes.
 >
   <Text component='div'>
 <Text component='span' fw={600}>
-  Performance & Compliance:
+  Testing & Validation:
 </Text>{' '}
-Sub-50ms name resolution, 100% audit coverage for GDPR
-compliance, and immutable audit trails ensuring complete
-transparency in data access.
+Comprehensive end-to-end testing with Playwright, complete audit
+trail implementation, and response time monitoring.
   </Text>
 </ListItem>
   </List>
@@ -275,30 +235,15 @@ transparency in data access.
 
 <Divider my='xl' />
 
-{/* Demo Apps Integration */}
-<div data-testid='overview-demo-section'>
-  <Title order={2} mb='md'>
-See It In Action
-  </Title>
-  <Text size='md' c='dimmed' mb='lg'>
-Experience TrueNamePath&apos;s context-aware identity resolution
-with our live demonstration applications. Each app represents a
-different context and shows how the same user can be presented
-appropriately to different audiences.
-  </Text>
-  <DemoAppsShowcase />
-</div>
-
-<Divider my='xl' />
-
 {/* Academic Context */}
 <div data-testid='overview-academic'>
-  <Alert
-icon={<IconSchool size={20} />}
-title='Academic Project Context'
-color='blue'
-variant='light'
-  >
+  <Paper p='lg' bg='blue.0' radius='lg'>
+<Group mb='md'>
+  <ThemeIcon size={32} radius='md' color='blue' variant='light'>
+<IconSchool size={20} />
+  </ThemeIcon>
+  <Title order={3}>Academic Project Context</Title>
+</Group>
 <Stack gap='sm'>
   <Text size='sm' lh='1.5'>
 <Text component='span' fw={600}>
@@ -315,44 +260,59 @@ despite possessing the necessary technical infrastructure.
 <Text component='span' fw={600}>
   Technical Approach:
 </Text>{' '}
-This project proves that context-aware name resolution can be
-implemented as a transparent layer on top of existing OAuth
-systems, requiring no changes to consuming applications while
-providing significant user value.
+This project demonstrates that context-aware name resolution can
+be implemented as a layer on top of existing OAuth systems
+without requiring changes to consuming applications.
   </Text>
   <Text size='sm' lh='1.5'>
 <Text component='span' fw={600}>
   Implementation Scope:
 </Text>{' '}
-The system is designed for academic demonstration and
-evaluation, showcasing modern web technologies including Next.js
-15, React 19, TypeScript, Supabase, PostgreSQL with
-comprehensive E2E testing using Playwright and OAuth compliance.
+Built for academic demonstration using Next.js 15, React 19,
+TypeScript, Supabase, and PostgreSQL with comprehensive
+end-to-end testing and OAuth compliance.
   </Text>
   <Text size='sm' lh='1.5'>
 <Text component='span' fw={600}>
   Technical Achievement:
 </Text>{' '}
-The system demonstrates production-ready deployment with
-sub-50ms resolution times, complete OAuth compliance, and a
-comprehensive test suite validating all functionality across
+Includes working OAuth integration, REST API implementation,
+comprehensive test suite, and performance monitoring across
 multiple browsers and devices.
   </Text>
 </Stack>
-  </Alert>
+  </Paper>
 </div>
+
+<Divider my='xl' />
+
+{/* Demo Apps Integration */}
+<div data-testid='overview-demo-section'>
+  <Title order={2} mb='md'>
+See It In Action
+  </Title>
+  <Text size='md' c='dimmed' mb='lg'>
+This academic project includes working demonstration applications
+that show how context-aware identity resolution functions in
+practice. Each demo app represents a different context and shows how
+names are presented differently based on the requesting application.
+  </Text>
+  <DemoAppsShowcase />
+</div>
+
+<Divider my='xl' />
 
 {/* Call to Action */}
 <div data-testid='overview-cta'>
   <Paper p='lg' bg='blue.0' radius='lg'>
 <Stack gap='md'>
   <Text size='lg' fw={600} ta='center'>
-Ready to explore context-aware identity management?
+Explore this academic demonstration
   </Text>
   <Text size='md' c='dimmed' ta='center' lh='1.5'>
-Try our demo applications above or continue to the Quick Start
-Guide to learn how to configure your own contexts and name
-variants.
+Try the demo applications above to see context-aware identity
+resolution in action, or continue to the Quick Start Guide to
+understand the system architecture and implementation.
   </Text>
 </Stack>
   </Paper>

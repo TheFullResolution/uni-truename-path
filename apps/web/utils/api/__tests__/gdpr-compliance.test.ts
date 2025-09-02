@@ -58,7 +58,7 @@ expect(allowedHeaders).toContain('x-authenticated-user-id');
 });
 
 it('should expose zero personal data for public authentication routes', () => {
-  const publicRoutes = ['/api/auth/login', '/api/auth/signup'];
+  const publicRoutes = ['/api/auth/signup'];
 
   publicRoutes.forEach((route) => {
 const allowedHeaders = getAllowedHeadersForRoute(route);
@@ -360,7 +360,6 @@ it('should provide deterministic results for compliance auditing', () => {
   expectedClass: RouteSecurityLevel.OAUTH_PUBLIC,
 },
 { route: '/api/names', expectedClass: RouteSecurityLevel.INTERNAL_APP },
-{ route: '/api/auth/login', expectedClass: RouteSecurityLevel.PUBLIC },
   ];
 
   auditRoutes.forEach(({ route, expectedClass }) => {

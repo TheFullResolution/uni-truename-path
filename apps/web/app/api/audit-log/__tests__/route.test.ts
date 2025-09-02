@@ -77,14 +77,6 @@ expect(GET).toBeDefined();
 expect(typeof GET).toBe('function');
   });
 
-  it('should export method not allowed handlers', async () => {
-const { POST, PUT, DELETE, PATCH } = await import('../route');
-expect(POST).toBeDefined();
-expect(PUT).toBeDefined();
-expect(DELETE).toBeDefined();
-expect(PATCH).toBeDefined();
-  });
-
   it('should validate app usage log entry data structure', () => {
 // Test raw app_usage_log data structure
 expect(mockAppUsageLogEntry).toHaveProperty('id');

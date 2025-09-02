@@ -1,4 +1,4 @@
-import { AuthProvider } from '../../utils/context';
+import { AuthProvider } from '@/utils/context';
 import { SharedFooter } from '@/components/layout/SharedFooter';
 import type { ReactNode } from 'react';
 
@@ -11,7 +11,6 @@ interface AuthenticatedLayoutProps {
 
 /**
  * Authenticated route group layout
- * Contains AuthProvider for authentication-dependent pages like dashboard, settings, etc.
  */
 export default function AuthenticatedLayout({
   children,

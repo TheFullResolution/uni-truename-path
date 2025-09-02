@@ -135,7 +135,7 @@ expect(classifyRoute(route, true)).toBe(
   });
 
   describe('Public Route Header Security', () => {
-const publicRoutes = ['/api/auth/login', '/api/auth/signup'];
+const publicRoutes = ['/api/auth/signup'];
 
 it('should block all authentication headers from public routes', () => {
   publicRoutes.forEach((route) => {
@@ -170,7 +170,6 @@ it('should maintain strict boundaries between route types', () => {
   expected: RouteSecurityLevel.OAUTH_PUBLIC,
 },
 { route: '/api/names', expected: RouteSecurityLevel.INTERNAL_APP },
-{ route: '/api/auth/login', expected: RouteSecurityLevel.PUBLIC },
   ];
 
   testCases.forEach(({ route, expected }) => {
@@ -196,7 +195,7 @@ it('should prevent cross-contamination between security levels', () => {
   // OAuth route should not get internal app headers
   const oauthRoute = '/api/oauth/resolve';
   const internalRoute = '/api/names';
-  const publicRoute = '/api/auth/login';
+  const publicRoute = '/api/auth/signup';
 
   // OAuth headers != Internal headers
   expect(getAllowedHeadersForRoute(oauthRoute)).not.toEqual(
@@ -240,7 +239,7 @@ expect(isHeaderAllowedForRoute(header, internalRoute, true)).toBe(true);
   });
 
   // Public route - should allow none
-  const publicRoute = '/api/auth/login';
+  const publicRoute = '/api/auth/signup';
   testHeaders.forEach((header) => {
 expect(isHeaderAllowedForRoute(header, publicRoute)).toBe(false);
   });
@@ -347,7 +346,7 @@ it('should maintain audit trail of security decisions', () => {
   const criticalRoutes = [
 '/api/oauth/resolve',
 '/api/names',
-'/api/auth/login',
+'/api/auth/signup',
   ];
 
   criticalRoutes.forEach((route) => {
@@ -367,7 +366,7 @@ it('should enforce principle of least privilege', () => {
   expect(oauthHeaders.length).toBeLessThan(INTERNAL_APP_HEADERS.length);
 
   // Public routes should have no headers
-  const publicHeaders = getAllowedHeadersForRoute('/api/auth/login');
+  const publicHeaders = getAllowedHeadersForRoute('/api/auth/signup');
   expect(publicHeaders).toHaveLength(0);
 
   // Internal routes can have all headers

@@ -17,8 +17,7 @@ interface CanDeleteContextResponse {
   can_delete: boolean;
   requires_force: boolean;
   impact?: {
-name_assignments: number;
-active_consents: number;
+app_assignments: number;
 details: string[];
   };
 }
@@ -60,8 +59,7 @@ const response: CanDeleteContextResponse = {
   can_delete: false,
   requires_force: false,
   impact: {
-name_assignments: 0,
-active_consents: 0,
+app_assignments: 0,
 details: ['Cannot delete the default context as it is permanent'],
   },
 };
@@ -94,8 +92,7 @@ can_delete: true,
 requires_force: hasDependencies,
 impact: hasDependencies
   ? {
-  name_assignments: 0, // Legacy field, no longer used
-  active_consents: appAssignmentCount, // Now represents app assignments
+  app_assignments: appAssignmentCount,
   details,
 }
   : undefined,

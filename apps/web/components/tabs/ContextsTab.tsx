@@ -74,7 +74,6 @@ error: contextsError,
 mutate: revalidateContexts,
   } = useSWR(user?.id ? '/api/contexts' : null, swrFetcher);
 
-  // Create context mutation
   const { trigger: createContext, isMutating: isCreating } = useSWRMutation(
 '/api/contexts',
 createMutationFetcher('POST'),
@@ -101,7 +100,6 @@ notifications.show({
 },
   );
 
-  // Update context mutation
   const { trigger: updateContext, isMutating: isUpdating } = useSWRMutation(
 '/api/contexts/update',
 async (url, { arg }: { arg: { context_id: string } & ContextFormData }) => {
@@ -146,7 +144,6 @@ notifications.show({
 },
   );
 
-  // Delete context mutation
   const { trigger: deleteContext, isMutating: isDeleting } = useSWRMutation(
 '/api/contexts/delete',
 async (url, { arg }: { arg: { context_id: string; force: boolean } }) => {
@@ -204,13 +201,11 @@ return result.success
 
   const handleSubmit = async (values: ContextFormData) => {
 if (editingContext) {
-  // Update existing context
   await updateContext({
 context_id: editingContext.id,
 ...values,
   });
 } else {
-  // Create new context
   await createContext(values);
 }
   };
@@ -260,7 +255,6 @@ throw new Error(`HTTP ${response.status}`);
   const result = await response.json();
 
   if (result.success) {
-// Check if context can be deleted at all
 if (!result.data.can_delete) {
   notifications.show({
 title: 'Cannot Delete Context',
@@ -273,7 +267,6 @@ autoClose: 5000,
   return;
 }
 
-// Set dependency impact data based on can-delete response
 if (result.data.requires_force && result.data.impact) {
   setDependencyImpact({
 name_assignments: result.data.impact.name_assignments,

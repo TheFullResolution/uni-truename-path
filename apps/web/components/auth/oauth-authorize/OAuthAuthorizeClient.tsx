@@ -112,12 +112,10 @@ error.message ||
 },
   );
 
-  // Get selected context data for display
   const selectedContextData = contexts.find(
 (c) => c.id === form.values.contextId,
   );
 
-  // Handle form submission
   const handleAuthorize = async () => {
 // Validate form
 const validation = form.validate();

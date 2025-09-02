@@ -42,15 +42,11 @@ interface PageData {
   user: { id: string; email?: string };
 }
 
-/**
- * Server-side data fetching functions
- */
 async function validateAuthorizeParams(searchParams: {
   [key: string]: string | undefined;
 }): Promise<AuthorizeParams> {
   const { app_name, return_url, state } = searchParams;
 
-  // Basic required parameter checks
   if (!return_url) {
 notFound();
   }
@@ -59,7 +55,6 @@ notFound();
 notFound();
   }
 
-  // Basic URL validation
   try {
 new URL(return_url);
   } catch {
@@ -77,7 +72,6 @@ async function fetchOAuthAppData(
   appName: string,
   domain: string,
 ): Promise<OAuthClientRegistryInfo> {
-  // Check for existing client using service role
   const { data: existingClient, error: lookupError } =
 await lookupExistingClient(domain, appName);
 
@@ -89,7 +83,6 @@ throw new Error(`Failed to lookup OAuth client: ${lookupError.message}`);
 return existingClient;
   }
 
-  // Create new client using service role with retry logic
   const requestId = randomBytes(8).toString('hex');
   const { data: newClient, error: createError } =
 await createNewClientWithRetry(domain, appName, requestId);
@@ -108,12 +101,11 @@ async function fetchUserContexts(
   userId: string,
 ): Promise<ContextWithStats[]> {
   try {
-// Use the centralized utility with OAuth-specific options
 const { fetchContextsWithStats } = await import('@/utils/server/contexts');
 
 const contextsWithStats = await fetchContextsWithStats(supabase, userId, {
-  useAppAssignments: false, // Use context_oidc_assignments to show new contexts
-  sortOrder: 'asc', // OAuth page uses ascending order
+  useAppAssignments: false,
+  sortOrder: 'asc',
 });
 
 if (!contextsWithStats || contextsWithStats.length === 0) {
@@ -123,13 +115,11 @@ if (!contextsWithStats || contextsWithStats.length === 0) {
   return [];
 }
 
-// Apply OAuth-specific filtering server-side for security
 const { filterAvailableContexts } = await import(
   '@/utils/contexts/filtering'
 );
 const filteredContexts = filterAvailableContexts(contextsWithStats);
 
-// For new users with no contexts yet, this is handled by the fallback in assignContextToClient
 if (!filteredContexts || filteredContexts.length === 0) {
   console.log(
 `No available contexts found for user ${userId} after OAuth filtering - contexts may be incomplete or restricted`,
@@ -163,13 +153,9 @@ throw new Error(`Failed to fetch app assignment: ${error.message}`);
   return assignment || null;
 }
 
-/**
- * Main page data fetching function
- */
 async function fetchPageData(searchParams: {
   [key: string]: string | undefined;
 }): Promise<PageData> {
-  // Server-side authentication check
   const supabase = await createClient();
   const {
 data: { user },
@@ -182,21 +168,17 @@ const currentUrl = `/auth/oauth-authorize?${params}`;
 redirect(`/auth/login?returnUrl=${encodeURIComponent(currentUrl)}`);
   }
 
-  // Validate parameters
   const authorizeParams = await validateAuthorizeParams(searchParams);
 
-  // Get host from headers for domain extraction
   const headersList = await headers();
   const host = headersList.get('host') || 'localhost';
   const domain = host.split(':')[0];
 
-  // Parallel data fetching
   const [client, contexts] = await Promise.all([
 fetchOAuthAppData(authorizeParams.app_name, domain),
 fetchUserContexts(supabase, user.id),
   ]);
 
-  // Fetch existing assignment after we have the client ID
   const existingAssignment = await fetchAppAssignment(
 supabase,
 user.id,
@@ -215,16 +197,12 @@ user: {
   };
 }
 
-/**
- * Page content component with pre-fetched data
- */
 function OAuthAuthorizePageContent({ data }: { data: PageData }) {
   const { client, contexts, existingAssignment, authorizeParams, user } = data;
 
   return (
 <Container maw={600} px='md' py='xl' data-testid='oauth-authorize-page'>
   <Paper shadow='sm' radius='md' p='xl'>
-{/* Header with consistent typography */}
 <Center mb='xl'>
   <Box ta='center'>
 <Logo size='lg' />
@@ -234,7 +212,6 @@ function OAuthAuthorizePageContent({ data }: { data: PageData }) {
   </Box>
 </Center>
 
-{/* App info card with professional styling */}
 <Card
   shadow='sm'
   padding='xl'
@@ -269,7 +246,6 @@ to share.
   application.
 </Text>
 
-{/* Authorization Form */}
 <OAuthAuthorizeClient
   app={client}
   contexts={contexts}
@@ -284,23 +260,18 @@ to share.
 
 /**
  * OAuth Authorization Page - Server Component
- * Handles OAuth authorization requests with server-side rendering
  */
 export default async function OAuthAuthorizePage({
   searchParams,
 }: {
   searchParams: Promise<{ [key: string]: string | undefined }>;
 }) {
-  // Await searchParams and fetch all page data server-side
-  // Note: Don't wrap in try-catch because redirect() needs to throw to work
   const params = await searchParams;
 
   try {
 const data = await fetchPageData(params);
-// Render page with pre-fetched data
 return <OAuthAuthorizePageContent data={data} />;
   } catch (error) {
-// Don't catch redirect errors - let them bubble up
 if (
   error &&
   typeof error === 'object' &&
@@ -311,7 +282,6 @@ if (
   throw error;
 }
 
-// Handle other server-side errors
 console.error('OAuth Authorization Page Error:', error);
 return (
   <Center p='xl'>

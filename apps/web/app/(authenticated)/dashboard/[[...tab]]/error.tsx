@@ -13,7 +13,6 @@ export default function DashboardError({
 }) {
   useEffect(() => {
 console.error('Dashboard error:', error);
-// Report to error tracking service in production
   }, [error]);
 
   return (

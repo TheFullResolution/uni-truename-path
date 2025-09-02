@@ -34,9 +34,9 @@ color: 'green',
   },
   {
 icon: IconPlug,
-title: 'OAuth 2.0 Integration',
+title: 'OAuth 2.0 Pattern',
 description:
-  'Seamlessly integrate with existing applications through standard OAuth flows. No custom authentication protocols required.',
+  'Academic implementation demonstrating context-aware identity resolution using simplified OAuth flows for educational purposes.',
 color: 'blue',
   },
   {
@@ -55,9 +55,9 @@ color: 'orange',
   },
   {
 icon: IconEye,
-title: 'Real-Time Monitoring',
+title: 'Usage Monitoring',
 description:
-  'Live dashboard showing API usage, connected applications, and recent identity resolutions with detailed metrics.',
+  'Dashboard interface showing connected applications, active sessions, and identity resolution history for demonstration purposes.',
 color: 'teal',
   },
 ];
@@ -70,12 +70,12 @@ export function FeaturesSection() {
   {/* Section Header */}
   <Box ta='center' mb='xl'>
 <Title order={2} size='2.5rem' fw={600} c='gray.8' mb='md'>
-  Why TrueNamePath?
+  Project Features
 </Title>
 <Text size='lg' c='gray.6' maw={700} mx='auto'>
-  Built for the modern web where identity is complex and context
-  matters. Our API provides the flexibility and security that
-  traditional systems lack.
+  This university project demonstrates technical capabilities for
+  context-aware identity management using existing infrastructure in
+  a novel configuration.
 </Text>
   </Box>
 

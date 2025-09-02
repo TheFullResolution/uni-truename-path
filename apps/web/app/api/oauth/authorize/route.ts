@@ -4,7 +4,6 @@ import {
   createSuccessResponse,
   createErrorResponse,
   AuthenticatedContext,
-  handle_method_not_allowed,
 } from '@/utils/api/with-auth';
 import { ErrorCodes, StandardResponse } from '@/utils/api/types';
 import { OAuthAuthorizeRequestSchema, OAuthAuthorizeRequest } from './schemas';
@@ -214,7 +213,7 @@ context: {
 }
 
 /**
- * POST /api/oauth/authorize - OAuth session token generation with context assignment
+ * POST /api/oauth/authorize - OAuth session token generation
  */
 async function handleAuthorize(
   request: NextRequest,
@@ -299,7 +298,6 @@ timestamp,
   );
 }
 
-// Track OAuth authorization for analytics
 const startTime = Date.now();
 await trackOAuthAuthorization(
   supabase,
@@ -334,15 +332,8 @@ return createErrorResponse(
 
 export const POST = withRequiredAuth(handleAuthorize);
 
-// Handle unsupported HTTP methods
-export const GET = () => handle_method_not_allowed(['POST']);
-export const PUT = () => handle_method_not_allowed(['POST']);
-export const DELETE = () => handle_method_not_allowed(['POST']);
-export const PATCH = () => handle_method_not_allowed(['POST']);
-
 /**
  * OPTIONS handler for CORS preflight requests
- * Required for cross-origin requests from demo-hr app
  */
 export async function OPTIONS(): Promise<Response> {
   return createCORSOptionsResponse('POST, OPTIONS');

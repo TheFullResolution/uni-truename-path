@@ -37,11 +37,12 @@ export default function QuickStartPage() {
   <Stack gap='xl' data-testid='quick-start-content'>
 <div data-testid='quick-start-hero'>
   <Title order={1} mb='md'>
-Getting Started with TrueNamePath
+TrueNamePath Setup Guide
   </Title>
   <Text size='lg' c='dimmed'>
-Follow these simple steps to set up your account and start managing
-your digital identity
+Academic demonstration of context-aware identity management using
+OAuth/OIDC patterns. This guide covers account setup and core
+functionality.
   </Text>
 </div>
 
@@ -64,8 +65,8 @@ gradient={{ from: 'blue', to: 'cyan' }}
 title='Account Creation'
   >
 <Text c='dimmed' size='sm' mt='xs'>
-  Start by creating your TrueNamePath account in just two simple
-  steps.
+  Account creation involves two steps with automatic database
+  trigger setup.
 </Text>
 <Stack gap='sm' mt='md'>
   <div>
@@ -82,8 +83,8 @@ title='Account Creation'
   Step 2: Profile Completion
 </Text>
 <Text size='xs' c='dimmed'>
-  Complete your profile setup. The system will automatically
-  create your default public context.
+  Complete profile setup. Database triggers automatically create
+  the default context and initial name variants.
 </Text>
   </div>
 </Stack>
@@ -102,8 +103,8 @@ gradient={{ from: 'teal', to: 'green' }}
 title='Default Context Setup'
   >
 <Text c='dimmed' size='sm' mt='xs'>
-  Your default context is automatically created and serves as your
-  public identity baseline.
+  The default context is automatically created via database triggers
+  and requires three mandatory OIDC properties for compliance.
 </Text>
 <Stack gap='sm' mt='md'>
   <div>
@@ -121,9 +122,9 @@ title='Default Context Setup'
   Assign to OIDC Properties
 </Text>
 <Text size='xs' c='dimmed'>
-  Link your names to standard properties: name, given_name, and
-  family_name. These are required for your default context to be
-  complete.
+  Link your names to OIDC standard properties: name, given_name,
+  and family_name. These three properties are mandatory for
+  default context completion.
 </Text>
   </div>
 </Stack>
@@ -171,8 +172,8 @@ gradient={{ from: 'orange', to: 'yellow' }}
 title='Custom Contexts Creation'
   >
 <Text c='dimmed' size='sm' mt='xs'>
-  Create additional contexts to present different versions of
-  yourself to different audiences.
+  Create additional contexts to demonstrate different identity
+  presentations for various OAuth clients.
 </Text>
 <Stack gap='sm' mt='md'>
   <div>
@@ -199,9 +200,9 @@ title='Custom Contexts Creation'
   Flexible Assignment
 </Text>
 <Text size='xs' c='dimmed'>
-  Unlike your default context, custom contexts don&apos;t
-  require specific property assignments - assign names as
-  needed.
+  Unlike the default context, custom contexts have no mandatory
+  OIDC property requirements - assign names based on
+  demonstration needs.
 </Text>
   </div>
 </Stack>
@@ -214,7 +215,7 @@ title='Custom Contexts Creation'
   mt='md'
   data-testid='context-examples-alert'
 >
-  <Text size='sm'>Popular context ideas to get you started:</Text>
+  <Text size='sm'>Common demonstration scenarios:</Text>
   <Stack gap='xs' mt='xs'>
 <Text size='xs'>
   • <strong>Work Colleagues</strong> - Professional name for
@@ -252,8 +253,8 @@ gradient={{ from: 'grape', to: 'pink' }}
 title='App Connection'
   >
 <Text c='dimmed' size='sm' mt='xs'>
-  Connect third-party applications and control how you appear to
-  each one.
+  OAuth clients receive identity claims based on assigned contexts,
+  demonstrating context-aware identity resolution.
 </Text>
 <Stack gap='sm' mt='md'>
   <div>
@@ -261,8 +262,8 @@ title='App Connection'
   Authorize Apps
 </Text>
 <Text size='xs' c='dimmed'>
-  When you authorize an OAuth application, it will automatically
-  appear in your Connected Apps panel.
+  OAuth authorization creates Bearer token sessions tracked in
+  the Connected Apps panel for demonstration purposes.
 </Text>
   </div>
   <div>
@@ -270,8 +271,8 @@ title='App Connection'
   Assign Contexts
 </Text>
 <Text size='xs' c='dimmed'>
-  Choose which context each connected app should see. This
-  determines how your identity is presented to that application.
+  Context assignment determines which identity data is resolved
+  for each OAuth client via the Bearer token API.
 </Text>
   </div>
   <div>
@@ -279,8 +280,8 @@ title='App Connection'
   Context Completeness
 </Text>
 <Text size='xs' c='dimmed'>
-  Look for the green checkmark indicating your context has all
-  required information for the app to work properly.
+  Green checkmarks indicate contexts have all required OIDC
+  properties assigned for complete claims resolution.
 </Text>
   </div>
 </Stack>
@@ -296,8 +297,8 @@ What Apps See:
   ${'"'}context${'"'}: ${'"'}Work Colleagues${'"'}
 }`}</Code>
   <Text size='xs' c='dimmed' mt='xs'>
-Apps receive your identity information based on the context
-you&apos;ve assigned to them.
+OAuth clients receive OIDC-compliant identity claims resolved
+from the assigned context via the Bearer token API.
   </Text>
 </div>
   </TimelineItem>
@@ -362,8 +363,9 @@ title='Understanding the Rules'
 
 <div data-testid='quick-start-cta'>
   <Text size='sm' c='dimmed' ta='center' mt='xl'>
-Ready to get started? Create your account and begin managing your
-digital identity across all your applications.
+This demonstration system showcases context-aware identity
+management as part of a university final project exploring
+OAuth/OIDC patterns and privacy-by-design principles.
   </Text>
 </div>
   </Stack>

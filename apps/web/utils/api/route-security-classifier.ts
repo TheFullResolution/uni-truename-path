@@ -1,56 +1,14 @@
-// TrueNamePath: Route-Aware Security Classification System
-// Classification system for implementing secure header isolation across API routes
-// Date: August 23, 2025
-// Academic project infrastructure for GDPR-compliant OAuth integration
+// Route Security Classification System
 
-/**
- * Security classification levels for API routes
- * Determines which authentication headers are safe to expose
- */
 export enum RouteSecurityLevel {
-  /**
-   * OAuth Public Routes (/api/oauth/*)
-   * - External API consumption by demo apps
-   * - Minimal headers only (session ID, app ID)
-   * - NO personal data (email, profile) - GDPR compliance
-   */
   OAUTH_PUBLIC = 'OAUTH_PUBLIC',
-
-  /**
-   * Internal App Routes (dashboard, management APIs)
-   * - Internal dashboard and app functionality
-   * - Full headers including email/profile for optimization
-   * - Safe for authenticated internal users
-   */
   INTERNAL_APP = 'INTERNAL_APP',
-
-  /**
-   * Public/Unauthenticated Routes
-   * - No authentication required
-   * - No auth headers exposed
-   * - Public access endpoints
-   */
   PUBLIC = 'PUBLIC',
 }
 
-/**
- * Route patterns for OAuth public endpoints
- * These routes serve external applications and must minimize data exposure
- * All OAuth routes are treated as OAUTH_PUBLIC for GDPR compliance
- */
 const OAUTH_ROUTE_PATTERNS = ['/api/oauth/'] as const;
-
-/**
- * OAuth routes that are actually internal app routes
- * These are part of TrueNamePath's authorization flow, not external APIs
- * NOTE: Currently empty - all OAuth routes are treated as OAUTH_PUBLIC for GDPR compliance
- */
 const OAUTH_INTERNAL_ROUTES = [] as const;
 
-/**
- * Route patterns for internal application endpoints
- * These routes serve the TrueNamePath dashboard and internal functionality
- */
 const INTERNAL_APP_ROUTE_PATTERNS = [
   '/api/names/',
   '/api/contexts/',
@@ -59,16 +17,8 @@ const INTERNAL_APP_ROUTE_PATTERNS = [
   '/api/dashboard/',
 ] as const;
 
-/**
- * Route patterns for public/unauthenticated endpoints
- * These routes don't require authentication
- */
 const PUBLIC_ROUTE_PATTERNS = ['/api/auth/'] as const;
 
-/**
- * Headers that are safe for OAuth public routes
- * CRITICAL: These headers contain NO personal identifying information
- */
 export const OAUTH_SAFE_HEADERS = [
   'x-authentication-verified',
   'x-authenticated-user-id',
@@ -77,101 +27,53 @@ export const OAUTH_SAFE_HEADERS = [
   'x-oauth-client-id',
 ] as const;
 
-/**
- * Headers that contain sensitive personal information
- * These should NEVER be exposed to OAuth public routes
- */
 export const SENSITIVE_HEADERS = [
   'x-authenticated-user-email',
   'x-authenticated-user-profile',
 ] as const;
 
-/**
- * All internal app headers (includes sensitive data)
- * Used for internal dashboard routes where user profile optimization is beneficial
- */
 export const INTERNAL_APP_HEADERS = [
   ...OAUTH_SAFE_HEADERS,
   ...SENSITIVE_HEADERS,
 ] as const;
 
-/**
- * Classify a route path into its appropriate security level
- *
- * @param pathname - The API route pathname (e.g., "/api/oauth/resolve")
- * @returns The security classification for the route
- */
 export function classifyRoute(pathname: string): RouteSecurityLevel {
-  // Check OAuth internal routes first (these are part of TrueNamePath's app)
   if (OAUTH_INTERNAL_ROUTES.some((route) => pathname === route)) {
 return RouteSecurityLevel.INTERNAL_APP;
   }
 
-  // Check OAuth routes (external API endpoints)
   if (OAUTH_ROUTE_PATTERNS.some((pattern) => pathname.startsWith(pattern))) {
 return RouteSecurityLevel.OAUTH_PUBLIC;
   }
 
-  // Check internal app routes
   if (
 INTERNAL_APP_ROUTE_PATTERNS.some((pattern) => pathname.startsWith(pattern))
   ) {
 return RouteSecurityLevel.INTERNAL_APP;
   }
 
-  // Check public routes
   if (PUBLIC_ROUTE_PATTERNS.some((pattern) => pathname.startsWith(pattern))) {
 return RouteSecurityLevel.PUBLIC;
   }
 
-  // Default to internal app for unknown API routes (safe fallback)
   if (pathname.startsWith('/api/')) {
 return RouteSecurityLevel.INTERNAL_APP;
   }
 
-  // Non-API routes default to public
   return RouteSecurityLevel.PUBLIC;
 }
 
-/**
- * Check if a route is an OAuth public route
- * These routes require minimal header exposure for GDPR compliance
- *
- * @param pathname - The API route pathname
- * @returns True if this is an OAuth public route
- */
 export function isOAuthPublicRoute(pathname: string): boolean {
   return classifyRoute(pathname) === RouteSecurityLevel.OAUTH_PUBLIC;
 }
 
-/**
- * Check if a route is an internal app route
- * These routes can include full headers for optimization
- *
- * @param pathname - The API route pathname
- * @returns True if this is an internal app route
- */
 export function isInternalAppRoute(pathname: string): boolean {
   return classifyRoute(pathname) === RouteSecurityLevel.INTERNAL_APP;
 }
 
-/**
- * Check if a route is a public route
- * These routes should have no authentication headers
- *
- * @param pathname - The API route pathname
- * @returns True if this is a public route
- */
 export function isPublicRoute(pathname: string): boolean {
   return classifyRoute(pathname) === RouteSecurityLevel.PUBLIC;
 }
-
-/**
- * Get the appropriate headers for a route based on its security classification
- *
- * @param pathname - The API route pathname
- * @returns Array of header names that are safe to expose for this route
- */
 export function getAllowedHeadersForRoute(pathname: string): readonly string[] {
   const securityLevel = classifyRoute(pathname);
 
@@ -181,20 +83,12 @@ case RouteSecurityLevel.OAUTH_PUBLIC:
 case RouteSecurityLevel.INTERNAL_APP:
   return INTERNAL_APP_HEADERS;
 case RouteSecurityLevel.PUBLIC:
-  return []; // No headers for public routes
+  return [];
 default:
-  // Safe fallback - minimal headers
   return OAUTH_SAFE_HEADERS;
   }
 }
 
-/**
- * Check if a specific header is allowed for a route
- *
- * @param headerName - The header name to check
- * @param pathname - The API route pathname
- * @returns True if the header is safe to expose for this route
- */
 export function isHeaderAllowedForRoute(
   headerName: string,
   pathname: string,
@@ -203,13 +97,6 @@ export function isHeaderAllowedForRoute(
   return allowedHeaders.includes(headerName);
 }
 
-/**
- * Get security documentation for a route classification
- * Used for debugging and audit purposes
- *
- * @param securityLevel - The security classification level
- * @returns Human-readable security documentation
- */
 export function getSecurityDocumentation(securityLevel: RouteSecurityLevel): {
   purpose: string;
   allowedHeaders: readonly string[];

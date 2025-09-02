@@ -56,7 +56,6 @@ swrFetcher,
 setActiveTab(initialTab);
   }, [initialTab]);
 
-  // Handle SWR errors
   useEffect(() => {
 if (statsError) {
   notifications.show({
@@ -68,7 +67,6 @@ autoClose: 5000,
 }
   }, [statsError]);
 
-  // Handle tab changes with URL updates
   const handleTabChange = useCallback(
 (value: string | null) => {
   if (
@@ -90,7 +88,6 @@ setActiveTab(newTab);
 const params = new URLSearchParams(urlSearchParams.toString());
 const queryString = params.toString();
 
-// Update URL without full page reload
 const newUrl =
   newTab === 'dashboard'
 ? `/dashboard${queryString ? `?${queryString}` : ''}`

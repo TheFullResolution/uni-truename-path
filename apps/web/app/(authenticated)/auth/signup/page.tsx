@@ -29,37 +29,30 @@ function SignupPageContent() {
   const searchParams = useSearchParams();
   const { isAuthenticated, loading } = useAuth();
 
-  // Two-step signup state management
   const [currentStep, setCurrentStep] = useState<1 | 2>(1);
   const [step1Data, setStep1Data] = useState<SignupStep1Data | null>(null);
 
-  // Handle redirect logic - simplified without notification
   useEffect(() => {
 if (!loading && isAuthenticated) {
-  // User is already authenticated, redirect them silently
   const returnUrl = searchParams.get('returnUrl') || '/dashboard';
   router.replace(returnUrl as Route);
 }
   }, [isAuthenticated, loading, router, searchParams]);
 
-  // Handle step 1 completion (email/password/consent)
   const handleStep1Complete = useCallback((data: SignupStep1Data) => {
 setStep1Data(data);
 setCurrentStep(2);
   }, []);
 
-  // Handle step 2 completion - redirect to dashboard
   const handleStep2Complete = useCallback(() => {
 const returnUrl = searchParams.get('returnUrl') || '/dashboard';
 router.replace(returnUrl as Route);
   }, [router, searchParams]);
 
-  // Handle back to step 1
   const handleBackToStep1 = useCallback(() => {
 setCurrentStep(1);
   }, []);
 
-  // Handle back to login navigation
   const handleBackToLogin = useCallback(() => {
 const returnUrl = searchParams.get('returnUrl');
 const loginUrl = returnUrl
@@ -69,7 +62,6 @@ const loginUrl = returnUrl
 router.push(loginUrl as Route);
   }, [router, searchParams]);
 
-  // Show loading state while checking authentication
   if (loading) {
 return (
   <Box bg='gray.0' style={{ minHeight: '100vh' }}>
@@ -89,7 +81,6 @@ Checking authentication...
 );
   }
 
-  // Don't render signup form if user is authenticated (redirect is in progress)
   if (isAuthenticated) {
 return null;
   }
@@ -108,7 +99,6 @@ background:
   radius='lg'
   style={{ overflow: 'hidden', backgroundColor: 'white' }}
 >
-  {/* Brand Header */}
   <Box
 py='xl'
 px='xl'
@@ -130,9 +120,7 @@ style={{
 </Text>
   </Box>
 
-  {/* Two-column layout */}
   <Grid gutter={0} style={{ minHeight: '600px' }}>
-{/* Left Panel - Privacy & Features Content */}
 <Grid.Col
   span={{ base: 12, md: 6 }}
   style={{
@@ -149,7 +137,6 @@ borderRight: '1px solid #dee2e6',
   contexts.
 </Text>
 
-{/* Key Benefits */}
 <Box
   style={{
 backgroundColor: 'rgba(74, 127, 231, 0.08)',
@@ -183,7 +170,6 @@ marginTop: '2px',
   </List>
 </Box>
 
-{/* Privacy Statement */}
 <Box
   style={{
 backgroundColor: 'rgba(46, 204, 113, 0.08)',
@@ -203,7 +189,6 @@ control over how your name appears in different contexts.
   </Text>
 </Box>
 
-{/* Academic Project Info */}
 <Box
   style={{
 backgroundColor: 'rgba(52, 152, 219, 0.08)',
@@ -223,14 +208,12 @@ management concepts.
   </Box>
 </Grid.Col>
 
-{/* Right Panel - Signup Form */}
 <Grid.Col span={{ base: 12, md: 6 }}>
   <Box p='xl'>
 <Title order={2} c='gray.8' mb='xl'>
   Create Account
 </Title>
 
-{/* Two-Step Signup Flow */}
 {currentStep === 1 ? (
   <SignupStep1Form
 onStepComplete={handleStep1Complete}

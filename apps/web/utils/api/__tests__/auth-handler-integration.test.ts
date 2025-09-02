@@ -218,7 +218,7 @@ data: { message: 'Login successful' },
 
   const publicRequest = {
 method: 'POST',
-url: 'https://example.com/api/auth/login',
+url: 'https://example.com/api/auth/signup',
 headers: publicHeaders as any,
   } as NextRequest;
 
@@ -235,7 +235,7 @@ headers: publicHeaders as any,
 });
 
 it('should handle public route classification', () => {
-  const routes = ['/api/auth/login', '/api/auth/signup'];
+  const routes = ['/api/auth/signup'];
 
   routes.forEach((route) => {
 // Verify route is classified as public
@@ -348,13 +348,6 @@ it('should maintain security boundaries between different route types', async ()
   shouldHaveEmail: true,
   shouldHaveProfile: true,
   shouldHaveId: true,
-},
-{
-  route: '/api/auth/login',
-  expectedClass: RouteSecurityLevel.PUBLIC,
-  shouldHaveEmail: false,
-  shouldHaveProfile: false,
-  shouldHaveId: false,
 },
   ];
 

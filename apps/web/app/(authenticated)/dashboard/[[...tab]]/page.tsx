@@ -27,8 +27,6 @@ interface PageProps {
   params: Promise<{ tab?: string[] }>;
 }
 
-// Removed generateStaticParams as we're using force-dynamic
-
 export async function generateMetadata({ params }: PageProps) {
   const { tab } = await params;
   const resolvedTab = validateAndResolveTab(tab);
@@ -41,25 +39,20 @@ description: `Manage your ${resolvedTab} in TrueNamePath context-aware identity 
 
 /**
  * Validates URL parameters and resolves to valid tab
- * Handles all edge cases: empty params, invalid tabs, default routing
  */
 function validateAndResolveTab(tabParam: string[] | undefined): ValidTab {
-  // No tab parameter or empty array: default to dashboard overview
   if (!tabParam || tabParam.length === 0) {
 return 'dashboard';
   }
 
   const requestedTab = tabParam[0];
 
-  // Empty string: default to dashboard
   if (!requestedTab || requestedTab === '') {
 return 'dashboard';
   }
 
-  // Validate against allowed tabs
   if (!VALID_TABS.includes(requestedTab as ValidTab)) {
-// Invalid tab triggers 404
-return 'dashboard'; // Won't be reached due to notFound()
+return 'dashboard';
   }
 
   return requestedTab as ValidTab;
@@ -68,7 +61,6 @@ return 'dashboard'; // Won't be reached due to notFound()
 export default async function DashboardPage({ params }: PageProps) {
   const { tab } = await params;
 
-  // Validate tab parameter and trigger 404 for invalid tabs
   if (tab?.[0] && !VALID_TABS.includes(tab[0] as ValidTab)) {
 notFound();
   }

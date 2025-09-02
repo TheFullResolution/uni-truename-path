@@ -109,14 +109,12 @@ updateContext({ context_id: newContextId });
 (context) => context.completion_status !== 'invalid',
   );
 
-  // Create simple select data with only standard properties
   const selectData = validContexts.map((context) => ({
 value: context.id,
 label: context.context_name,
 disabled: false, // All contexts are valid since we filtered out invalid ones
   }));
 
-  // Create lookup map for context metadata needed in renderOption
   const contextLookup = new Map(
 validContexts.map((context) => [context.id, context]),
   );

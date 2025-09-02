@@ -13,39 +13,40 @@ import {
 
 const useCases = [
   {
-title: 'International Professionals',
-persona: 'Jędrzej (JJ) Lewandowski',
-avatar: 'JL',
+title: 'International Professional',
+persona: 'JJ (Jędrzej Lewandowski)',
+avatar: 'JJ',
 challenge:
-  'Polish developer whose legal name contains diacritics that are difficult to pronounce internationally',
+  'Polish software developer whose legal name "Jędrzej" contains diacritics that colleagues struggle to pronounce in international workplace settings',
 solution:
-  'Uses legal name for documents, JJ for Slack and casual interactions, J. Lewandowski for professional emails',
+  'HR systems receive "Jędrzej Lewandowski" for compliance, workplace Slack shows "JJ" for daily communication, professional emails display "J. Lewandowski"',
 benefit:
-  'Maintains cultural identity while ensuring smooth professional communication',
-tags: ['Cultural Identity', 'Accessibility'],
+  'Preserves cultural identity while enabling smooth international collaboration and meeting academic requirements for name complexity research',
+tags: ['Cultural Identity', 'Diacritics'],
   },
   {
-title: 'Privacy-Conscious Developers',
-persona: 'Alex Smith / @CodeAlex',
-avatar: 'AS',
+title: 'Cross-Cultural Professional',
+persona: 'Li Wei (李伟)',
+avatar: 'LW',
 challenge:
-  'Open source contributor wants to separate professional identity from personal employment',
+  'Chinese professional navigating Western business contexts where name order conventions and pronunciation create communication barriers',
 solution:
-  'Uses @CodeAlex for GitHub contributions, Alex Smith for work Slack, full legal name only for HR systems',
-benefit: 'Protects personal privacy while building professional reputation',
-tags: ['Privacy', 'Professional'],
+  'Chinese services use "李伟", legal documents show "Li Wei", Western business contexts receive "Wei Li", internal teams use "David Li" or preferred nicknames',
+benefit:
+  'Maintains cultural naming traditions while adapting to different business contexts as documented in academic literature',
+tags: ['Cultural Adaptation', 'Business Context'],
   },
   {
-title: 'Creative Professionals',
-persona: 'Maria Santos / DJ Luna',
-avatar: 'MS',
+title: 'Privacy-Conscious Developer',
+persona: 'Alex',
+avatar: 'AX',
 challenge:
-  'Musician with separate professional and artistic identities needs context-aware presentation',
+  'Developer maintaining separate professional identities across different contexts, requiring privacy controls over personal information disclosure',
 solution:
-  'Uses Maria Santos for corporate bookings, DJ Luna for fan interactions, legal name for contracts',
+  'Open source contributions show pseudonym, work systems display professional identity, HR records contain full legal name with controlled access',
 benefit:
-  'Maintains distinct brand identities while managing business efficiently',
-tags: ['Creative', 'Branding'],
+  'Demonstrates technical feasibility of granular identity control as outlined in privacy-by-design research framework',
+tags: ['Privacy Control', 'Identity Separation'],
   },
 ];
 
@@ -57,17 +58,16 @@ export function UseCasesSection() {
   {/* Section Header */}
   <Box ta='center' mb='xl'>
 <Title order={2} size='2.5rem' fw={600} c='gray.8' mb='md'>
-  Real People, Real Solutions
+  Research Personas
 </Title>
 <Text size='lg' c='gray.6' maw={700} mx='auto'>
-  See how TrueNamePath solves identity challenges for people from
-  all walks of life, giving them control over their digital presence
-  without compromising authenticity.
+  Three personas developed during domain analysis to represent
+  real-world naming challenges identified in the literature review.
 </Text>
   </Box>
 
   {/* Use Cases Grid */}
-  <SimpleGrid cols={{ base: 1, md: 2, lg: 3 }} spacing='xl'>
+  <SimpleGrid cols={{ base: 1, md: 2, lg: 3 }} spacing='md'>
 {useCases.map((useCase, index) => (
   <Card
 key={index}
@@ -80,7 +80,7 @@ h='100%'
   >
 <Stack gap='md' h='100%'>
   {/* Header */}
-  <Group gap='md' align='center'>
+  <Group gap='xs' align='center'>
 <Avatar
   size='md'
   radius='md'
@@ -142,15 +142,15 @@ BENEFIT
 ))}
   </SimpleGrid>
 
-  {/* Bottom CTA */}
+  {/* Academic Context */}
   <Box ta='center' pt='xl'>
 <Text size='lg' fw={600} c='gray.8' mb='sm'>
-  Your Story Matters Too
+  Academic Research Foundation
 </Text>
 <Text size='md' c='gray.6' maw={500} mx='auto'>
-  Whether you&apos;re navigating cultural identity, professional
-  personas, or privacy concerns, TrueNamePath gives you the tools to
-  present yourself authentically in every context.
+  These personas represent documented challenges from academic
+  literature, demonstrating the technical feasibility of addressing
+  identity complexity through context-aware systems.
 </Text>
   </Box>
 </Stack>

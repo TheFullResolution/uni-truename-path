@@ -12,11 +12,9 @@ import type { Database } from '@/generated/database';
 
 import { newPasswordOnlySchema } from '@/utils/validation/password';
 
-// Constants
 const SYSTEM_CLIENT_ID = 'tnp_system_settings';
 const ACTION_PASSWORD_CHANGE = 'password_change';
 
-// Helper function to log audit events
 const logPasswordChangeAttempt = async (
   supabase: SupabaseClient<Database>,
   profileId: string,
@@ -38,11 +36,9 @@ const handlePost: AuthenticatedHandler = async (request, context) => {
   let validationSuccess = false;
 
   try {
-// Parse and validate request body
 const body = newPasswordOnlySchema.parse(await request.json());
 validationSuccess = true;
 
-// Update password directly (user is already authenticated)
 const { error: updateError } = await context.supabase.auth.updateUser({
   password: body.new_password,
 });
@@ -65,7 +61,6 @@ context.timestamp,
   );
 }
 
-// Log successful password change
 const responseTime = Math.round(performance.now() - startTime);
 await logPasswordChangeAttempt(
   context.supabase,
@@ -82,7 +77,6 @@ return createSuccessResponse(
   } catch (error) {
 const responseTime = Math.round(performance.now() - startTime);
 
-// Determine appropriate error code based on what failed
 let errorCode: string;
 let message: string;
 let details: string | undefined;
@@ -99,7 +93,6 @@ if (!validationSuccess && error instanceof z.ZodError) {
   details = error instanceof Error ? error.message : String(error);
 }
 
-// Log failed password change attempt
 await logPasswordChangeAttempt(
   context.supabase,
   context.user!.id,
