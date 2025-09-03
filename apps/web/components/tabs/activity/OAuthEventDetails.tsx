@@ -34,9 +34,8 @@ return `OAuth action: ${action}`;
 
   const getPerformanceColor = (ms: number | null) => {
 if (!ms) return 'gray';
-if (ms < 50) return 'green';
-if (ms < 200) return 'yellow';
-if (ms < 1000) return 'orange';
+if (ms < 1500) return 'green';
+if (ms < 3000) return 'yellow';
 return 'red';
   };
 

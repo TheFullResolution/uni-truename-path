@@ -29,6 +29,20 @@ CREATE TABLE public.app_usage_log (
   CONSTRAINT app_usage_log_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id),
   CONSTRAINT app_usage_log_context_id_fkey FOREIGN KEY (context_id) REFERENCES public.user_contexts(id)
 );
+CREATE TABLE public.auth_events (
+id bigint NOT NULL DEFAULT nextval('auth_events_id_seq'::regclass),
+user_id uuid,
+event_type character varying NOT NULL,
+ip_address inet,
+user_agent text,
+success boolean NOT NULL DEFAULT true,
+error_message text,
+session_id text,
+metadata jsonb DEFAULT '{}'::jsonb,
+created_at timestamp with time zone NOT NULL DEFAULT now(),
+CONSTRAINT auth_events_pkey PRIMARY KEY (id),
+CONSTRAINT auth_events_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
 CREATE TABLE public.context_oidc_assignments (
  id uuid NOT NULL DEFAULT gen_random_uuid(),
  user_id uuid NOT NULL,
@@ -41,6 +55,23 @@ CREATE TABLE public.context_oidc_assignments (
  CONSTRAINT context_oidc_assignments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
  CONSTRAINT context_oidc_assignments_context_id_fkey FOREIGN KEY (context_id) REFERENCES public.user_contexts(id),
  CONSTRAINT context_oidc_assignments_name_id_fkey FOREIGN KEY (name_id) REFERENCES public.names(id)
+);
+CREATE TABLE public.data_changes (
+ id bigint NOT NULL DEFAULT nextval('data_changes_id_seq'::regclass),
+ user_id uuid,
+ table_name character varying NOT NULL,
+ record_id text NOT NULL,
+ operation character varying NOT NULL CHECK (operation::text = ANY (ARRAY['INSERT'::character varying, 'UPDATE'::character varying, 'DELETE'::character varying]::text[])),
+  old_values jsonb,
+  new_values jsonb,
+  changed_by uuid,
+  change_reason character varying,
+  ip_address inet,
+  user_agent text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT data_changes_pkey PRIMARY KEY (id),
+  CONSTRAINT data_changes_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT data_changes_changed_by_fkey FOREIGN KEY (changed_by) REFERENCES auth.users(id)
 );
 CREATE TABLE public.names (
   id uuid NOT NULL DEFAULT gen_random_uuid(),

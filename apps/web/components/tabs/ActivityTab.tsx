@@ -411,9 +411,9 @@ variant='light'
 <Badge
   size='xs'
   color={
-event.response_time_ms < 100
+event.response_time_ms < 1500
   ? 'green'
-  : event.response_time_ms < 500
+  : event.response_time_ms < 3000
 ? 'yellow'
 : 'red'
   }
