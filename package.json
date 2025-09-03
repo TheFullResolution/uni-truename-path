@@ -38,7 +38,9 @@
 "diagrams:architecture": "mmdc -i docs/report-materials/academic-report-diagrams.md -o enhanced-architecture.png -t neutral -s 2 --cssFile docs/mermaid-theme.css",
 "diagrams:flowchart": "mmdc -i docs/report-materials/academic-report-diagrams.md -o enhanced-flowchart.png -t neutral -s 2 --cssFile docs/mermaid-theme.css",
 "diagrams:all": "yarn diagrams:erd && yarn diagrams:architecture && yarn diagrams:flowchart",
-"wireframes": "open docs/wireframes/index.html"
+"wireframes": "open docs/wireframes/index.html",
+"performance:monitor": "npx tsx scripts/performance-monitor.ts",
+"performance:monitor:prod": "npx tsx scripts/performance-monitor.ts --production"
   },
   "devDependencies": {
 "@eslint/eslintrc": "^3.3.1",
@@ -54,6 +56,7 @@
 "prettier": "^3.6.2",
 "puppeteer": "^24.16.1",
 "simple-git-hooks": "^2.13.1",
+"tsx": "^4.20.5",
 "turbo": "2.5.6",
 "typescript": "^5.8.3"
   },

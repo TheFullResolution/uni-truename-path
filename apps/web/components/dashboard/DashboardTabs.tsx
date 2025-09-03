@@ -61,13 +61,13 @@ ssr: false,
   },
 );
 
-const AuditLogTab = dynamic(
+const ActivityTab = dynamic(
   () =>
-import('@/components/tabs/AuditLogTab').then((mod) => ({
-  default: mod.AuditLogTab,
+import('@/components/tabs/ActivityTab').then((mod) => ({
+  default: mod.ActivityTab,
 })),
   {
-loading: () => <AuditLogTabSkeleton />,
+loading: () => <AuditLogTabSkeleton />, // Reuse existing skeleton for now
 ssr: false,
   },
 );
@@ -111,7 +111,7 @@ export function DashboardTabs({
 </Suspense>
 
 <Suspense fallback={<AuditLogTabSkeleton />}>
-  <AuditLogTab user={user} />
+  <ActivityTab user={user} />
 </Suspense>
   </Box>
 </SWRErrorBoundary>

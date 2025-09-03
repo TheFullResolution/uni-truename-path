@@ -315,7 +315,7 @@ p_profile_id: MOCK_SESSION.profile_id,
 p_client_id: MOCK_SESSION.client_id,
 p_action: 'revoke',
 p_session_id: VALID_SESSION_ID,
-p_response_time_ms: 0,
+p_response_time_ms: expect.any(Number), // Now dynamically measured
 p_success: true,
   });
 });

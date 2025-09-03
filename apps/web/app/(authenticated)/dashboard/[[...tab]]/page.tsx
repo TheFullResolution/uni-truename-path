@@ -12,7 +12,7 @@ type ValidTab =
   | 'contexts'
   | 'connected-apps'
   | 'settings'
-  | 'audit-log';
+  | 'activity';
 
 const VALID_TABS: ValidTab[] = [
   'dashboard',
@@ -20,7 +20,7 @@ const VALID_TABS: ValidTab[] = [
   'contexts',
   'connected-apps',
   'settings',
-  'audit-log',
+  'activity',
 ];
 
 interface PageProps {

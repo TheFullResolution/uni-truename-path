@@ -27,7 +27,7 @@ type ValidTab =
   | 'contexts'
   | 'connected-apps'
   | 'settings'
-  | 'audit-log';
+  | 'activity';
 
 interface DashboardContentProps {
   initialTab: ValidTab;
@@ -78,7 +78,7 @@ value &&
   'connected-apps',
   'oidc-preview',
   'settings',
-  'audit-log',
+  'activity',
 ].includes(value)
   ) {
 const newTab = value as ValidTab;
@@ -144,11 +144,11 @@ router.push(newUrl as Route, { scroll: false });
   Settings
 </Tabs.Tab>
 <Tabs.Tab
-  value='audit-log'
+  value='activity'
   leftSection={<IconHistory size={16} />}
-  data-testid='tab-audit-log'
+  data-testid='tab-activity'
 >
-  Audit Log
+  Activity
 </Tabs.Tab>
   </Tabs.List>
 

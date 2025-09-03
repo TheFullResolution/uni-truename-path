@@ -97,6 +97,7 @@ import { createClient } from '@/utils/supabase/server';
  * ```
  */
 export async function DELETE(request: NextRequest): Promise<NextResponse> {
+  const startTime = performance.now();
   const requestId = generateRequestId();
   const timestamp = new Date().toISOString();
 
@@ -207,13 +208,14 @@ timestamp,
 );
   }
 
-  // Step 2: Log revocation action in app_usage_log
+  // Step 2: Log revocation action in app_usage_log with actual performance time
+  const responseTime = Math.round(performance.now() - startTime);
   const { error: logError } = await supabase.rpc('log_app_usage', {
 p_profile_id: session.profile_id,
 p_client_id: session.client_id,
 p_action: 'revoke',
 p_session_id: sessionId,
-p_response_time_ms: 0, // Not applicable for revocation
+p_response_time_ms: responseTime,
 p_success: true,
   });
 

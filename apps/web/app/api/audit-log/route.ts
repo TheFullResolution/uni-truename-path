@@ -27,7 +27,7 @@ interface TransformedAuditLogEntry {
   context_name: string | null;
   // Fields that don't exist in app_usage_log but UI might expect
   resolved_name_id: null;
-  target_user_id: string; // mapped from profile_id
+  target_user_id: string | null; // mapped from profile_id or user_id
 }
 
 interface AuditLogResponse {
@@ -118,14 +118,16 @@ return createErrorResponse(
   }
 
   try {
-// Build base query for app_usage_log table
+// Query both app_usage_log and auth_events tables in parallel
+const [appUsageResult, authEventsResult] = await Promise.all([
+  // Query app_usage_log table
+  (() => {
 let query = context.supabase
   .from('app_usage_log')
-  .select('*', { count: 'exact' })
-  .eq('profile_id', context.user!.id)
-  .order('created_at', { ascending: false });
+  .select('*')
+  .eq('profile_id', context.user!.id);
 
-// Apply date filtering if provided (use created_at instead of accessed_at)
+// Apply date filtering if provided
 if (startDate) {
   query = query.gte('created_at', startDate);
 }
@@ -133,31 +135,82 @@ if (endDate) {
   query = query.lte('created_at', endDate);
 }
 
-// Apply pagination
-query = query.range(offset, offset + limit - 1);
+return query;
+  })(),
 
-const { data: rawEntries, error, count } = await query;
+  // Query auth_events table
+  (() => {
+let query = context.supabase
+  .from('auth_events')
+  .select('*')
+  .eq('user_id', context.user!.id);
 
-if (error) {
+// Apply date filtering if provided
+if (startDate) {
+  query = query.gte('created_at', startDate);
+}
+if (endDate) {
+  query = query.lte('created_at', endDate);
+}
+
+return query;
+  })(),
+]);
+
+if (appUsageResult.error) {
   return createErrorResponse(
 ErrorCodes.DATABASE_ERROR,
-'Failed to retrieve audit log entries',
+'Failed to retrieve app usage log entries',
 context.requestId,
-error.message,
+appUsageResult.error.message,
 context.timestamp,
   );
 }
 
-const total = count || 0;
+if (authEventsResult.error) {
+  return createErrorResponse(
+ErrorCodes.DATABASE_ERROR,
+'Failed to retrieve auth events',
+context.requestId,
+authEventsResult.error.message,
+context.timestamp,
+  );
+}
+
+// Combine and sort all entries by created_at
+const allRawEntries = [
+  ...(appUsageResult.data || []).map((entry) => ({
+...entry,
+source: 'app_usage_log' as const,
+  })),
+  ...(authEventsResult.data || []).map((entry) => ({
+...entry,
+source: 'auth_events' as const,
+  })),
+].sort(
+  (a, b) =>
+new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+);
+
+// Apply pagination to combined results
+const paginatedEntries = allRawEntries.slice(offset, offset + limit);
+const total = allRawEntries.length;
+const rawEntries = paginatedEntries;
 const hasMore = offset + limit < total;
 
-// Get unique client IDs and context IDs for lookup
+// Get unique client IDs and context IDs for lookup (only from app_usage_log entries)
 const clientIds = Array.from(
-  new Set(rawEntries?.map((e) => e.client_id).filter(Boolean) || []),
+  new Set(
+rawEntries
+  ?.filter((e) => e.source === 'app_usage_log')
+  .map((e) => e.client_id)
+  .filter(Boolean) || [],
+  ),
 );
 const contextIds = Array.from(
   new Set(
 rawEntries
+  ?.filter((e) => e.source === 'app_usage_log')
   ?.map((e) => e.context_id)
   .filter((id): id is string => Boolean(id)) || [],
   ),
@@ -196,10 +249,13 @@ contextData[ctx.id] = { name: ctx.context_name };
   });
 }
 
-// Transform app_usage_log entries to match UI expectations
+// Transform entries from both tables to match UI expectations
 const transformedEntries: TransformedAuditLogEntry[] = (
   rawEntries || []
-).map((entry) => ({
+).map((entry) => {
+  if (entry.source === 'app_usage_log') {
+// Transform app_usage_log entries
+return {
   id: entry.id,
   accessed_at: entry.created_at, // Map created_at to accessed_at for UI compatibility
   action: entry.action,
@@ -211,14 +267,37 @@ const transformedEntries: TransformedAuditLogEntry[] = (
   response_time_ms: entry.response_time_ms,
   // Human-readable fields from separate queries
   app_display_name: clientData[entry.client_id]?.display_name || null,
-  publisher_domain: clientData[entry.client_id]?.publisher_domain || null,
+  publisher_domain:
+clientData[entry.client_id]?.publisher_domain || null,
   context_name: entry.context_id
 ? contextData[entry.context_id]?.name || null
 : null,
   // Fields that don't exist in app_usage_log but UI might expect
   resolved_name_id: null,
   target_user_id: entry.profile_id, // Map profile_id to target_user_id for UI compatibility
-}));
+};
+  } else {
+// Transform auth_events entries
+return {
+  id: entry.id,
+  accessed_at: entry.created_at, // Map created_at to accessed_at for UI compatibility
+  action: entry.event_type, // Map event_type to action
+  client_id: 'auth', // Special identifier for auth events
+  session_id: entry.session_id,
+  context_id: null, // Auth events don't have contexts
+  success: entry.success,
+  error_type: entry.error_message,
+  response_time_ms: null, // Auth events don't track response time
+  // Human-readable fields for auth events
+  app_display_name: 'TrueNamePath Authentication', // Special name for auth events
+  publisher_domain: null,
+  context_name: null,
+  // Fields that don't exist in auth_events but UI might expect
+  resolved_name_id: null,
+  target_user_id: entry.user_id, // Map user_id to target_user_id for UI compatibility
+};
+  }
+});
 
 const response: AuditLogResponse = {
   entries: transformedEntries,

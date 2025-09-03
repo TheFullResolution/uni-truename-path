@@ -219,6 +219,7 @@ async function handleAuthorize(
   request: NextRequest,
   { user, supabase, requestId, timestamp }: AuthenticatedContext,
 ): Promise<StandardResponse<OAuthAuthorizeResponseData>> {
+  const startTime = performance.now();
   if (!user?.id) {
 return createErrorResponse(
   ErrorCodes.AUTHENTICATION_REQUIRED,
@@ -298,14 +299,14 @@ timestamp,
   );
 }
 
-const startTime = Date.now();
+const responseTime = Math.round(performance.now() - startTime);
 await trackOAuthAuthorization(
   supabase,
   user.id,
   client_id,
   context_id,
   sessionResult.sessionId,
-  Date.now() - startTime,
+  responseTime,
 );
 
 const responseData = buildAuthorizationResponse(

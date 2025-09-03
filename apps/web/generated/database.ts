@@ -136,6 +136,45 @@ referencedColumns: ["id"]
   },
 ]
   }
+  auth_events: {
+Row: {
+  created_at: string
+  error_message: string | null
+  event_type: string
+  id: number
+  ip_address: unknown | null
+  metadata: Json | null
+  session_id: string | null
+  success: boolean
+  user_agent: string | null
+  user_id: string | null
+}
+Insert: {
+  created_at?: string
+  error_message?: string | null
+  event_type: string
+  id?: number
+  ip_address?: unknown | null
+  metadata?: Json | null
+  session_id?: string | null
+  success?: boolean
+  user_agent?: string | null
+  user_id?: string | null
+}
+Update: {
+  created_at?: string
+  error_message?: string | null
+  event_type?: string
+  id?: number
+  ip_address?: unknown | null
+  metadata?: Json | null
+  session_id?: string | null
+  success?: boolean
+  user_agent?: string | null
+  user_id?: string | null
+}
+Relationships: []
+  }
   context_oidc_assignments: {
 Row: {
   context_id: string
@@ -187,6 +226,51 @@ referencedRelation: "profiles"
 referencedColumns: ["id"]
   },
 ]
+  }
+  data_changes: {
+Row: {
+  change_reason: string | null
+  changed_by: string | null
+  created_at: string
+  id: number
+  ip_address: unknown | null
+  new_values: Json | null
+  old_values: Json | null
+  operation: string
+  record_id: string
+  table_name: string
+  user_agent: string | null
+  user_id: string | null
+}
+Insert: {
+  change_reason?: string | null
+  changed_by?: string | null
+  created_at?: string
+  id?: number
+  ip_address?: unknown | null
+  new_values?: Json | null
+  old_values?: Json | null
+  operation: string
+  record_id: string
+  table_name: string
+  user_agent?: string | null
+  user_id?: string | null
+}
+Update: {
+  change_reason?: string | null
+  changed_by?: string | null
+  created_at?: string
+  id?: number
+  ip_address?: unknown | null
+  new_values?: Json | null
+  old_values?: Json | null
+  operation?: string
+  record_id?: string
+  table_name?: string
+  user_agent?: string | null
+  user_id?: string | null
+}
+Relationships: []
   }
   names: {
 Row: {
@@ -400,6 +484,25 @@ referencedColumns: ["id"]
   },
 ]
   }
+  user_data_audit: {
+Row: {
+  change_reason: string | null
+  changed_by: string | null
+  changed_by_email: string | null
+  created_at: string | null
+  id: number | null
+  ip_address: unknown | null
+  new_values: Json | null
+  old_values: Json | null
+  operation: string | null
+  record_id: string | null
+  table_name: string | null
+  user_agent: string | null
+  user_email: string | null
+  user_id: string | null
+}
+Relationships: []
+  }
 }
 Functions: {
   assign_default_context_to_app: {
@@ -434,12 +537,16 @@ Returns: Json
 Args: { p_limit?: number; p_user_id: string }
 Returns: {
   accessed_at: string
-  action: Database["public"]["Enums"]["audit_action"]
+  action: string
   context_name: string
   details: Json
   requester_user_id: string
   resolved_name: string
 }[]
+  }
+  jsonb_object_keys_count: {
+Args: { obj: Json }
+Returns: number
   }
   log_app_usage: {
 Args: {
@@ -451,6 +558,45 @@ Args: {
   p_response_time_ms?: number
   p_session_id?: string
   p_success?: boolean
+}
+Returns: number
+  }
+  log_auth_event: {
+Args: {
+  p_error_message?: string
+  p_event_type: string
+  p_ip_address?: unknown
+  p_metadata?: Json
+  p_session_id?: string
+  p_success?: boolean
+  p_user_agent?: string
+  p_user_id: string
+}
+Returns: number
+  }
+  log_data_change: {
+Args: {
+  p_change_reason?: string
+  p_changed_by?: string
+  p_ip_address?: unknown
+  p_new_values?: Json
+  p_old_values?: Json
+  p_operation: string
+  p_record_id: string
+  p_table_name: string
+  p_user_agent?: string
+  p_user_id: string
+}
+Returns: number
+  }
+  log_manual_data_change: {
+Args: {
+  p_change_reason?: string
+  p_new_values?: Json
+  p_old_values?: Json
+  p_operation: string
+  p_record_id: string
+  p_table_name: string
 }
 Returns: number
   }
