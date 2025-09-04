@@ -180,7 +180,13 @@ const parts: string[] = [];
 
 // Add response time if available
 if (entry.response_time_ms !== null) {
-  parts.push(`${entry.response_time_ms}ms`);
+  parts.push(
+entry.response_time_ms === -1
+  ? 'N/A response time'
+  : `${entry.response_time_ms}ms`,
+  );
+} else {
+  parts.push('N/A response time');
 }
 
 // Add error type if failed
@@ -192,10 +198,15 @@ return parts.length > 0 ? parts.join(', ') : '';
   };
 
   const getResponseTimeColor = (ms: number | null): string => {
-if (ms === null) return 'gray';
+if (ms === null || ms === -1) return 'gray';
 if (ms < 50) return 'green';
 if (ms < 200) return 'yellow';
 return 'red';
+  };
+
+  const formatResponseTimeForBadge = (ms: number | null): string => {
+if (ms === null || ms === -1) return 'N/A';
+return `${ms}ms`;
   };
 
   return (
@@ -332,15 +343,25 @@ Default
   ✗ Failed
 </Text>
   )}
-  {entry.response_time_ms !== null && (
+  {(entry.response_time_ms !== null ||
+entry.response_time_ms === -1) && (
 <Badge
   size='xs'
   color={getResponseTimeColor(
 entry.response_time_ms,
   )}
   variant='light'
+  style={{
+opacity:
+  entry.response_time_ms === null ||
+  entry.response_time_ms === -1
+? 0.7
+: 1,
+  }}
 >
-  {entry.response_time_ms}ms
+  {formatResponseTimeForBadge(
+entry.response_time_ms,
+  )}
 </Badge>
   )}
 </Flex>

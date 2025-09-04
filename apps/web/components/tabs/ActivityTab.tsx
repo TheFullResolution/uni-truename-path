@@ -407,19 +407,33 @@ variant='light'
 
 {/* Performance indicator for OAuth events */}
 {event.type === 'oauth' &&
-  event.response_time_ms && (
+  (event.response_time_ms !== null ||
+event.response_time_ms === -1) && (
 <Badge
   size='xs'
   color={
-event.response_time_ms < 1500
-  ? 'green'
-  : event.response_time_ms < 3000
-? 'yellow'
-: 'red'
+event.response_time_ms === null ||
+event.response_time_ms === -1
+  ? 'gray'
+  : event.response_time_ms < 1500
+? 'green'
+: event.response_time_ms < 3000
+  ? 'yellow'
+  : 'red'
   }
   variant='light'
+  style={{
+opacity:
+  event.response_time_ms === null ||
+  event.response_time_ms === -1
+? 0.7
+: 1,
+  }}
 >
-  {event.response_time_ms}ms
+  {event.response_time_ms === null ||
+  event.response_time_ms === -1
+? 'N/A'
+: `${event.response_time_ms}ms`}
 </Badge>
   )}
   </Group>

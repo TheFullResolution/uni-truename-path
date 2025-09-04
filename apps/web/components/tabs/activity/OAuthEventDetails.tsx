@@ -33,10 +33,15 @@ return `OAuth action: ${action}`;
   };
 
   const getPerformanceColor = (ms: number | null) => {
-if (!ms) return 'gray';
+if (ms === null || ms === -1) return 'gray';
 if (ms < 1500) return 'green';
 if (ms < 3000) return 'yellow';
 return 'red';
+  };
+
+  const formatResponseTime = (ms: number | null) => {
+if (ms === null || ms === -1) return 'N/A';
+return `${ms}ms`;
   };
 
   return (
@@ -81,20 +86,24 @@ Context
 </Stack>
 
 {/* Performance Metrics */}
-{event.response_time_ms !== null && (
-  <Stack gap={2} align='center'>
-<Text size='xs' fw={500} c='dimmed'>
-  Response Time
-</Text>
-<Badge
-  size='sm'
-  color={getPerformanceColor(event.response_time_ms)}
-  variant='light'
->
-  {event.response_time_ms}ms
-</Badge>
-  </Stack>
-)}
+<Stack gap={2} align='center'>
+  <Text size='xs' fw={500} c='dimmed'>
+Response Time
+  </Text>
+  <Badge
+size='sm'
+color={getPerformanceColor(event.response_time_ms)}
+variant='light'
+style={{
+  opacity:
+event.response_time_ms === null || event.response_time_ms === -1
+  ? 0.7
+  : 1,
+}}
+  >
+{formatResponseTime(event.response_time_ms)}
+  </Badge>
+</Stack>
   </Group>
 
   {/* Session ID if available */}

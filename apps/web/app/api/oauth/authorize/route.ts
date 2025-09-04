@@ -9,7 +9,12 @@ import { ErrorCodes, StandardResponse } from '@/utils/api/types';
 import { OAuthAuthorizeRequestSchema, OAuthAuthorizeRequest } from './schemas';
 import { OAuthAuthorizeResponseData, AuthorizeErrorCodes } from './types';
 import { createCORSOptionsResponse } from '@/utils/api/cors';
-import { trackOAuthAuthorization } from '@/utils/analytics';
+import {
+  startPerformanceMeasurement,
+  finishPerformanceMeasurementAsync,
+  createSessionMetadata,
+} from '@/utils/api/performance-tracker';
+// NOTE: OAuth authorization tracking is now handled by database triggers
 
 interface ClientData {
   client_id: string;
@@ -103,6 +108,7 @@ async function createSessionRecord(
   sessionToken: string,
   expiresAt: string,
   returnUrl: string,
+  requestId: string,
   state?: string,
 ): Promise<{ success: boolean; sessionId?: string; error?: string }> {
   const sessionData = {
@@ -112,6 +118,7 @@ session_token: sessionToken,
 expires_at: expiresAt,
 return_url: returnUrl,
 state,
+metadata: createSessionMetadata(requestId),
   };
 
   const { data, error } = await supabase
@@ -134,6 +141,7 @@ async function createAuthorizationSession(
   clientId: string,
   contextId: string,
   returnUrl: string,
+  requestId: string,
   state?: string,
 ): Promise<
   | {
@@ -172,6 +180,7 @@ clientId,
 tokenResult.token,
 expiresAt,
 returnUrl,
+requestId,
 state,
   );
   if (!recordResult.success || !recordResult.sessionId)
@@ -219,7 +228,8 @@ async function handleAuthorize(
   request: NextRequest,
   { user, supabase, requestId, timestamp }: AuthenticatedContext,
 ): Promise<StandardResponse<OAuthAuthorizeResponseData>> {
-  const startTime = performance.now();
+  // Start performance measurement with correlation ID
+  const perf = startPerformanceMeasurement();
   if (!user?.id) {
 return createErrorResponse(
   ErrorCodes.AUTHENTICATION_REQUIRED,
@@ -287,6 +297,7 @@ const sessionResult = await createAuthorizationSession(
   client_id,
   context_id,
   return_url,
+  perf.requestId,
   state,
 );
 if (!sessionResult.success) {
@@ -299,15 +310,8 @@ timestamp,
   );
 }
 
-const responseTime = Math.round(performance.now() - startTime);
-await trackOAuthAuthorization(
-  supabase,
-  user.id,
-  client_id,
-  context_id,
-  sessionResult.sessionId,
-  responseTime,
-);
+// NOTE: OAuth authorization events are now automatically logged via database trigger
+// when oauth_sessions records are inserted. No manual logging needed.
 
 const responseData = buildAuthorizationResponse(
   sessionResult.sessionToken,
@@ -317,6 +321,9 @@ const responseData = buildAuthorizationResponse(
   contextResult.context,
   state,
 );
+
+// Update performance measurement asynchronously (fire-and-forget)
+finishPerformanceMeasurementAsync(perf, { enableLogging: false });
 
 return createSuccessResponse(responseData, requestId, timestamp);
   } catch (error) {

@@ -346,6 +346,7 @@ Row: {
   created_at: string
   expires_at: string
   id: string
+  metadata: Json | null
   profile_id: string
   return_url: string
   session_token: string
@@ -358,6 +359,7 @@ Insert: {
   created_at?: string
   expires_at?: string
   id?: string
+  metadata?: Json | null
   profile_id: string
   return_url: string
   session_token: string
@@ -370,6 +372,7 @@ Update: {
   created_at?: string
   expires_at?: string
   id?: string
+  metadata?: Json | null
   profile_id?: string
   return_url?: string
   session_token?: string
@@ -603,6 +606,10 @@ Returns: number
   resolve_oauth_oidc_claims: {
 Args: { p_session_token: string }
 Returns: Json
+  }
+  update_log_performance: {
+Args: { p_request_id: string; p_response_time_ms: number }
+Returns: boolean
   }
   validate_name_deletion_protection_setup: {
 Args: Record<PropertyKey, never>

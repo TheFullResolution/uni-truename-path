@@ -13,7 +13,7 @@ export function APIUsageCard({ stats, loading }: APIUsageCardProps) {
   const oauthMetrics = stats?.oauth_metrics;
 
   const formatResponseTime = (ms: number | null) => {
-if (ms === null) return 'N/A';
+if (ms === null || ms === -1) return 'N/A';
 return ms < 1000 ? `${ms.toFixed(1)}ms` : `${(ms / 1000).toFixed(2)}s`;
   };
 

@@ -11,9 +11,10 @@ import { ErrorCodes } from '@/utils/api/types';
 import { ResolveErrorCodes, OIDCClaims } from './types';
 import { measurePerformance } from './helpers';
 import { createCORSOptionsResponse, withCORSHeaders } from '@/utils/api/cors';
-import { trackOAuthResolve } from '@/utils/analytics';
+// NOTE: OAuth resolve tracking is now handled by database triggers
 
 async function handleResolve(request: NextRequest) {
+  // Start performance measurement (trigger-based logging will handle correlation)
   const perf = measurePerformance();
   const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 12)}`;
   const timestamp = new Date().toISOString();
@@ -82,17 +83,10 @@ createErrorResponse(
 
 const responseTime = perf.getElapsed();
 
+// NOTE: OAuth resolve events are now automatically logged via database trigger
+// when oauth_sessions.used_at is updated from NULL to timestamp. No manual logging needed.
+
 const claims = claimsResult as unknown as OIDCClaims;
-if (claims.sub && claims.aud) {
-  await trackOAuthResolve(
-supabase,
-claims.sub,
-claims.aud,
-'',
-'',
-responseTime,
-  ).catch((err) => console.error('Failed to track OAuth resolve:', err));
-}
 
 return NextResponse.json(
   createSuccessResponse(

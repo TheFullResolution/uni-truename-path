@@ -97,7 +97,7 @@ import { createClient } from '@/utils/supabase/server';
  * ```
  */
 export async function DELETE(request: NextRequest): Promise<NextResponse> {
-  const startTime = performance.now();
+  // Performance measurement is handled by database triggers when session is deleted
   const requestId = generateRequestId();
   const timestamp = new Date().toISOString();
 
@@ -208,23 +208,10 @@ timestamp,
 );
   }
 
-  // Step 2: Log revocation action in app_usage_log with actual performance time
-  const responseTime = Math.round(performance.now() - startTime);
-  const { error: logError } = await supabase.rpc('log_app_usage', {
-p_profile_id: session.profile_id,
-p_client_id: session.client_id,
-p_action: 'revoke',
-p_session_id: sessionId,
-p_response_time_ms: responseTime,
-p_success: true,
-  });
+  // NOTE: Session deletion events are now automatically logged via database triggers
+  // when oauth_sessions records are deleted. No manual logging needed.
 
-  if (logError) {
-console.error(`[${requestId}] Usage logging failed:`, logError);
-// Non-critical error, don't fail the request
-  }
-
-  // Step 3: Optional - Remove app context assignment if requested
+  // Step 2: Optional - Remove app context assignment if requested
   let assignmentRemoved = false;
   if (removeAssignment) {
 const { error: assignmentError } = await supabase

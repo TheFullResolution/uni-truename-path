@@ -13,18 +13,6 @@ import type { Session } from '@supabase/supabase-js';
 import type { AuthResponse } from './types';
 
 /**
- * Helper function to get client information for authentication logging
- */
-const getClientInfo = async () => {
-  const userAgent =
-typeof navigator !== 'undefined' ? navigator.userAgent : undefined;
-
-  // Note: We can't reliably get the client's real IP address from browser JavaScript
-  // for privacy/security reasons. The IP address should be logged server-side.
-  return { userAgent };
-};
-
-/**
  * Get current authenticated user using official SSR client
  */
 export const getCurrentUser = async (): Promise<AuthResponse> => {
@@ -116,9 +104,6 @@ export const signInWithPassword = async (
   email: string,
   password: string,
 ): Promise<AuthResponse> => {
-  let userId: string | null = null;
-  const { userAgent } = await getClientInfo();
-
   try {
 // Input validation
 if (!email || !password) {
@@ -151,35 +136,6 @@ const { data, error } = await supabase.auth.signInWithPassword({
 });
 
 if (error) {
-  // Try to get user ID for failed login logging (if user exists)
-  try {
-const { data: userLookup } = await supabase
-  .from('profiles')
-  .select('id')
-  .eq('email', email.trim())
-  .single();
-userId = userLookup?.id || null;
-  } catch {
-// User lookup failed, continue without ID
-  }
-
-  // Log failed login attempt
-  if (userId) {
-try {
-  await supabase.rpc('log_auth_event', {
-p_user_id: userId,
-p_event_type: 'failed_login',
-p_ip_address: undefined, // Client-side can't get real IP
-p_user_agent: userAgent,
-p_success: false,
-p_error_message: error.message,
-p_metadata: { email: email.trim(), error_code: error.name },
-  });
-} catch (logError) {
-  console.warn('Failed to log authentication event:', logError);
-}
-  }
-
   return {
 user: null,
 error: {
@@ -199,27 +155,6 @@ error: {
   };
 }
 
-userId = data.user.id;
-
-// Log successful login
-try {
-  await supabase.rpc('log_auth_event', {
-p_user_id: userId,
-p_event_type: 'login',
-p_ip_address: undefined, // Client-side can't get real IP
-p_user_agent: userAgent,
-p_success: true,
-p_session_id: data.session?.access_token || undefined,
-p_metadata: {
-  email: data.user.email || email.trim(),
-  provider: 'email',
-},
-  });
-} catch (logError) {
-  console.warn('Failed to log authentication event:', logError);
-  // Continue with successful login even if logging fails
-}
-
 return {
   user: {
 id: data.user.id,
@@ -228,25 +163,6 @@ email: data.user.email || email,
   error: null,
 };
   } catch (error) {
-// Log system error if we have a user ID
-if (userId) {
-  try {
-const supabase = createClient();
-await supabase.rpc('log_auth_event', {
-  p_user_id: userId,
-  p_event_type: 'failed_login',
-  p_ip_address: null,
-  p_user_agent: userAgent,
-  p_success: false,
-  p_error_message:
-error instanceof Error ? error.message : 'System error',
-  p_metadata: { error_type: 'system_error' },
-});
-  } catch (logError) {
-console.warn('Failed to log authentication event:', logError);
-  }
-}
-
 return {
   user: null,
   error: {
@@ -267,8 +183,6 @@ export const signUpWithPassword = async (
   email: string,
   password: string,
 ): Promise<AuthResponse> => {
-  const { userAgent } = await getClientInfo();
-
   try {
 const supabase = createClient();
 
@@ -299,26 +213,6 @@ error: {
   };
 }
 
-// Log successful signup
-try {
-  await supabase.rpc('log_auth_event', {
-p_user_id: data.user.id,
-p_event_type: 'signup',
-p_ip_address: undefined, // Client-side can't get real IP
-p_user_agent: userAgent,
-p_success: true,
-p_session_id: data.session?.access_token || undefined,
-p_metadata: {
-  email: data.user.email || email,
-  provider: 'email',
-  email_confirmed: data.user.email_confirmed_at !== null,
-},
-  });
-} catch (logError) {
-  console.warn('Failed to log signup event:', logError);
-  // Continue with successful signup even if logging fails
-}
-
 // Profile will be created automatically via trigger or when user signs in
 return {
   user: {
@@ -342,40 +236,13 @@ message: error instanceof Error ? error.message : 'Sign up failed',
  * Sign out current user using official SSR client
  */
 export const signOut = async (): Promise<{ error: string | null }> => {
-  const { userAgent } = await getClientInfo();
-
   try {
 const supabase = createClient();
-
-// Get current user before logging out
-const {
-  data: { user },
-} = await supabase.auth.getUser();
-const userId = user?.id;
 
 const { error } = await supabase.auth.signOut();
 
 if (error) {
   return { error: error.message };
-}
-
-// Log successful logout
-if (userId) {
-  try {
-await supabase.rpc('log_auth_event', {
-  p_user_id: userId,
-  p_event_type: 'logout',
-  p_ip_address: undefined, // Client-side can't get real IP
-  p_user_agent: userAgent,
-  p_success: true,
-  p_metadata: {
-logout_type: 'user_initiated',
-  },
-});
-  } catch (logError) {
-console.warn('Failed to log logout event:', logError);
-// Continue with successful logout even if logging fails
-  }
 }
 
 return { error: null };

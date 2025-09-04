@@ -1,25 +1,29 @@
 /**
- * OAuth App Usage Analytics Utility
+ * Analytics Utility - Non-OAuth Operations Only
  *
- * This module provides utilities for tracking OAuth application usage analytics
- * for the TrueNamePath OAuth demo integration system.
+ * This module provides utilities for tracking non-OAuth application events
+ * that are not handled by database triggers.
  *
  * Academic Project: University Final Project (CM3035 Advanced Web Design)
- * Innovation: Simplified OAuth analytics for context-aware identity demonstration
  *
  * =============================================================================
- * OAUTH ANALYTICS SYSTEM - STEP 16 IMPLEMENTATION
+ * ANALYTICS SYSTEM - TRIGGER-FIRST APPROACH
  * =============================================================================
  *
- * This file provides OAuth-focused analytics tracking to replace the
- * over-engineered context_usage_analytics system with a simplified approach
- * suitable for academic demonstration purposes.
+ * IMPORTANT: OAuth events are now automatically logged via database triggers:
+ * - OAuth authorization: oauth_session_creation_logging_trigger
+ * - OAuth resolution: oauth_usage_logging_trigger (existing)
+ * - OAuth revocation: oauth_session_deletion_logging_trigger
+ * - Context assignments: app_context_assignment_logging_trigger
+ *
+ * This utility is now focused on non-OAuth system events that require
+ * manual logging (e.g., password changes, account settings, etc.)
  *
  * KEY FEATURES:
- * - Simple OAuth operation tracking (authorize, resolve, revoke, assign_context)
- * - Performance monitoring for <3ms requirement
- * - Dashboard integration for real OAuth metrics
+ * - Manual logging for non-OAuth system operations
+ * - Performance monitoring integration
  * - Clean integration with app_usage_log table
+ * - Reduced client-side complexity
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -169,7 +173,8 @@ return {
 }
 
 /**
- * Helper function to track OAuth authorization
+ * @deprecated OAuth authorization events are now automatically logged via database triggers.
+ * This function is kept for backward compatibility but should not be used.
  */
 export async function trackOAuthAuthorization(
   supabase: SupabaseClient<Database>,
@@ -179,20 +184,15 @@ export async function trackOAuthAuthorization(
   sessionId: string,
   responseTimeMs: number = 0,
 ): Promise<TrackOAuthUsageResult> {
-  return trackOAuthUsage({
-supabase,
-profileId,
-clientId,
-action: 'authorize',
-contextId,
-sessionId,
-responseTimeMs,
-success: true,
-  });
+  console.warn(
+'trackOAuthAuthorization is deprecated. OAuth authorization events are now automatically logged via database triggers.',
+  );
+  return { success: true, logId: 0 };
 }
 
 /**
- * Helper function to track OIDC claims resolution
+ * @deprecated OAuth resolve events are now automatically logged via database triggers.
+ * This function is kept for backward compatibility but should not be used.
  */
 export async function trackOAuthResolve(
   supabase: SupabaseClient<Database>,
@@ -202,37 +202,30 @@ export async function trackOAuthResolve(
   sessionId: string,
   responseTimeMs: number = 0,
 ): Promise<TrackOAuthUsageResult> {
-  return trackOAuthUsage({
-supabase,
-profileId,
-clientId,
-action: 'resolve',
-contextId,
-sessionId,
-responseTimeMs,
-success: true,
-  });
+  console.warn(
+'trackOAuthResolve is deprecated. OAuth resolve events are now automatically logged via database triggers.',
+  );
+  return { success: true, logId: 0 };
 }
 
 /**
- * Helper function to track app revocation
+ * @deprecated OAuth revocation events are now automatically logged via database triggers.
+ * This function is kept for backward compatibility but should not be used.
  */
 export async function trackOAuthRevocation(
   supabase: SupabaseClient<Database>,
   profileId: string,
   clientId: string,
 ): Promise<TrackOAuthUsageResult> {
-  return trackOAuthUsage({
-supabase,
-profileId,
-clientId,
-action: 'revoke',
-success: true,
-  });
+  console.warn(
+'trackOAuthRevocation is deprecated. OAuth revocation events are now automatically logged via database triggers.',
+  );
+  return { success: true, logId: 0 };
 }
 
 /**
- * Helper function to track context assignment changes
+ * @deprecated Context assignment events are now automatically logged via database triggers.
+ * This function is kept for backward compatibility but should not be used.
  */
 export async function trackContextAssignment(
   supabase: SupabaseClient<Database>,
@@ -240,14 +233,10 @@ export async function trackContextAssignment(
   clientId: string,
   contextId: string,
 ): Promise<TrackOAuthUsageResult> {
-  return trackOAuthUsage({
-supabase,
-profileId,
-clientId,
-action: 'assign_context',
-contextId,
-success: true,
-  });
+  console.warn(
+'trackContextAssignment is deprecated. Context assignment events are now automatically logged via database triggers.',
+  );
+  return { success: true, logId: 0 };
 }
 
 // =============================================================================

@@ -55,6 +55,7 @@ import {
   generateRequestId,
 } from '@/utils/api/with-auth';
 import { ErrorCodes } from '@/utils/api/types';
+// NOTE: Revocation performance is handled by database triggers
 
 // Validation schema for request body
 const RevokeRequestSchema = z.object({
@@ -63,7 +64,7 @@ const RevokeRequestSchema = z.object({
 });
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const startTime = performance.now();
+  // Performance measurement is handled by database triggers
   const requestId = generateRequestId();
   const timestamp = new Date().toISOString();
 
@@ -187,16 +188,8 @@ assignmentRemoved = true;
   }
 }
 
-// Log revocation action with actual performance time
-const responseTime = Math.round(performance.now() - startTime);
-await supabase.rpc('log_app_usage', {
-  p_profile_id: user.id,
-  p_client_id: client_id,
-  p_action: 'revoke_all',
-  p_session_id: undefined,
-  p_response_time_ms: responseTime,
-  p_success: true,
-});
+// NOTE: Revocation events are now automatically logged via database triggers
+// when oauth_sessions records are deleted. No manual logging needed.
 
 return NextResponse.json(
   createSuccessResponse(
