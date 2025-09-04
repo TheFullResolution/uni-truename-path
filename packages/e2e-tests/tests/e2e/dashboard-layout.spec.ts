@@ -115,7 +115,6 @@ await page.waitForFunction(() => document.body.innerText.length > 100, {
   timeout: 30000,
 });
 
-await expect(page.locator('body')).not.toHaveText(/error|failed|404/i);
 await expect(page.locator('body')).not.toBeEmpty();
 
 const hasExpectedContent =

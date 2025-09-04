@@ -1282,6 +1282,15 @@ expires_at: expect.stringMatching(
   /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
 ),
 return_url: VALID_RETURN_URL,
+metadata: {
+  created_at: expect.stringMatching(
+/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+  ),
+  request_id: expect.stringMatching(
+/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+  ),
+},
+state: undefined,
   });
 });
   });

@@ -310,14 +310,8 @@ it('should successfully revoke session and return 200', async () => {
 
   // Verify database operations were called
   expect(mockSupabaseClient.from).toHaveBeenCalledWith('oauth_sessions');
-  expect(mockSupabaseClient.rpc).toHaveBeenCalledWith('log_app_usage', {
-p_profile_id: MOCK_SESSION.profile_id,
-p_client_id: MOCK_SESSION.client_id,
-p_action: 'revoke',
-p_session_id: VALID_SESSION_ID,
-p_response_time_ms: expect.any(Number), // Now dynamically measured
-p_success: true,
-  });
+  // NOTE: OAuth revocation events are now automatically logged via database triggers
+  // when oauth_sessions records are deleted. No manual RPC logging needed.
 });
 
 it('should handle remove_assignment parameter when provided', async () => {

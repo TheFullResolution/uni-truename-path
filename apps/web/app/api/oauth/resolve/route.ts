@@ -86,8 +86,6 @@ const responseTime = perf.getElapsed();
 // NOTE: OAuth resolve events are now automatically logged via database trigger
 // when oauth_sessions.used_at is updated from NULL to timestamp. No manual logging needed.
 
-const claims = claimsResult as unknown as OIDCClaims;
-
 return NextResponse.json(
   createSuccessResponse(
 {
