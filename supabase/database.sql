@@ -105,6 +105,7 @@ CREATE TABLE public.oauth_sessions (
   updated_at timestamp with time zone DEFAULT now(),
   state character varying,
   client_id character varying NOT NULL,
+  metadata jsonb DEFAULT '{}'::jsonb,
   CONSTRAINT oauth_sessions_pkey PRIMARY KEY (id),
   CONSTRAINT oauth_sessions_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id)
 );

@@ -136,6 +136,33 @@ const { data, error } = await supabase.auth.signInWithPassword({
 });
 
 if (error) {
+  // Log failed login attempt
+  try {
+// Query profiles table to get user ID from email for failed login logging
+const { data: profile } = await supabase
+  .from('profiles')
+  .select('id')
+  .eq('email', email.trim())
+  .single();
+
+if (profile?.id) {
+  await supabase.rpc('log_auth_event', {
+p_user_id: profile.id,
+p_event_type: 'failed_login',
+p_success: false,
+p_error_message: error.message || 'Authentication failed',
+p_metadata: {
+  source: 'web_app',
+  timestamp: new Date().toISOString(),
+  email: email.trim(),
+},
+  });
+}
+  } catch {
+// Silent fail - we don't want to expose whether an email exists
+// This prevents user enumeration attacks
+  }
+
   return {
 user: null,
 error: {
@@ -153,6 +180,22 @@ error: {
   message: 'Sign in failed - no user returned',
 },
   };
+}
+
+// Log successful login event
+try {
+  await supabase.rpc('log_auth_event', {
+p_user_id: data.user.id,
+p_event_type: 'login',
+p_success: true,
+p_metadata: {
+  source: 'web_app',
+  timestamp: new Date().toISOString(),
+},
+  });
+} catch (logError) {
+  console.error('Failed to log login event:', logError);
+  // Don't fail the login if logging fails
 }
 
 return {
@@ -238,6 +281,27 @@ message: error instanceof Error ? error.message : 'Sign up failed',
 export const signOut = async (): Promise<{ error: string | null }> => {
   try {
 const supabase = createClient();
+
+// Log logout event before signing out
+try {
+  const {
+data: { session },
+  } = await supabase.auth.getSession();
+  if (session?.user) {
+await supabase.rpc('log_auth_event', {
+  p_user_id: session.user.id,
+  p_event_type: 'logout',
+  p_success: true,
+  p_metadata: {
+source: 'web_app',
+timestamp: new Date().toISOString(),
+  },
+});
+  }
+} catch (logError) {
+  console.error('Failed to log logout event:', logError);
+  // Don't fail the logout if logging fails
+}
 
 const { error } = await supabase.auth.signOut();
 
