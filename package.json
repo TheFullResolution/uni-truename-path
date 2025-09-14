@@ -34,10 +34,7 @@
 "kill-ports": "chmod +x scripts/kill-ports.sh && scripts/kill-ports.sh",
 "db:types": "supabase gen types typescript --local > apps/web/generated/database.ts",
 "types:remote": "supabase gen types typescript --project-id txfcnjvmkaqzblztkjmr > apps/web/generated/database.ts",
-"diagrams:erd": "mmdc -i docs/report-materials/academic-report-diagrams.md -o enhanced-erd.png -t neutral -s 2 --cssFile docs/mermaid-theme.css",
-"diagrams:architecture": "mmdc -i docs/report-materials/academic-report-diagrams.md -o enhanced-architecture.png -t neutral -s 2 --cssFile docs/mermaid-theme.css",
-"diagrams:flowchart": "mmdc -i docs/report-materials/academic-report-diagrams.md -o enhanced-flowchart.png -t neutral -s 2 --cssFile docs/mermaid-theme.css",
-"diagrams:all": "yarn diagrams:erd && yarn diagrams:architecture && yarn diagrams:flowchart",
+"diagrams": "node scripts/generate-diagrams.js",
 "wireframes": "open docs/wireframes/index.html",
 "performance:monitor": "npx tsx scripts/performance-monitor.ts",
 "performance:monitor:prod": "npx tsx scripts/performance-monitor.ts --production"

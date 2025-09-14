@@ -1,0 +1,132 @@
+name: Supabase Keep-Alive
+
+# Schedule: Run every Monday at 9:00 AM UTC
+# This timing avoids weekends and provides a regular check during business hours
+on:
+  schedule:
+- cron: '0 9 * * 1'  # Every Monday at 9:00 AM UTC
+
+  # Allow manual triggering for testing and emergency runs
+  workflow_dispatch:
+inputs:
+  environment:
+description: 'Target environment'
+required: false
+default: 'production'
+type: choice
+options:
+  - production
+  - staging
+
+jobs:
+  keep-alive:
+name: Keep Supabase Project Active
+runs-on: ubuntu-latest
+
+# Set timeout to prevent hanging workflows
+timeout-minutes: 10
+
+steps:
+  - name: Checkout repository
+uses: actions/checkout@v4
+
+  - name: Setup Node.js
+uses: actions/setup-node@v4
+with:
+  node-version: '24'
+  cache: 'yarn'
+
+  - name: Enable Corepack
+run: corepack enable
+
+  - name: Install dependencies
+run: yarn install --immutable
+
+  - name: Cache Playwright browsers
+uses: actions/cache@v4
+id: playwright-cache
+with:
+  path: ~/.cache/ms-playwright
+  key: ${{ runner.os }}-playwright-keep-alive-${{ hashFiles('**/yarn.lock') }}
+  restore-keys: |
+${{ runner.os }}-playwright-keep-alive-
+${{ runner.os }}-playwright-
+
+  - name: Install Playwright browsers
+if: steps.playwright-cache.outputs.cache-hit != 'true'
+run: |
+  cd packages/e2e-tests
+  npx playwright install chromium --with-deps
+
+  - name: Install Playwright dependencies only (if browsers cached)
+if: steps.playwright-cache.outputs.cache-hit == 'true'
+run: |
+  cd packages/e2e-tests
+  npx playwright install-deps chromium
+
+  - name: Run Keep-Alive Test
+run: |
+  cd packages/e2e-tests
+  npx playwright test --config=playwright.config.keep-alive.ts --reporter=list
+env:
+  # Production environment configuration
+  KEEP_ALIVE_BASE_URL: ${{ secrets.PRODUCTION_BASE_URL || 'https://www.truenamepath.com' }}
+
+  # Test user credentials (stored in GitHub Secrets)
+  KEEP_ALIVE_TEST_EMAIL: ${{ secrets.KEEP_ALIVE_TEST_EMAIL }}
+  KEEP_ALIVE_TEST_PASSWORD: ${{ secrets.KEEP_ALIVE_TEST_PASSWORD }}
+
+  # Test configuration
+  TEST_TIMEOUT: 30000
+  CI: true
+  NODE_ENV: production
+
+  - name: Upload test results on failure
+if: failure()
+uses: actions/upload-artifact@v4
+with:
+  name: keep-alive-test-results-${{ github.run_number }}
+  path: |
+packages/e2e-tests/test-results/
+packages/e2e-tests/playwright-report/
+  retention-days: 7
+
+  - name: Notify on failure (optional)
+if: failure()
+uses: actions/github-script@v7
+with:
+  script: |
+const issue_body = `
+## 🚨 Supabase Keep-Alive Test Failed
+
+The weekly keep-alive test failed on ${new Date().toISOString()}.
+
+**Run Details:**
+- Workflow: ${{ github.workflow }}
+- Run Number: ${{ github.run_number }}
+- Run ID: ${{ github.run_id }}
+- Environment: ${{ github.event.inputs.environment || 'production' }}
+
+**Next Steps:**
+1. Check the [workflow run logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+2. Review uploaded test artifacts for detailed error information
+3. Manually run the keep-alive test if needed: \`gh workflow run keep-alive.yml\`
+
+**Note:** If this failure persists, it may indicate an issue with the production environment or Supabase project status.
+`;
+
+console.log('Keep-alive test failed. Consider creating an issue or notification.');
+console.log(issue_body);
+
+  health-check:
+name: Verify Project Health
+runs-on: ubuntu-latest
+needs: keep-alive
+
+steps:
+  - name: Check keep-alive success
+run: |
+  echo "✅ Keep-alive test completed successfully"
+  echo "📊 Supabase project activity maintained"
+  echo "📅 Next scheduled run: $(date -d 'next monday 09:00' --iso-8601=minutes) UTC"
+  echo "🔗 Manual trigger available via: gh workflow run keep-alive.yml"
