@@ -131,20 +131,14 @@ timeout: 10000,
  */
 export async function logout(page: Page): Promise<void> {
   try {
-await page.goto('/dashboard/settings');
-
-await page.waitForLoadState('domcontentloaded');
-await page.waitForSelector('[data-testid="tab-settings"]', {
-  timeout: 30000,
-});
-
-let logoutButton = page.getByTestId('sign-out-button');
-
-if (!(await logoutButton.isVisible({ timeout: 2000 }))) {
-  logoutButton = page.getByRole('button', {
-name: /sign out|logout/i,
-  });
+// Ensure we're on a dashboard page where the sign-out button is available
+if (!page.url().includes('/dashboard')) {
+  await page.goto('/dashboard');
+  await page.waitForLoadState('domcontentloaded');
 }
+
+// The sign-out button is in the top navigation, not in any specific tab
+const logoutButton = page.getByTestId('sign-out-button');
 
 if (await logoutButton.isVisible({ timeout: 5000 })) {
   await logoutButton.click();

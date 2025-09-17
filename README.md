@@ -1,10 +1,18 @@
 # TrueNamePath - Context-Aware Identity Management API
 
-**University Final Project (CM3035 Advanced Web Design)**
+**University Final Project (CM3035 Advanced Web Development)**
 
-## Quick Start
+## Overview
 
-This project implements a context-aware identity management system where users control how their names are presented to different audiences. The system addresses real discrimination issues while maintaining privacy and GDPR compliance.
+TrueNamePath is an innovative context-aware identity management system that addresses name-based discrimination in digital environments. The system allows users to control how their names are presented to different audiences while maintaining privacy and GDPR compliance.
+
+### Problem Statement
+
+Many individuals face discrimination based on their names in professional and social contexts. Traditional identity systems present static name information regardless of context, potentially exposing users to bias. This project demonstrates a technical solution that enables dynamic, context-appropriate name presentation while preserving user privacy and control.
+
+### Technical Innovation
+
+The system implements OAuth/OIDC-compliant context-aware name resolution, allowing external applications to receive appropriate name variants based on user-defined contexts and consent preferences. This represents a novel application of existing identity provider patterns to address social discrimination issues.
 
 ## Prerequisites
 
@@ -26,10 +34,10 @@ This project uses official Supabase SSR (Server-Side Rendering) patterns for aut
 
 ### 1. Prerequisites
 
-Ensure you have a `.env.local` file in the project root with the following Supabase environment variables correctly configured. These are required for both the Next.js application and the user creation script.
+Create a `.env.local` file in the project root with your Supabase project credentials. You'll need to create a Supabase project and obtain these values from your project dashboard.
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL="https://txfcnjvmkaqzblztkjmr.supabase.co"
+NEXT_PUBLIC_SUPABASE_URL="https://your-project-id.supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
 SUPABASE_SERVICE_ROLE_KEY="your-supabase-service-role-key"
 ```
@@ -90,7 +98,7 @@ yarn test:e2e tests/e2e/auth/
 
 This will execute all 7 test files located in the `tests/e2e/auth/` directory, covering UI, functionality, and integration scenarios.
 
-**Expected**: 125+ test scenarios should pass, validating the authentication system across multiple browsers.
+**Expected**: Comprehensive test scenarios should pass, validating the authentication system across multiple browsers.
 
 ## Development Commands
 
@@ -113,93 +121,108 @@ This will execute all 7 test files located in the `tests/e2e/auth/` directory, c
 
 This is a monorepo using Turborepo and Yarn workspaces:
 
-- `apps/web/` - Next.js frontend application with authentication system
-  - `utils/supabase/` - Official Supabase SSR client utilities (`@supabase/ssr`)
-- `packages/database/` - Supabase client and generated types (legacy compatibility)
+- `apps/web/` - Next.js main application with authentication and dashboard
+  - `utils/supabase/` - Supabase SSR client utilities (`@supabase/ssr`)
+- `apps/demo-hr/` - Demo HR application showcasing professional context
+- `apps/demo-chat/` - Demo chat application showcasing casual context
+- `packages/database/` - Supabase client and generated types
 - `packages/ui/` - Shared Mantine UI components
-- `tests/e2e/` - Playwright end-to-end tests including comprehensive auth testing
+- `packages/e2e-tests/` - Playwright end-to-end test suite
+- `packages/truename-oauth/` - Shared OAuth integration library
 - `scripts/` - Utility scripts including demo user creation
 - `docs/` - Project documentation and academic materials
-- `.claude/agents/` - AI agent definitions for development workflow
-- `.claude/commands/` - Custom slash commands for workflow automation
+- `supabase/` - Database migrations and SQL functions
 
-## Core Features Implemented
+## Core Features
 
-### Authentication System (Step 8 Complete - 100% Production Ready)
+### Authentication System
 
-- ✅ **Official Supabase SSR Implementation**: Complete migration to `@supabase/ssr` patterns
-- ✅ **Cookie-Based Session Management**: Secure httpOnly cookies replacing custom JWT
-- ✅ **Professional Login Page**: Responsive UI with Mantine components
-- ✅ **SSR Client Architecture**: Separate browser/server clients (`apps/web/utils/supabase/`)
-- ✅ **AuthProvider Context**: Global state management with official SSR patterns
-- ✅ **Next.js Middleware**: Route protection using official `updateSession` pattern
-- ✅ **AuthGuard Component**: Client-side protection with loading states
-- ✅ **Comprehensive E2E Testing**: 125+ scenarios across 7 test files
-- ✅ **Demo User Automation**: Script using Supabase Admin API
-- ✅ **Backward Compatibility**: Legacy database package integration maintained
+- ✅ **Supabase SSR Implementation**: Built with official `@supabase/ssr` patterns
+- ✅ **Cookie-Based Session Management**: Secure httpOnly cookies for session handling
+- ✅ **Responsive Login Interface**: Professional UI built with Mantine components
+- ✅ **SSR Client Architecture**: Separate browser/server clients for optimal performance
+- ✅ **Global Authentication Context**: Centralized state management
+- ✅ **Route Protection**: Next.js middleware with session validation
+- ✅ **Comprehensive Testing**: End-to-end test coverage for all authentication flows
+- ✅ **Demo User Management**: Automated user creation for testing and demonstration
 
 ### Context-Aware Name Resolution
 
-- ✅ OAuth/OIDC resolution with ~1.2s end-to-end performance
-- ✅ User-defined contexts (not hardcoded)
-- ✅ GDPR-compliant audit logging
-- ✅ Multi-persona demo interface
+- ✅ **OAuth/OIDC Compliance**: Standards-compliant identity resolution
+- ✅ **User-Defined Contexts**: Flexible context system without hardcoded values
+- ✅ **Privacy-by-Design**: GDPR-compliant audit logging and consent management
+- ✅ **Multi-Persona Interface**: Demonstration of different identity presentations
 
-### API Layer
+### API Architecture
 
-- ✅ REST API endpoints (names, consents, audit)
-- ✅ JSend format standardization
-- ✅ JWT authentication integration
-- ✅ Comprehensive API testing
+- ✅ **RESTful Endpoints**: Complete API for names, contexts, and consent management
+- ✅ **Standardized Responses**: JSend format for consistent API responses
+- ✅ **Secure Authentication**: JWT-based API authentication
+- ✅ **Comprehensive Testing**: Full test coverage for all API endpoints
 
-## AI-Driven Development Workflow
+### Demo Applications
 
-This project uses a sophisticated multi-agent AI system for efficient development. The system coordinates specialized agents to handle planning, implementation, testing, and documentation with optimal parallelization.
-
-### Quick Command Reference
-
-Custom slash commands automate the development workflow:
-
-- **`/status`** - Check comprehensive project status
-- **`/plan [step]`** - Create detailed implementation plan
-- **`/review [plan]`** - Critical review of plans or code
-- **`/execute [step]`** - Coordinate implementation with agent deployment
-- **`/debug [issue]`** - Investigate and troubleshoot problems
-- **`/research [topic]`** - Deep codebase analysis
-- **`/document [work]`** - Create professional documentation
-
-### Example Workflow
-
-```bash
-# Standard development flow
-/status  # Check current state
-/plan 9  # Plan Step 9 (signup page)
-/review step-09  # Review the plan
-/execute 9   # Execute with agent coordination
-/document 9  # Document completion
-
-# Troubleshooting flow
-/debug login redirect not working
-/research authentication middleware
-```
-
-### Agent System Benefits
-
-- **Parallel Development**: Multiple agents working simultaneously on independent tasks
-- **Quality Assurance**: Continuous testing and code review during development
-- **Comprehensive Planning**: Detailed analysis before implementation begins
-- **Academic Integration**: AI agents understand university project requirements
-
-See **CLAUDE.md** for complete documentation of the agent system, workflow process, and available agents.
+- ✅ **HR Application**: Professional context demonstration
+- ✅ **Chat Application**: Casual context demonstration
+- ✅ **OAuth Integration**: Complete OAuth flows for external applications
 
 ## Academic Project Context
 
-This is a university final project demonstrating:
+This project was developed as the final project for the Bachelor of Computer Science degree at the University of London (CM3035 Advanced Web Development), demonstrating:
 
-- Advanced web development with modern React/Next.js patterns
-- Professional authentication and authorization implementation
-- Context-aware identity management innovation
-- Comprehensive testing and quality assurance practices
-- GDPR compliance and privacy-by-design principles
+- **Modern Web Development**: Advanced React/Next.js patterns and TypeScript implementation
+- **Authentication Systems**: Professional-grade authentication and authorization
+- **Technical Innovation**: Novel application of OAuth/OIDC for context-aware identity management
+- **Quality Assurance**: Comprehensive testing strategies and quality assurance practices
+- **Privacy Engineering**: GDPR compliance and privacy-by-design principles
+- **Full-Stack Development**: Complete system from database design to user interface
 
-The implementation focuses on academic demonstration rather than production deployment, emphasizing code quality, documentation, and educational value.
+The project emphasizes technical excellence, innovative problem-solving, and professional software engineering practices suitable for academic evaluation and portfolio presentation.
+
+## Technologies Used
+
+### Frontend
+
+- **Next.js 15** - React framework with App Router
+- **React 19** - Modern React with concurrent features
+- **TypeScript** - Type-safe development
+- **Mantine UI** - Professional component library
+- **SWR** - Data fetching and caching
+
+### Backend & Database
+
+- **Supabase** - PostgreSQL database with real-time features
+- **PostgreSQL** - Relational database with custom functions
+- **Supabase Auth** - Authentication with SSR support
+
+### Testing & Quality
+
+- **Playwright** - End-to-end testing framework
+- **Vitest** - Unit testing framework
+- **ESLint & Prettier** - Code quality and formatting
+
+### DevOps & Tooling
+
+- **Turborepo** - Monorepo build system
+- **Yarn Workspaces** - Package management
+- **Vercel** - Deployment platform for demo applications
+
+## Getting Started
+
+To run this project locally, you'll need to:
+
+1. Set up a Supabase project and configure environment variables
+2. Run the database migrations
+3. Create demo users for testing
+4. Start the development server
+
+Follow the detailed setup instructions in the Authentication Setup section above for complete configuration steps.
+
+## Demo Applications
+
+The project includes two deployed demo applications that showcase different identity contexts:
+
+- **Demo HR Application**: Demonstrates professional identity presentation in corporate environments
+- **Demo Chat Application**: Shows casual identity presentation in social contexts
+
+Both applications integrate with the main TrueNamePath API using OAuth flows to demonstrate context-aware name resolution in real-world scenarios.
